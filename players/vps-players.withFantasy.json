@@ -1,0 +1,104 @@
+[
+  {
+    "name": "Aleksi Piispa",
+    "position": "Goalkeeper",
+    "marketValueEur": 50000,
+    "fantasyValueM": 4.9
+  },
+  {
+    "name": "Mamadou Jalloh",
+    "position": "Goalkeeper",
+    "marketValueEur": 50000,
+    "fantasyValueM": 4.9
+  },
+  {
+    "name": "Lucas Väyrynen",
+    "position": "Goalkeeper",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Eino Ehrnrooth",
+    "position": "Goalkeeper",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Emmanuel Okereke",
+    "position": "Centre-Back",
+    "marketValueEur": 200000,
+    "fantasyValueM": 10.2
+  },
+  {
+    "name": "Martti Haukioja",
+    "position": "Centre-Back",
+    "marketValueEur": 200000,
+    "fantasyValueM": 10.2
+  },
+  {
+    "name": "Vilmer Rönnberg",
+    "position": "Centre-Back",
+    "marketValueEur": 100000,
+    "fantasyValueM": 6.7
+  },
+  {
+    "name": "Adrian Arrakoski",
+    "position": "Centre-Back",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Kevin Kouassivi-Benissan",
+    "position": "Right-Back",
+    "marketValueEur": 200000,
+    "fantasyValueM": 10.2
+  },
+  {
+    "name": "Miika Niemi",
+    "position": "Right-Back",
+    "marketValueEur": 100000,
+    "fantasyValueM": 6.7
+  },
+  {
+    "name": "Yassin Daoussi",
+    "position": "Right-Back",
+    "marketValueEur": 100000,
+    "fantasyValueM": 6.7
+  },
+  {
+    "name": "Jayden Turfkruier",
+    "position": "Left-Winger",
+    "marketValueEur": 250000,
+    "fantasyValueM": 12
+  },
+  {
+    "name": "Alex Myntti",
+    "position": "Left-Winger",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Tijjani Mohammed",
+    "position": "Centre-Forward",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Luka Smyth",
+    "position": "Centre-Forward",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Olavi Keturi",
+    "position": "Centre-Forward",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Joona Somppi",
+    "position": "Centre-Forward",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  }
+]

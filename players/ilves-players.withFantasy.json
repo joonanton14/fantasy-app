@@ -1,0 +1,122 @@
+[
+  {
+    "name": "Otso Virtanen",
+    "position": "Goalkeeper",
+    "marketValueEur": 200000,
+    "fantasyValueM": 7.3
+  },
+  {
+    "name": "Faris Krkalic",
+    "position": "Goalkeeper",
+    "marketValueEur": 100000,
+    "fantasyValueM": 5.7
+  },
+  {
+    "name": "Sauli Väisänen",
+    "position": "Centre-Back",
+    "marketValueEur": 300000,
+    "fantasyValueM": 9
+  },
+  {
+    "name": "Oliver Pettersson",
+    "position": "Centre-Back",
+    "marketValueEur": 200000,
+    "fantasyValueM": 7.3
+  },
+  {
+    "name": "Tatu Miettunen",
+    "position": "Centre-Back",
+    "marketValueEur": 200000,
+    "fantasyValueM": 7.3
+  },
+  {
+    "name": "Ville Kumpu",
+    "position": "Centre-Back",
+    "marketValueEur": 50000,
+    "fantasyValueM": 4.8
+  },
+  {
+    "name": "Jere Riissanen",
+    "position": "Centre-Back",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Matias Rale",
+    "position": "Left-Back",
+    "marketValueEur": 400000,
+    "fantasyValueM": 10.7
+  },
+  {
+    "name": "André Raymond",
+    "position": "Left-Back",
+    "marketValueEur": 200000,
+    "fantasyValueM": 7.3
+  },
+  {
+    "name": "Kalle Wallius",
+    "position": "Right-Back",
+    "marketValueEur": 150000,
+    "fantasyValueM": 6.5
+  },
+  {
+    "name": "Goudouss Bamba",
+    "position": "Right-Back",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Marius Söderbäck",
+    "position": "Attacking-Midfielder",
+    "marketValueEur": 400000,
+    "fantasyValueM": 10.7
+  },
+  {
+    "name": "Jardell Kanga",
+    "position": "Attacking-Midfielder",
+    "marketValueEur": 350000,
+    "fantasyValueM": 9.8
+  },
+  {
+    "name": "Maksim Stjopin",
+    "position": "Attacking-Midfielder",
+    "marketValueEur": 250000,
+    "fantasyValueM": 8.2
+  },
+  {
+    "name": "Lauri Ala-Myllymäki",
+    "position": "Attacking-Midfielder",
+    "marketValueEur": 200000,
+    "fantasyValueM": 7.3
+  },
+  {
+    "name": "Jesse Kilo",
+    "position": "Attacking-Midfielder",
+    "marketValueEur": 100000,
+    "fantasyValueM": 5.7
+  },
+  {
+    "name": "Oiva Jukkola",
+    "position": "Right-winger",
+    "marketValueEur": 450000,
+    "fantasyValueM": 11.5
+  },
+  {
+    "name": "Teemu Hytönen",
+    "position": "Centre-Forward",
+    "marketValueEur": 200000,
+    "fantasyValueM": 7.3
+  },
+  {
+    "name": "Roope Riski",
+    "position": "Centre-Forward",
+    "marketValueEur": 100000,
+    "fantasyValueM": 5.7
+  },
+  {
+    "name": "Oskari Paavola",
+    "position": "Centre-Forward",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  }
+]

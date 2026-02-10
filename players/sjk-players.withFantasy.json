@@ -1,0 +1,116 @@
+[
+  {
+    "name": "Roope Paunio",
+    "position": "Goalkeeper",
+    "marketValueEur": 350000,
+    "fantasyValueM": 9.8
+  },
+  {
+    "name": "Johannes Viitala",
+    "position": "Goalkeeper",
+    "marketValueEur": 50000,
+    "fantasyValueM": 4.8
+  },
+  {
+    "name": "Kelvin Pires",
+    "position": "Centre-Back",
+    "marketValueEur": 300000,
+    "fantasyValueM": 9
+  },
+  {
+    "name": "Samuel Chukwudi",
+    "position": "Centre-Back",
+    "marketValueEur": 300000,
+    "fantasyValueM": 9
+  },
+  {
+    "name": "Oskari Väistö",
+    "position": "Centre-Back",
+    "marketValueEur": 150000,
+    "fantasyValueM": 6.5
+  },
+  {
+    "name": "Fallou Ndiaye",
+    "position": "Centre-Back",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4.4
+  },
+  {
+    "name": "Salim Yussif",
+    "position": "Right-Back",
+    "marketValueEur": 200000,
+    "fantasyValueM": 7.3
+  },
+  {
+    "name": "Gabriel Oksanen",
+    "position": "Right-Back",
+    "marketValueEur": 50000,
+    "fantasyValueM": 4.8
+  },
+  {
+    "name": "Jaakko Moisio",
+    "position": "Right-Back",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4.4
+  },
+  {
+    "name": "Armaan Wilson",
+    "position": "Defensive-Midfielder",
+    "marketValueEur": 150000,
+    "fantasyValueM": 6.5
+  },
+  {
+    "name": "Prosper Padera",
+    "position": "Defensive-Midfielder",
+    "marketValueEur": 100000,
+    "fantasyValueM": 5.7
+  },
+  {
+    "name": "Kasper Paananen",
+    "position": "Attacking-Midfielder",
+    "marketValueEur": 600000,
+    "fantasyValueM": 14
+  },
+  {
+    "name": "Eetu Mömmö",
+    "position": "Left-Winger",
+    "marketValueEur": 150000,
+    "fantasyValueM": 6.5
+  },
+  {
+    "name": "Elias Mastokangas",
+    "position": "Left-Winger",
+    "marketValueEur": 150000,
+    "fantasyValueM": 6.5
+  },
+  {
+    "name": "Danila Bulgakov",
+    "position": "Left-Winger",
+    "marketValueEur": 50000,
+    "fantasyValueM": 4.8
+  },
+  {
+    "name": "Albin Björkskog",
+    "position": "Right-Winger",
+    "marketValueEur": 200000,
+    "fantasyValueM": 7.3
+  },
+  {
+    "name": "Olatoundji Tessilimi",
+    "position": "Right-Winger",
+    "marketValueEur": 150000,
+    "fantasyValueM": 6.5
+  },
+  {
+    "name": "Jeremiah Streng",
+    "position": "Centre-Forward",
+    "marketValueEur": 200000,
+    "fantasyValueM": 7.3
+  },
+  {
+    "name": "Emil Ingman",
+    "position": "Centre-Forward",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  }
+]

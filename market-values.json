@@ -1,0 +1,110 @@
+[
+  {
+    "name": "Dan Lauri",
+    "position": "Goalkeeper",
+    "marketValueEur": 50000,
+    "fantasyValueM": 5.1
+  },
+  {
+    "name": "Niklas Harju",
+    "position": "Goalkeeper",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Nikolas Talo",
+    "position": "Centre-Back",
+    "marketValueEur": 200000,
+    "fantasyValueM": 12
+  },
+  {
+    "name": "Charlemagne Azongnitode",
+    "position": "Centre-Back",
+    "marketValueEur": 150000,
+    "fantasyValueM": 9.7
+  },
+  {
+    "name": "Atte Sihvonen",
+    "position": "Centre-Back",
+    "marketValueEur": 50000,
+    "fantasyValueM": 5.1
+  },
+  {
+    "name": "Akim Sairinen",
+    "position": "Centre-Back",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Jesper Aitos",
+    "position": "Centre-Back",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Tobias Karkulowski",
+    "position": "Left-Back",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Eetu Turkki",
+    "position": "Left-Back",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Oscar Häggström",
+    "position": "Right-Back",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Timo Zaal",
+    "position": "Defensive",
+    "marketValueEur": 100000,
+    "fantasyValueM": 7.4
+  },
+  {
+    "name": "Marius Könkkölä",
+    "position": "Attacking",
+    "marketValueEur": 100000,
+    "fantasyValueM": 7.4
+  },
+  {
+    "name": "Elmer Vauhkonen",
+    "position": "Left",
+    "marketValueEur": 50000,
+    "fantasyValueM": 5.1
+  },
+  {
+    "name": "Miika Kauppila",
+    "position": "Right",
+    "marketValueEur": 50000,
+    "fantasyValueM": 5.1
+  },
+  {
+    "name": "Albijon Muzaci",
+    "position": "Right",
+    "marketValueEur": 50000,
+    "fantasyValueM": 5.1
+  },
+  {
+    "name": "Rasmus Harjanne",
+    "position": "Right",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Nino Rajamäki",
+    "position": "Right",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Luke Ivanovic",
+    "position": "Centre-Forward",
+    "marketValueEur": 150000,
+    "fantasyValueM": 9.7
+  }
+]

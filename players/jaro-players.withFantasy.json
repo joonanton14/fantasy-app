@@ -1,0 +1,92 @@
+[
+  {
+    "name": "Joas Snellman",
+    "position": "Goalkeeper",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Anton Finell",
+    "position": "Goalkeeper",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Erik Gunnarsson",
+    "position": "Centre-Back",
+    "marketValueEur": 200000,
+    "fantasyValueM": 10.2
+  },
+  {
+    "name": "Michael Ogungbaro",
+    "position": "Centre-Back",
+    "marketValueEur": 150000,
+    "fantasyValueM": 8.4
+  },
+  {
+    "name": "Johan Brunell",
+    "position": "Centre-Back",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Felix Kass",
+    "position": "Centre-Back",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Aron Bjonbäck",
+    "position": "Right-Back",
+    "marketValueEur": 100000,
+    "fantasyValueM": 6.7
+  },
+  {
+    "name": "Herman Sjögrell",
+    "position": "Right-Midfielder",
+    "marketValueEur": 250000,
+    "fantasyValueM": 12
+  },
+  {
+    "name": "Kaius Hardén",
+    "position": "Attacking-Midfielder",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Luca Weckström",
+    "position": "Left-Winger",
+    "marketValueEur": 50000,
+    "fantasyValueM": 4.9
+  },
+  {
+    "name": "Joas Vikström",
+    "position": "Left-Winger",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Elliot Holmäng",
+    "position": "Left-Winger",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Emmanuel Mendy",
+    "position": "Right-Winger",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Rudi Vikström",
+    "position": "Centre-Forward",
+    "marketValueEur": 100000,
+    "fantasyValueM": 6.7
+  },
+  {
+    "name": "Linus Zetterström",
+    "position": "Centre-Forward",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  }
+]

@@ -1,0 +1,60 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Environment variables (KEEP SECRET)
+# Never commit actual .env files with real values
+.env
+.env.local
+.env.*.local
+.env.*.txt
+.env.vercel
+.env.production
+.env.development
+
+# Examples (safe to commit - contains placeholder values only)
+# .env.example is allowed
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Testing
+.nyc_output/
+coverage/
+
+# Temporary files
+.tmp/
+temp/
+*.tmp
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Local development
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Vercel
+.vercel/

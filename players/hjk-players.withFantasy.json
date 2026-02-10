@@ -1,0 +1,128 @@
+[
+  {
+    "name": "Jesse Öst",
+    "position": "Goalkeeper",
+    "marketValueEur": 50000,
+    "fantasyValueM": 4.8
+  },
+  {
+    "name": "Till Cissokho",
+    "position": "Centre-Back",
+    "marketValueEur": 600000,
+    "fantasyValueM": 14
+  },
+  {
+    "name": "Ville Tikkanen",
+    "position": "Centre-Back",
+    "marketValueEur": 400000,
+    "fantasyValueM": 10.7
+  },
+  {
+    "name": "Mihailo Bogicevic",
+    "position": "Centre-Back",
+    "marketValueEur": 300000,
+    "fantasyValueM": 9
+  },
+  {
+    "name": "Daniel O'Shaughnessy",
+    "position": "Centre-Back",
+    "marketValueEur": 150000,
+    "fantasyValueM": 6.5
+  },
+  {
+    "name": "Emil Leveälahti",
+    "position": "Centre-Back",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Kaius Simojoki",
+    "position": "Right-Back",
+    "marketValueEur": 300000,
+    "fantasyValueM": 9
+  },
+  {
+    "name": "Miska Ylitolva",
+    "position": "Right-Back",
+    "marketValueEur": 300000,
+    "fantasyValueM": 9
+  },
+  {
+    "name": "Brooklyn Lyons-Foster",
+    "position": "Right-Back",
+    "marketValueEur": 200000,
+    "fantasyValueM": 7.3
+  },
+  {
+    "name": "Eemil Toivonen",
+    "position": "Right-Back",
+    "marketValueEur": 50000,
+    "fantasyValueM": 4.8
+  },
+  {
+    "name": "Alfie Cicale",
+    "position": "Left-Midfielder",
+    "marketValueEur": 200000,
+    "fantasyValueM": 7.3
+  },
+  {
+    "name": "Liam Möller",
+    "position": "Attacking-Midfielder",
+    "marketValueEur": 200000,
+    "fantasyValueM": 7.3
+  },
+  {
+    "name": "Martin Kirilov",
+    "position": "Attacking-Midfielder",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Lassi Lappalainen",
+    "position": "Left-Winger",
+    "marketValueEur": 500000,
+    "fantasyValueM": 12.3
+  },
+  {
+    "name": "Benji Michel",
+    "position": "Left-Winger",
+    "marketValueEur": 400000,
+    "fantasyValueM": 10.7
+  },
+  {
+    "name": "Toivo Mero",
+    "position": "Left-Winger",
+    "marketValueEur": 50000,
+    "fantasyValueM": 4.8
+  },
+  {
+    "name": "Ville Vuorinen",
+    "position": "Left-Winger",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4.4
+  },
+  {
+    "name": "Roni Hudd",
+    "position": "Centre-Forward",
+    "marketValueEur": 100000,
+    "fantasyValueM": 5.7
+  },
+  {
+    "name": "Teemu Pukki",
+    "position": "Centre-Forward",
+    "marketValueEur": 400000,
+    "fantasyValueM": 10.7
+  },
+  {
+    "name": "Mads Borchers",
+    "position": "Centre-Forward",
+    "marketValueEur": 350000,
+    "fantasyValueM": 9.8
+  },
+  {
+    "name": "David Ezeh",
+    "position": "Centre-Forward",
+    "marketValueEur": 100000,
+    "fantasyValueM": 5.7
+  }
+]

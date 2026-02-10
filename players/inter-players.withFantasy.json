@@ -1,0 +1,104 @@
+[
+  {
+    "name": "Eero Vuorjoki",
+    "position": "Goalkeeper",
+    "marketValueEur": 50000,
+    "fantasyValueM": 4.5
+  },
+  {
+    "name": "Alex Hilden",
+    "position": "Goalkeeper",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Luka Kuittinen",
+    "position": "Centre-Back",
+    "marketValueEur": 300000,
+    "fantasyValueM": 9.9
+  },
+  {
+    "name": "Juuso Hämäläinen",
+    "position": "Centre-Back",
+    "marketValueEur": 150000,
+    "fantasyValueM": 6.7
+  },
+  {
+    "name": "Ilari Kangasniemi",
+    "position": "Centre-Back",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Jussi Niska",
+    "position": "Left-Back",
+    "marketValueEur": 300000,
+    "fantasyValueM": 9.9
+  },
+  {
+    "name": "Seth Saarinen",
+    "position": "Right-Back",
+    "marketValueEur": 200000,
+    "fantasyValueM": 7.7
+  },
+  {
+    "name": "Julius Tauriainen",
+    "position": "Right-Back",
+    "marketValueEur": 50000,
+    "fantasyValueM": 4.5
+  },
+  {
+    "name": "Albin Granlund",
+    "position": "Right-Back",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Prosper Ahiabu",
+    "position": "Defensive-midfielder",
+    "marketValueEur": 300000,
+    "fantasyValueM": 9.9
+  },
+  {
+    "name": "Johannes Yli-Kokko",
+    "position": "Attacking-Midfielder",
+    "marketValueEur": 150000,
+    "fantasyValueM": 6.7
+  },
+  {
+    "name": "Loic Essomba",
+    "position": "Left-Winger",
+    "marketValueEur": 400000,
+    "fantasyValueM": 12
+  },
+  {
+    "name": "Vincent Ulundu",
+    "position": "Left-Winger",
+    "marketValueEur": 100000,
+    "fantasyValueM": 5.6
+  },
+  {
+    "name": "Vilho Huovila",
+    "position": "Left-Winger",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Henri Salomaa",
+    "position": "Right-Winger",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Jean Botué",
+    "position": "Centre-Forward",
+    "marketValueEur": 250000,
+    "fantasyValueM": 8.8
+  },
+  {
+    "name": "Jasse Tuominen",
+    "position": "Centre-Forward",
+    "marketValueEur": 200000,
+    "fantasyValueM": 7.7
+  }
+]

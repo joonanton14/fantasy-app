@@ -1,0 +1,98 @@
+[
+  {
+    "name": "Kevin Lund",
+    "position": "Goalkeeper",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Yeboah Amankwah",
+    "position": "Centre-Back",
+    "marketValueEur": 200000,
+    "fantasyValueM": 12
+  },
+  {
+    "name": "Pontus Lindgren",
+    "position": "Centre-Back",
+    "marketValueEur": 150000,
+    "fantasyValueM": 9.7
+  },
+  {
+    "name": "Michael Fonsell",
+    "position": "Centre-Back",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Noah Nurmi",
+    "position": "Centre-Back",
+    "marketValueEur": 50000,
+    "fantasyValueM": 5.1
+  },
+  {
+    "name": "Tuomas Koivisto",
+    "position": "Centre-Back",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Aaro Soiniemi",
+    "position": "Left-Back",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Samson Ngulube",
+    "position": "Left-Back",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Jiri Nissinen",
+    "position": "Right-Back",
+    "marketValueEur": 150000,
+    "fantasyValueM": 9.7
+  },
+  {
+    "name": "Nikolaos Dosis",
+    "position": "Defensive-Midfielder",
+    "marketValueEur": 125000,
+    "fantasyValueM": 8.6
+  },
+  {
+    "name": "Anttoni Huttunen",
+    "position": "Attacking-Midfielder",
+    "marketValueEur": 150000,
+    "fantasyValueM": 9.7
+  },
+  {
+    "name": "Leo Andersson",
+    "position": "Attacking-Midfielder",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Milton Jansson",
+    "position": "Attacking-Midfielder",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Adam Larsson",
+    "position": "Centre-Forward",
+    "marketValueEur": 150000,
+    "fantasyValueM": 9.7
+  },
+  {
+    "name": "Wille Nuñez",
+    "position": "Centre-Forward",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Arvid Lundberg",
+    "position": "Centre-Forward",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4
+  }
+]

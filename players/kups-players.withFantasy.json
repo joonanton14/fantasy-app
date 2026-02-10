@@ -1,0 +1,104 @@
+[
+  {
+    "name": "Hemmo Riihimäki",
+    "position": "Goalkeeper",
+    "marketValueEur": 50000,
+    "fantasyValueM": 4.8
+  },
+  {
+    "name": "Miilo Pitkänen",
+    "position": "Goalkeeper",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Taneli Hämäläinen",
+    "position": "Centre-Back",
+    "marketValueEur": 250000,
+    "fantasyValueM": 8.2
+  },
+  {
+    "name": "Arttu Lötjönen",
+    "position": "Centre-Back",
+    "marketValueEur": 100000,
+    "fantasyValueM": 5.7
+  },
+  {
+    "name": "Tatu Hukkanen",
+    "position": "Centre-Back",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4.4
+  },
+  {
+    "name": "Karl Ward",
+    "position": "Centre-Back",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Clinton Antwi",
+    "position": "Left-Back",
+    "marketValueEur": 300000,
+    "fantasyValueM": 9
+  },
+  {
+    "name": "Rasmus Tikkanen",
+    "position": "Left-Back",
+    "marketValueEur": 50000,
+    "fantasyValueM": 4.8
+  },
+  {
+    "name": "Akseli Puukko",
+    "position": "Right-Back",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Otto Ruoppi",
+    "position": "Attacking-Midfielder",
+    "marketValueEur": 600000,
+    "fantasyValueM": 14
+  },
+  {
+    "name": "Arttu Heinonen",
+    "position": "Attacking-Midfielder",
+    "marketValueEur": 150000,
+    "fantasyValueM": 6.5
+  },
+  {
+    "name": "Eemil Tanninen",
+    "position": "Attacking-Midfielder",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4.4
+  },
+  {
+    "name": "Calvin Kabuye",
+    "position": "Left-Winger",
+    "marketValueEur": 400000,
+    "fantasyValueM": 10.7
+  },
+  {
+    "name": "Saku Savolainen",
+    "position": "Right-Winger",
+    "marketValueEur": 250000,
+    "fantasyValueM": 8.2
+  },
+  {
+    "name": "Joslyn Luyeye-Lutumba",
+    "position": "Right-Winger",
+    "marketValueEur": 250000,
+    "fantasyValueM": 8.2
+  },
+  {
+    "name": "Mohamed Toure",
+    "position": "Centre-Forward",
+    "marketValueEur": 500000,
+    "fantasyValueM": 12.3
+  },
+  {
+    "name": "Gustav Engvall",
+    "position": "Centre-Forward",
+    "marketValueEur": 125000,
+    "fantasyValueM": 6.1
+  }
+]

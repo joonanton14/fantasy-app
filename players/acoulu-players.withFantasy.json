@@ -1,0 +1,122 @@
+[
+  {
+    "name": "Niklas Schulz",
+    "position": "Goalkeeper",
+    "marketValueEur": 50000,
+    "fantasyValueM": 4.7
+  },
+  {
+    "name": "Johannes Pentti",
+    "position": "Goalkeeper",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Mikko Pitkänen",
+    "position": "Centre-Back",
+    "marketValueEur": 250000,
+    "fantasyValueM": 10.5
+  },
+  {
+    "name": "Alex Lietsa",
+    "position": "Centre-Back",
+    "marketValueEur": 50000,
+    "fantasyValueM": 4.7
+  },
+  {
+    "name": "Eetu Saarela",
+    "position": "Centre-Back",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Otso-Pekka Parkkila",
+    "position": "Centre-Back",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Sampo Ala-Iso",
+    "position": "Centre-Back",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Adramane Cassamá",
+    "position": "Left-Back",
+    "marketValueEur": 200000,
+    "fantasyValueM": 9.1
+  },
+  {
+    "name": "Juha Pirinen",
+    "position": "Left-Back",
+    "marketValueEur": 150000,
+    "fantasyValueM": 7.6
+  },
+  {
+    "name": "Santeri Silander",
+    "position": "Right-Back",
+    "marketValueEur": 150000,
+    "fantasyValueM": 7.6
+  },
+  {
+    "name": "Otto Kemppainen",
+    "position": "Right-Back",
+    "marketValueEur": 100000,
+    "fantasyValueM": 6.2
+  },
+  {
+    "name": "Sami Sipola",
+    "position": "Right-Back",
+    "marketValueEur": 50000,
+    "fantasyValueM": 4.7
+  },
+  {
+    "name": "Niklas Jokelainen",
+    "position": "Attacking-Midfielder",
+    "marketValueEur": 250000,
+    "fantasyValueM": 10.5
+  },
+  {
+    "name": "Julius Körkkö",
+    "position": "Attacking-Midfielder",
+    "marketValueEur": 200000,
+    "fantasyValueM": 9.1
+  },
+  {
+    "name": "Eemil Merikanto",
+    "position": "Attacking-Midfielder",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Rasmus Karjalainen",
+    "position": "Left-Winger",
+    "marketValueEur": 300000,
+    "fantasyValueM": 12
+  },
+  {
+    "name": "Elias Kallio",
+    "position": "Left-Winger",
+    "marketValueEur": 50000,
+    "fantasyValueM": 4.7
+  },
+  {
+    "name": "Lamine Ghezali",
+    "position": "Right-Winger",
+    "marketValueEur": 200000,
+    "fantasyValueM": 9.1
+  },
+  {
+    "name": "Tuomas Kaukua",
+    "position": "Right-Winger",
+    "marketValueEur": 150000,
+    "fantasyValueM": 7.6
+  },
+  {
+    "name": "Kalifa Jatta",
+    "position": "Right-Winger",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  }
+]

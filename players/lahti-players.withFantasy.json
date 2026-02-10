@@ -1,0 +1,110 @@
+[
+  {
+    "name": "Aatu Hakala",
+    "position": "Goalkeeper",
+    "marketValueEur": 50000,
+    "fantasyValueM": 4.6
+  },
+  {
+    "name": "Veikka Rättö",
+    "position": "Goalkeeper",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Väinö Vehkonen",
+    "position": "Centre-Back",
+    "marketValueEur": 50000,
+    "fantasyValueM": 4.6
+  },
+  {
+    "name": "Matias Vainionpää",
+    "position": "Centre-Back",
+    "marketValueEur": 50000,
+    "fantasyValueM": 4.6
+  },
+  {
+    "name": "Topias Inkinen",
+    "position": "Centre-Back",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "José Müller",
+    "position": "Centre-Back",
+    "marketValueEur": null,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Romain Sans",
+    "position": "Left-Back",
+    "marketValueEur": 100000,
+    "fantasyValueM": 5.8
+  },
+  {
+    "name": "Romaric Yapi",
+    "position": "Right-Back",
+    "marketValueEur": 225000,
+    "fantasyValueM": 8.9
+  },
+  {
+    "name": "Joel Lehtonen",
+    "position": "Right-Back",
+    "marketValueEur": 150000,
+    "fantasyValueM": 7.1
+  },
+  {
+    "name": "Yohan Cassubie",
+    "position": "Defensive-Midfielder",
+    "marketValueEur": 350000,
+    "fantasyValueM": 12
+  },
+  {
+    "name": "Armend Kabashi",
+    "position": "Defensive-Midfielder",
+    "marketValueEur": 100000,
+    "fantasyValueM": 5.8
+  },
+  {
+    "name": "Otso Koskinen",
+    "position": "Attacking-Midfielder",
+    "marketValueEur": 100000,
+    "fantasyValueM": 5.8
+  },
+  {
+    "name": "Daniel Heikkinen",
+    "position": "Attacking-Midfielder",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Martim Ferreira",
+    "position": "Left-Winger",
+    "marketValueEur": 50000,
+    "fantasyValueM": 4.6
+  },
+  {
+    "name": "Tòfol Montiel",
+    "position": "Right-Winger",
+    "marketValueEur": 100000,
+    "fantasyValueM": 5.8
+  },
+  {
+    "name": "Justus Ojanen",
+    "position": "Right-Winger",
+    "marketValueEur": 50000,
+    "fantasyValueM": 4.6
+  },
+  {
+    "name": "Aaron Lindholm",
+    "position": "Centre-Forward",
+    "marketValueEur": 50000,
+    "fantasyValueM": 4.6
+  },
+  {
+    "name": "Amir Belabid",
+    "position": "Centre-Forward",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4
+  }
+]
