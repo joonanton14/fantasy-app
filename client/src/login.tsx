@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { apiCall } from './api';
 
 interface LoginProps {
   onLoginSuccess: (userId: number, userName: string, isAdmin: boolean) => void;
@@ -27,11 +28,10 @@ export default function Login({ onLoginSuccess }: LoginProps) {
       if (!name.trim()) throw new Error('Name is required');
       if (!password) throw new Error('Password is required');
 
-      const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ name, password }),
+      const res = await apiCall('/auth/login', {
+        method: 'POST',
+        credentials: 'include',
+        body: JSON.stringify({ name, password }),
       });
 
 

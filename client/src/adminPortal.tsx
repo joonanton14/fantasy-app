@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { apiCall } from './api';
 
 interface Team {
   id: number;
@@ -39,8 +40,8 @@ export default function AdminPortal() {
     async function load() {
       try {
         const [teamRes, playerRes] = await Promise.all([
-          fetch('/api/teams'),
-          fetch('/api/players')
+          apiCall('/teams'),
+          apiCall('/players')
         ]);
         const teamData: Team[] = await teamRes.json();
         const playerData: Player[] = await playerRes.json();
@@ -62,9 +63,8 @@ export default function AdminPortal() {
     e.preventDefault();
     setTeamMessage(null);
     try {
-      const res = await fetch('/api/admin/teams', {
+      const res = await apiCall('/admin/teams', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newTeamName })
       });
       if (res.ok) {
@@ -88,9 +88,8 @@ export default function AdminPortal() {
     e.preventDefault();
     setPlayerMessage(null);
     try {
-      const res = await fetch('/api/admin/players', {
+      const res = await apiCall('/admin/players', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: playerName,
           position: playerPosition,

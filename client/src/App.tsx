@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import Login from './login';
 import AdminPortal from './adminPortal';
 import StartingXI from './StartingXI';
+import { apiCall } from './api';
 import './styles.css';
 
 interface Player {
@@ -58,7 +59,7 @@ export default function App() {
   useEffect(() => {
     async function load() {
       try {
-        const [playersRes, teamsRes] = await Promise.all([fetch('/api/players'), fetch('/api/teams')]);
+        const [playersRes, teamsRes] = await Promise.all([apiCall('/players'), apiCall('/teams')]);
         const playersData: Player[] = await playersRes.json();
         const teamsData: Team[] = await teamsRes.json();
         setPlayers(playersData);
