@@ -1,5 +1,8 @@
 {
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index" }
+    {
+      "source": "/api/:path*",
+      "destination": "https://fantasy-app-jqdj.vercel.app/api/:path*"
+    }
   ]
 }
