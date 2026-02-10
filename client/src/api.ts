@@ -1,13 +1,15 @@
-// API configuration - uses environment variable or defaults to relative path for local development
+// client/src/api.ts
 const API_URL = import.meta.env.VITE_API_URL || '';
 
-export const apiCall = async (endpoint: string, options?: RequestInit) => {
+export const apiCall = (endpoint: string, options: RequestInit = {}) => {
   const url = `${API_URL}/api${endpoint}`;
+
   return fetch(url, {
+    credentials: 'include', // IMPORTANT for cookie session
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...options?.headers,
+      ...(options.headers || {}),
     },
   });
 };

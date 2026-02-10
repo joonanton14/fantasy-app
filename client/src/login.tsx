@@ -28,9 +28,8 @@ export default function Login({ onLoginSuccess }: LoginProps) {
       if (!name.trim()) throw new Error('Name is required');
       if (!password) throw new Error('Password is required');
 
-const res = await fetch('/api/auth/login', {
+const res = await apiCall('/api/auth/login', {
   method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ name, password }),
   credentials: 'include',
 });
@@ -45,6 +44,7 @@ const res = await fetch('/api/auth/login', {
       onLoginSuccess(user.id, user.name, user.isAdmin || false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
+      setPassword('');
     } finally {
       setLoading(false);
     }
