@@ -1,37 +1,94 @@
-import express from 'express';
-import cors from 'cors';
-import bodyParser from 'body-parser';
-import router from './routes';
+import express, { Request, Response } from 'express';
+import { players, teams } from './data';
 
-const app = express();
+const router = express.Router();
 
-// If you use cookies for auth, CORS must allow credentials AND specify origin.
-// In production (Vercel), your client is a different domain unless you use rewrites.
-// If you use client-side rewrites (/api -> server), then origin is same and this is fine.
-// For now, keep it permissive; tighten later.
-app.use(
-  cors({
-    origin: true,
-    credentials: true,
-  })
-);
+// ===== AUTH ROUTES =====
+router.post('/auth/login', (req: Request, res: Response) => {
+  const { name, password } = req.body;
 
-app.use(bodyParser.json());
+  console.log('Login attempt:', { name, password });
+  console.log('Admin creds:', { adminUser: process.env.ADMIN_USERNAME, adminPass: process.env.ADMIN_PASSWORD });
 
-// Health check
-app.get('/', (_req, res) => {
-  res.send('Fantasy league server is running');
+  if (!name || !password) {
+    return res.status(400).json({ error: 'Name and password are required' });
+  }
+
+  // Check admin credentials
+  if (name === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
+    console.log('Admin login successful');
+    return res.status(200).json({
+      id: 0,
+      name: name,
+      isAdmin: true,
+    });
+  }
+
+  // Check user credentials from environment variables
+  const userKey = `${name.toUpperCase()}_PASSWORD`;
+  const userNameKey = `${name.toUpperCase()}_USERNAME`;
+  
+  const storedPassword = process.env[userKey];
+  const storedUsername = process.env[userNameKey];
+
+  console.log('Checking user:', { userNameKey, userKey, storedUsername, storedPassword });
+
+  if (storedUsername && storedPassword && name === storedUsername && password === storedPassword) {
+    console.log('User login successful');
+    return res.status(200).json({
+      id: Math.abs(name.charCodeAt(0)),
+      name: name,
+      isAdmin: false,
+    });
+  }
+
+  console.log('Login failed - invalid credentials');
+  return res.status(401).json({ error: 'Invalid credentials' });
 });
 
-// Prefix all API routes with /api
-app.use('/api', router);
+// ===== TEAMS ROUTES =====
+router.get('/teams', (_req: Request, res: Response) => {
+  res.json(teams);
+});
 
-export default app;
+router.post('/admin/teams', (req: Request, res: Response) => {
+  const { name } = req.body;
+  
+  if (!name) {
+    return res.status(400).json({ error: 'Team name is required' });
+  }
 
-// Local dev only (Vercel provides the runtime)
-if (!process.env.VERCEL) {
-  const PORT = Number(process.env.PORT) || 3001;
-  app.listen(PORT, () => {
-    console.log(`Server listening on port ${PORT}`);
-  });
-}
+  const newTeam = {
+    id: Math.max(...teams.map(t => t.id), 0) + 1,
+    name: name,
+  };
+
+  teams.push(newTeam);
+  res.status(201).json(newTeam);
+});
+
+// ===== PLAYERS ROUTES =====
+router.get('/players', (_req: Request, res: Response) => {
+  res.json(players);
+});
+
+router.post('/admin/players', (req: Request, res: Response) => {
+  const { name, position, teamId, value } = req.body;
+
+  if (!name || !position || !teamId || value === undefined) {
+    return res.status(400).json({ error: 'All player fields are required' });
+  }
+
+  const newPlayer = {
+    id: Math.max(...players.map(p => p.id), 0) + 1,
+    name: name,
+    position: position,
+    teamId: teamId,
+    value: value,
+  };
+
+  players.push(newPlayer);
+  res.status(201).json(newPlayer);
+});
+
+export default router;
