@@ -25,10 +25,9 @@ export default function Login({ onLoginSuccess }: LoginProps) {
       if (!name.trim()) throw new Error('Name is required');
       if (!password) throw new Error('Password is required');
 
-    const res = await apiCall('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ name, password }),
-    });
+    apiCall('/auth/login', { method:'POST', body: JSON.stringify({name, password}) })
+
+    const res = await apiCall('/auth/login', { method:'POST', body: JSON.stringify({name, password}) });
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));

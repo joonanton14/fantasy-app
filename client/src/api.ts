@@ -1,9 +1,7 @@
-// client/src/api.ts
-const API_URL = import.meta.env.VITE_API_URL || '';
+const API_URL = '';
 
 export const apiCall = (endpoint: string, options: RequestInit = {}) => {
-  const url = `${API_URL}/api${endpoint}`;
-  return fetch(url, {
+  return fetch(`${API_URL}/api${endpoint}`, {
     credentials: 'include',
     ...options,
     headers: {
