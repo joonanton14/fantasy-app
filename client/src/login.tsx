@@ -12,9 +12,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
   const [loading, setLoading] = useState(false);
   const [showPw, setShowPw] = useState(false);
 
-  const canSubmit = useMemo(() => {
-    return !!name.trim() && !!password;
-  }, [name, password]);
+  const canSubmit = useMemo(() => !!name.trim() && !!password, [name, password]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -25,14 +23,15 @@ export default function Login({ onLoginSuccess }: LoginProps) {
       if (!name.trim()) throw new Error('Name is required');
       if (!password) throw new Error('Password is required');
 
-    apiCall('/auth/login', { method:'POST', body: JSON.stringify({name, password}) })
+      const res = await apiCall('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ name, password }),
+      });
 
-    const res = await apiCall('/auth/login', { method:'POST', body: JSON.stringify({name, password}) });
-
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      throw new Error((data as any).error || 'Login failed');
-    }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as any).error || 'Login failed');
+      }
 
       const user = await res.json();
       onLoginSuccess(user.id, user.name, user.isAdmin || false);
@@ -55,13 +54,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
           </div>
 
           <div className="auth-tabs" role="tablist" aria-label="Authentication mode">
-            <button
-              type="button"
-              className="tab active"
-              disabled={loading}
-              role="tab"
-              aria-selected="true"
-            >
+            <button type="button" className="tab active" disabled={loading} role="tab" aria-selected="true">
               Kirjaudu
             </button>
 
@@ -132,9 +125,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
             )}
           </button>
 
-          <p className="fineprint">
-            Tämä on pelin beta versio ja ominaisuudet voivat muuttua.
-          </p>
+          <p className="fineprint">Tämä on pelin beta versio ja ominaisuudet voivat muuttua.</p>
         </form>
 
         <footer className="auth-footer">
