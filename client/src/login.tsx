@@ -6,9 +6,6 @@ interface LoginProps {
 }
 
 export default function Login({ onLoginSuccess }: LoginProps) {
-  // Beta: login only
-  const mode: 'login' = 'login';
-
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -28,17 +25,15 @@ export default function Login({ onLoginSuccess }: LoginProps) {
       if (!name.trim()) throw new Error('Name is required');
       if (!password) throw new Error('Password is required');
 
-const res = await apiCall('/api/auth/login', {
-  method: 'POST',
-  body: JSON.stringify({ name, password }),
-  credentials: 'include',
-});
+    const res = await apiCall('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ name, password }),
+    });
 
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error((data as any).error || 'Login failed');
-      }
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error((data as any).error || 'Login failed');
+    }
 
       const user = await res.json();
       onLoginSuccess(user.id, user.name, user.isAdmin || false);
