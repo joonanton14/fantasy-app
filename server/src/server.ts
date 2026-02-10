@@ -16,6 +16,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.options('*', cors({ origin: true, credentials: true }));
 app.use(bodyParser.json());
 
 // Prefix all API routes with /api
