@@ -28,10 +28,12 @@ export default function Login({ onLoginSuccess }: LoginProps) {
       if (!password) throw new Error('Password is required');
 
       const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, password }),
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ name, password }),
       });
+
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
