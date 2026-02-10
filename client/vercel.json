@@ -1,8 +1,8 @@
 {
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "https://fantasy-app-jqdj.vercel.app/api/:path*"
-    }
+  "routes": [
+    { "src": "/api/(.*)", "dest": "https://BACKEND_DOMAIN/api/$1" },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
+
