@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "https://<YOUR-SERVER-DOMAIN>.vercel.app/api/$1" }
+    { "source": "/api/(.*)", "destination": "https://fantasy-app-jqdj.vercel.app/api/$1" }
   ]
 }
 
