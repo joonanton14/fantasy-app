@@ -1,0 +1,12 @@
+{
+  "name": "fantasy-app",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix client install && npm --prefix client run build",
+    "dev": "npm --prefix client run dev",
+    "dev:server": "npm --prefix server run dev"
+  },
+  "devDependencies": {
+    "@vercel/node": "^5.6.0"
+  }
+}

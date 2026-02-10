@@ -26,6 +26,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
       const res = await apiCall('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ name, password }),
+        credentials: 'include',
       });
 
       if (!res.ok) {
@@ -57,14 +58,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
             <button type="button" className="tab active" disabled={loading} role="tab" aria-selected="true">
               Kirjaudu
             </button>
-
-            <button
-              type="button"
-              className="tab tab-disabled"
-              disabled
-              aria-disabled="true"
-              title="Tilit luodaan ylläpidon toimesta (beta)"
-            >
+            <button type="button" className="tab tab-disabled" disabled aria-disabled="true" title="Tilit luodaan ylläpidon toimesta (beta)">
               Luo tili
             </button>
           </div>
