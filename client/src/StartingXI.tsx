@@ -20,6 +20,7 @@ interface Props {
   initial?: Player[];
   onSave: (selected: Player[]) => void;
   budget?: number;
+  readOnly?: boolean;
 }
 
 type FormationKey = '3-5-2' | '3-4-3' | '4-4-2' | '4-3-3' | '4-5-1' | '5-3-2' | '5-4-1';
@@ -49,7 +50,7 @@ function countByPos(list: Player[], pos: Player['position']) {
   return list.filter((p) => p.position === pos).length;
 }
 
-export const StartingXI: FC<Props> = ({ players, teams, initial = [], onSave, budget = 100 }) => {
+export const StartingXI: FC<Props> = ({ players, teams, initial = [], onSave, budget = 100, readOnly = false }) => {
   const rootRef = useRef<HTMLDivElement | null>(null);
 
   const [formation, setFormation] = useState<FormationKey>('4-4-2');
@@ -72,6 +73,27 @@ export const StartingXI: FC<Props> = ({ players, teams, initial = [], onSave, bu
   });
 
   const [openSlot, setOpenSlot] = useState<string | null>(null);
+
+  // Keep internal assignments in sync if parent passes a new `initial` (e.g. loaded from Redis)
+  useEffect(() => {
+    const baseSlots = buildSlots(formation);
+    const map: Record<string, Player | null> = {};
+    baseSlots.forEach((s) => (map[s.id] = null));
+
+    const remaining = [...initial];
+    for (const s of baseSlots) {
+      const idx = remaining.findIndex((p) => p.position === s.position);
+      if (idx >= 0) {
+        map[s.id] = remaining[idx];
+        remaining.splice(idx, 1);
+      }
+    }
+
+    setSlots(baseSlots);
+    setSlotAssignments(map);
+    setOpenSlot(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initial]);
 
   // Close selection popover when clicking outside component
   useEffect(() => {
@@ -124,12 +146,14 @@ export const StartingXI: FC<Props> = ({ players, teams, initial = [], onSave, bu
   }
 
   function assignToSlot(slotId: string, p: Player) {
+    if (readOnly) return;
     if (!canAssign(p)) return;
     setSlotAssignments((prev) => ({ ...prev, [slotId]: p }));
     setOpenSlot(null);
   }
 
   function removeFromSlot(slotId: string) {
+    if (readOnly) return;
     setSlotAssignments((prev) => ({ ...prev, [slotId]: null }));
   }
 
@@ -144,6 +168,8 @@ export const StartingXI: FC<Props> = ({ players, teams, initial = [], onSave, bu
   }
 
   function applyFormation(next: FormationKey) {
+    if (readOnly) return;
+
     const nextSlots = buildSlots(next);
 
     const currentSelected = Object.values(slotAssignments).filter(Boolean) as Player[];
@@ -194,7 +220,10 @@ export const StartingXI: FC<Props> = ({ players, teams, initial = [], onSave, bu
             <div
               key={s.id}
               className={`slot ${assigned ? 'slot-filled' : ''} ${isOpen ? 'slot-open' : ''}`}
-              onClick={() => setOpenSlot(isOpen ? null : s.id)}
+              onClick={() => {
+                if (readOnly) return;
+                setOpenSlot(isOpen ? null : s.id);
+              }}
               role="button"
               tabIndex={0}
             >
@@ -202,24 +231,27 @@ export const StartingXI: FC<Props> = ({ players, teams, initial = [], onSave, bu
                 <div className="player-chip">
                   <div className="player-name">{assigned.name}</div>
                   <div className="player-team">{teams.find((t) => t.id === assigned.teamId)?.name}</div>
-                  <button
-                    type="button"
-                    className="remove-slot"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeFromSlot(s.id);
-                    }}
-                    aria-label="Remove player"
-                    title="Remove"
-                  >
-                    ×
-                  </button>
+                  {!readOnly && (
+                    <button
+                      type="button"
+                      className="remove-slot"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (readOnly) return;
+                        removeFromSlot(s.id);
+                      }}
+                      aria-label="Remove player"
+                      title="Remove"
+                    >
+                      ×
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="slot-empty">{label}</div>
               )}
 
-              {isOpen && (
+              {isOpen && !readOnly && (
                 <div
                   className="slot-pop"
                   onMouseDown={(e) => e.stopPropagation()}
@@ -241,9 +273,7 @@ export const StartingXI: FC<Props> = ({ players, teams, initial = [], onSave, bu
                       </button>
                     ))}
 
-                    {available.length === 0 && (
-                      <div className="slot-pop-empty">Ei saatavilla olevia pelaajia</div>
-                    )}
+                    {available.length === 0 && <div className="slot-pop-empty">Ei saatavilla olevia pelaajia</div>}
                   </div>
                 </div>
               )}
@@ -279,6 +309,7 @@ export const StartingXI: FC<Props> = ({ players, teams, initial = [], onSave, bu
                 value={formation}
                 onChange={(e) => applyFormation(e.target.value as FormationKey)}
                 aria-label="Select formation"
+                disabled={readOnly}
               >
                 {(Object.keys(FORMATIONS) as FormationKey[]).map((k) => (
                   <option key={k} value={k}>
@@ -312,14 +343,16 @@ export const StartingXI: FC<Props> = ({ players, teams, initial = [], onSave, bu
         </div>
 
         <div className="starting-xi-controls">
-          <button
-            type="button"
-            className="xi-save"
-            onClick={() => onSave(assignedPlayers)}
-            disabled={saveDisabled}
-          >
-            Tallenna avauskokoonpano
-          </button>
+          {!readOnly && (
+            <button
+              type="button"
+              className="xi-save"
+              onClick={() => onSave(assignedPlayers)}
+              disabled={saveDisabled}
+            >
+              Tallenna avauskokoonpano
+            </button>
+          )}
 
           <div className="xi-limits">
             <span>GK: {counts('GK')}/1</span>

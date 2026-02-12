@@ -34,8 +34,15 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         throw new Error((data as any).error || 'Login failed');
       }
 
-      const user = await res.json();
-      onLoginSuccess(user.id, user.name, user.isAdmin || false);
+    const user = await res.json();
+
+    // store session token for calling Redis-protected endpoints
+    if (user.token) {
+      localStorage.setItem("authToken", user.token);
+    }
+
+    onLoginSuccess(user.id, user.name, user.isAdmin || false);
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       setPassword('');

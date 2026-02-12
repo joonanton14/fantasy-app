@@ -8,5 +8,8 @@
   },
   "devDependencies": {
     "@vercel/node": "^5.6.0"
+  },
+  "dependencies": {
+    "@upstash/redis": "^1.36.2"
   }
 }
