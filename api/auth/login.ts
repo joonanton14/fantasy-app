@@ -10,7 +10,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
       return res.status(204).end();
     }
-
+    // Allow CORS for all origins (you may want to restrict this in production)
     if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
     const { name, password } = (req.body ?? {}) as any;
