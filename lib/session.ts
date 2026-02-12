@@ -1,5 +1,5 @@
-import crypto from "node:crypto";
 import type { VercelRequest } from "@vercel/node";
+import crypto from "node:crypto";
 import { redis, PREFIX } from "./redis";
 
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
