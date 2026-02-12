@@ -16,12 +16,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { name, password } = (req.body ?? {}) as any;
     if (!name || !password) return res.status(400).json({ error: "Name and password are required" });
 
-    // Beta: env user check (extend as needed for other users)
-    const ok = name === process.env.JOONA_USERNAME && password === process.env.JOONA_PASSWORD;
+    // ✅ Normalize username to avoid desktop/phone key mismatches (case/whitespace)
+    const username = String(name).trim().toLowerCase();
+    const envUser = String(process.env.JOONA_USERNAME ?? "").trim().toLowerCase();
+    const envPass = String(process.env.JOONA_PASSWORD ?? "");
+
+    const ok = username === envUser && password === envPass;
     if (!ok) return res.status(401).json({ error: "Invalid credentials" });
 
-    const token = await createSession(name);
-    return res.status(200).json({ id: 2, name, isAdmin: false, token });
+    const token = await createSession(username);
+    return res.status(200).json({ id: 2, name: username, isAdmin: false, token });
   } catch (e: unknown) {
     console.error("LOGIN_CRASH", e);
     const message = e instanceof Error ? e.message : "Server error";

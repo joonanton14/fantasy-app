@@ -6,7 +6,19 @@ const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
 
 export async function createSession(username: string) {
   const token = crypto.randomBytes(32).toString("hex");
+
+  // Optional: keep only 1 active session per user
+  const prev = await redis.get<string>(`${PREFIX}:session_of:${username}`);
+  if (prev) {
+    await redis.del(`${PREFIX}:session:${prev}`);
+  }
+
+  // Store pointer (username -> token)
+  await redis.set(`${PREFIX}:session_of:${username}`, token, { ex: SESSION_TTL_SECONDS });
+
+  // Store session (token -> username)
   await redis.set(`${PREFIX}:session:${token}`, { username }, { ex: SESSION_TTL_SECONDS });
+
   return token;
 }
 
