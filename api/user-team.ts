@@ -1,13 +1,13 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { redis, PREFIX } from "../lib/redis";
-import { getSessionFromReq } from "../lib/session";
+import { redis, PREFIX } from "./lib/redis";
+import { getSessionFromReq } from "./lib/session";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const session = await getSessionFromReq(req);
     if (!session) return res.status(401).json({ error: "Unauthorized" });
 
-    const username = session.username; // don’t accept username from query anymore
+    const username = session.username;
     const key = `${PREFIX}:team:${username}`;
 
     if (req.method === "GET") {
@@ -24,6 +24,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(405).json({ error: "Method not allowed" });
   } catch (e: unknown) {
+    console.error("USER_TEAM_CRASH", e);
     const message = e instanceof Error ? e.message : "Server error";
     return res.status(500).json({ error: message });
   }
