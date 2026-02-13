@@ -17,8 +17,9 @@ interface Team {
 interface Props {
   players: Player[];
   teams: Team[];
-  initial?: Player[];
-  onSave: (selected: Player[]) => void;
+  initial?: Player[];          // Starting XI players
+  initialBench?: Player[];     // Bench players (1 GK + 3 field)
+  onSave: (payload: { startingXI: Player[]; bench: Player[] }) => void;
   budget?: number;
   readOnly?: boolean;
 }
@@ -50,7 +51,24 @@ function countByPos(list: Player[], pos: Player['position']) {
   return list.filter((p) => p.position === pos).length;
 }
 
-export const StartingXI: FC<Props> = ({ players, teams, initial = [], onSave, budget = 100, readOnly = false }) => {
+type BenchSlot = { id: string; label: string; kind: 'GK' | 'FIELD' };
+
+const BENCH_SLOTS: BenchSlot[] = [
+  { id: 'bench-gk', label: 'MV', kind: 'GK' },
+  { id: 'bench-1', label: 'PENKKI', kind: 'FIELD' },
+  { id: 'bench-2', label: 'PENKKI', kind: 'FIELD' },
+  { id: 'bench-3', label: 'PENKKI', kind: 'FIELD' },
+];
+
+export const StartingXI: FC<Props> = ({
+  players,
+  teams,
+  initial = [],
+  initialBench = [],
+  onSave,
+  budget = 100,
+  readOnly = false,
+}) => {
   const rootRef = useRef<HTMLDivElement | null>(null);
 
   const [formation, setFormation] = useState<FormationKey>('4-4-2');
@@ -72,9 +90,25 @@ export const StartingXI: FC<Props> = ({ players, teams, initial = [], onSave, bu
     return map;
   });
 
+  const [benchAssignments, setBenchAssignments] = useState<Record<string, Player | null>>(() => {
+    const map: Record<string, Player | null> = {};
+    BENCH_SLOTS.forEach((s) => (map[s.id] = null));
+
+    // place initial bench: first GK goes to bench-gk, rest into bench-1..3
+    const gk = initialBench.find((p) => p.position === 'GK') ?? null;
+    const field = initialBench.filter((p) => p.position !== 'GK').slice(0, 3);
+
+    map['bench-gk'] = gk;
+    map['bench-1'] = field[0] ?? null;
+    map['bench-2'] = field[1] ?? null;
+    map['bench-3'] = field[2] ?? null;
+
+    return map;
+  });
+
   const [openSlot, setOpenSlot] = useState<string | null>(null);
 
-  // Keep internal assignments in sync if parent passes a new `initial` (e.g. loaded from Redis)
+  // Sync when parent passes new initial values (e.g. loaded from Redis)
   useEffect(() => {
     const baseSlots = buildSlots(formation);
     const map: Record<string, Player | null> = {};
@@ -89,13 +123,22 @@ export const StartingXI: FC<Props> = ({ players, teams, initial = [], onSave, bu
       }
     }
 
+    const bmap: Record<string, Player | null> = {};
+    BENCH_SLOTS.forEach((s) => (bmap[s.id] = null));
+    const gk = initialBench.find((p) => p.position === 'GK') ?? null;
+    const field = initialBench.filter((p) => p.position !== 'GK').slice(0, 3);
+    bmap['bench-gk'] = gk;
+    bmap['bench-1'] = field[0] ?? null;
+    bmap['bench-2'] = field[1] ?? null;
+    bmap['bench-3'] = field[2] ?? null;
+
     setSlots(baseSlots);
     setSlotAssignments(map);
+    setBenchAssignments(bmap);
     setOpenSlot(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initial]);
+  }, [initial, initialBench]);
 
-  // Close selection popover when clicking outside component
   useEffect(() => {
     function handlePointerDown(e: MouseEvent | TouchEvent) {
       if (!rootRef.current) return;
@@ -109,22 +152,18 @@ export const StartingXI: FC<Props> = ({ players, teams, initial = [], onSave, bu
     };
   }, []);
 
-  const assignedPlayers = useMemo(() => {
-    return Object.values(slotAssignments).filter(Boolean) as Player[];
-  }, [slotAssignments]);
+  const xiPlayers = useMemo(() => Object.values(slotAssignments).filter(Boolean) as Player[], [slotAssignments]);
+  const benchPlayers = useMemo(() => Object.values(benchAssignments).filter(Boolean) as Player[], [benchAssignments]);
 
   const totalValue = useMemo(() => {
-    return assignedPlayers.reduce((sum, p) => sum + p.value, 0);
-  }, [assignedPlayers]);
+    return [...xiPlayers, ...benchPlayers].reduce((sum, p) => sum + p.value, 0);
+  }, [xiPlayers, benchPlayers]);
 
-  const remainingBudget = useMemo(() => {
-    return budget - totalValue;
-  }, [budget, totalValue]);
+  const remainingBudget = useMemo(() => budget - totalValue, [budget, totalValue]);
 
   const f = FORMATIONS[formation];
-
-  const counts = (pos: Player['position']) => countByPos(assignedPlayers, pos);
-  const teamCount = (teamId: number) => assignedPlayers.filter((p) => p.teamId === teamId).length;
+  const counts = (pos: Player['position']) => countByPos(xiPlayers, pos);
+  const teamCountAll = (teamId: number) => [...xiPlayers, ...benchPlayers].filter((p) => p.teamId === teamId).length;
 
   const LIMITS = useMemo(() => {
     return {
@@ -135,39 +174,71 @@ export const StartingXI: FC<Props> = ({ players, teams, initial = [], onSave, bu
     };
   }, [f.DEF, f.MID, f.FWD]);
 
-  function canAssign(p: Player) {
-    if (assignedPlayers.some((a) => a.id === p.id)) return false;
-    if (teamCount(p.teamId) >= 3) return false;
+  function isPickedAnywhere(id: number) {
+    return [...xiPlayers, ...benchPlayers].some((p) => p.id === id);
+  }
+
+  function canAssignToXI(p: Player) {
+    if (isPickedAnywhere(p.id)) return false;
+    if (teamCountAll(p.teamId) >= 3) return false;
 
     const max = (LIMITS as any)[p.position].max as number;
     if (counts(p.position) >= max) return false;
 
-    // ✅ Budget check
     if (totalValue + p.value > budget) return false;
-
     return true;
   }
 
-  function assignToSlot(slotId: string, p: Player) {
+  function canAssignToBench(slotKind: 'GK' | 'FIELD', p: Player) {
+    if (isPickedAnywhere(p.id)) return false;
+    if (teamCountAll(p.teamId) >= 3) return false;
+
+    if (slotKind === 'GK' && p.position !== 'GK') return false;
+    if (slotKind === 'FIELD' && p.position === 'GK') return false;
+
+    if (totalValue + p.value > budget) return false;
+    return true;
+  }
+
+  function assignToXISlot(slotId: string, p: Player) {
     if (readOnly) return;
-    if (!canAssign(p)) return;
+    if (!canAssignToXI(p)) return;
     setSlotAssignments((prev) => ({ ...prev, [slotId]: p }));
     setOpenSlot(null);
   }
 
-  function removeFromSlot(slotId: string) {
+  function removeFromXISlot(slotId: string) {
     if (readOnly) return;
     setSlotAssignments((prev) => ({ ...prev, [slotId]: null }));
   }
 
-  function isValidFormation() {
-    if (assignedPlayers.length !== 11) return false;
+  function assignToBenchSlot(slotId: string, slotKind: 'GK' | 'FIELD', p: Player) {
+    if (readOnly) return;
+    if (!canAssignToBench(slotKind, p)) return;
+    setBenchAssignments((prev) => ({ ...prev, [slotId]: p }));
+    setOpenSlot(null);
+  }
+
+  function removeFromBenchSlot(slotId: string) {
+    if (readOnly) return;
+    setBenchAssignments((prev) => ({ ...prev, [slotId]: null }));
+  }
+
+  function isValidXI() {
+    if (xiPlayers.length !== 11) return false;
     return (
       counts('GK') === LIMITS.GK.max &&
       counts('DEF') === LIMITS.DEF.max &&
       counts('MID') === LIMITS.MID.max &&
       counts('FWD') === LIMITS.FWD.max
     );
+  }
+
+  function isValidBench() {
+    if (benchPlayers.length !== 4) return false;
+    const gkCount = benchPlayers.filter((p) => p.position === 'GK').length;
+    const fieldCount = benchPlayers.filter((p) => p.position !== 'GK').length;
+    return gkCount === 1 && fieldCount === 3;
   }
 
   function applyFormation(next: FormationKey) {
@@ -200,7 +271,7 @@ export const StartingXI: FC<Props> = ({ players, teams, initial = [], onSave, bu
     setOpenSlot(null);
   }
 
-  const saveDisabled = !isValidFormation();
+  const saveDisabled = !(isValidXI() && isValidBench() && remainingBudget >= 0);
 
   const Row = ({ position, label }: { position: Player['position']; label: string }) => {
     const rowSlots = slots.filter((s) => s.position === position);
@@ -212,7 +283,7 @@ export const StartingXI: FC<Props> = ({ players, teams, initial = [], onSave, bu
           const isOpen = openSlot === s.id;
 
           const available = players
-            .filter((p) => p.position === s.position && canAssign(p))
+            .filter((p) => p.position === s.position && canAssignToXI(p))
             .map((p) => ({
               ...p,
               teamName: teams.find((t) => t.id === p.teamId)?.name ?? '',
@@ -240,8 +311,7 @@ export const StartingXI: FC<Props> = ({ players, teams, initial = [], onSave, bu
                       className="remove-slot"
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (readOnly) return;
-                        removeFromSlot(s.id);
+                        removeFromXISlot(s.id);
                       }}
                       aria-label="Remove player"
                       title="Remove"
@@ -255,21 +325,12 @@ export const StartingXI: FC<Props> = ({ players, teams, initial = [], onSave, bu
               )}
 
               {isOpen && !readOnly && (
-                <div
-                  className="slot-pop"
-                  onMouseDown={(e) => e.stopPropagation()}
-                  onClick={(e) => e.stopPropagation()}
-                >
+                <div className="slot-pop" onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
                   <div className="slot-pop-title">Valitse pelaaja</div>
 
                   <div className="slot-pop-list">
                     {available.map((p) => (
-                      <button
-                        key={p.id}
-                        type="button"
-                        className="slot-pop-btn"
-                        onClick={() => assignToSlot(s.id, p)}
-                      >
+                      <button key={p.id} type="button" className="slot-pop-btn" onClick={() => assignToXISlot(s.id, p)}>
                         <span className="slot-pop-name">{p.name}</span>
                         <span className="slot-pop-team">{p.teamName}</span>
                         <span className="slot-pop-price">{p.value.toFixed(1)} M</span>
@@ -287,6 +348,93 @@ export const StartingXI: FC<Props> = ({ players, teams, initial = [], onSave, bu
     );
   };
 
+  const Bench = () => {
+    return (
+      <div className="bench">
+        <h3 className="app-h2" style={{ marginTop: 16 }}>Penkki</h3>
+        <div className="bench-row">
+          {BENCH_SLOTS.map((s) => {
+            const assigned = benchAssignments[s.id];
+            const isOpen = openSlot === s.id;
+
+            const available = players
+              .filter((p) => canAssignToBench(s.kind, p))
+              .map((p) => ({
+                ...p,
+                teamName: teams.find((t) => t.id === p.teamId)?.name ?? '',
+              }))
+              .sort((a, b) => a.name.localeCompare(b.name));
+
+            return (
+              <div
+                key={s.id}
+                className={`slot ${assigned ? 'slot-filled' : ''} ${isOpen ? 'slot-open' : ''}`}
+                onClick={() => {
+                  if (readOnly) return;
+                  setOpenSlot(isOpen ? null : s.id);
+                }}
+                role="button"
+                tabIndex={0}
+              >
+                {assigned ? (
+                  <div className="player-chip">
+                    <div className="player-name">{assigned.name}</div>
+                    <div className="player-team">{teams.find((t) => t.id === assigned.teamId)?.name}</div>
+                    {!readOnly && (
+                      <button
+                        type="button"
+                        className="remove-slot"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeFromBenchSlot(s.id);
+                        }}
+                        aria-label="Remove player"
+                        title="Remove"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="slot-empty">{s.label}</div>
+                )}
+
+                {isOpen && !readOnly && (
+                  <div className="slot-pop" onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
+                    <div className="slot-pop-title">Valitse pelaaja</div>
+
+                    <div className="slot-pop-list">
+                      {available.map((p) => (
+                        <button
+                          key={p.id}
+                          type="button"
+                          className="slot-pop-btn"
+                          onClick={() => assignToBenchSlot(s.id, s.kind, p)}
+                        >
+                          <span className="slot-pop-name">{p.name}</span>
+                          <span className="slot-pop-team">{p.teamName}</span>
+                          <span className="slot-pop-price">{p.value.toFixed(1)} M</span>
+                        </button>
+                      ))}
+
+                      {available.length === 0 && <div className="slot-pop-empty">Ei saatavilla olevia pelaajia</div>}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {!isValidBench() && (
+          <div className="starting-xi-warning" role="alert" style={{ marginTop: 8 }}>
+            Penkki: valitse 1 maalivahti ja 3 kenttäpelaajaa.
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="starting-xi-root" ref={rootRef}>
       <div className="starting-xi-card">
@@ -295,7 +443,11 @@ export const StartingXI: FC<Props> = ({ players, teams, initial = [], onSave, bu
 
           <div className="starting-xi-meta">
             <div className="meta-pill">
-              Valittuna: <b>{assignedPlayers.length}</b>/11
+              XI: <b>{xiPlayers.length}</b>/11
+            </div>
+
+            <div className="meta-pill">
+              Penkki: <b>{benchPlayers.length}</b>/4
             </div>
 
             <div className="meta-pill">
@@ -337,7 +489,7 @@ export const StartingXI: FC<Props> = ({ players, teams, initial = [], onSave, bu
             </div>
           )}
 
-          {!isValidFormation() && (
+          {!isValidXI() && (
             <div className="starting-xi-warning" role="alert">
               Avaus ei ole kelvollinen valitulle formaatiolle. Täytä kaikki paikat.
             </div>
@@ -351,19 +503,19 @@ export const StartingXI: FC<Props> = ({ players, teams, initial = [], onSave, bu
           <Row position="FWD" label="H" />
         </div>
 
+        <Bench />
+
         <div className="starting-xi-controls">
           {!readOnly && (
-            <button type="button" className="xi-save" onClick={() => onSave(assignedPlayers)} disabled={saveDisabled}>
-              Tallenna avauskokoonpano
+            <button
+              type="button"
+              className="xi-save"
+              onClick={() => onSave({ startingXI: xiPlayers, bench: benchPlayers })}
+              disabled={saveDisabled}
+            >
+              Tallenna avaus + penkki
             </button>
           )}
-
-          <div className="xi-limits">
-            <span>GK: {counts('GK')}/1</span>
-            <span>DEF: {counts('DEF')}/{f.DEF}</span>
-            <span>MID: {counts('MID')}/{f.MID}</span>
-            <span>FWD: {counts('FWD')}/{f.FWD}</span>
-          </div>
         </div>
       </div>
     </div>

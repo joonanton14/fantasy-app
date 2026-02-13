@@ -1741,3 +1741,34 @@ button {
     font-size: 12px;
   }
 }
+
+.bench {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.12);
+}
+
+.bench-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.bench-header h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.bench-sub {
+  opacity: 0.8;
+  font-size: 12px;
+}
+
+.bench-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+

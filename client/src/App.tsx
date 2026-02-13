@@ -34,6 +34,7 @@ export default function App() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [selected, setSelected] = useState<Player[]>([]);
   const [startingXI, setStartingXI] = useState<Player[]>([]);
+  const [bench, setBench] = useState<Player[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const [teamViewTab, setTeamViewTab] = useState<'startingXI' | 'players'>('startingXI');
@@ -90,34 +91,36 @@ export default function App() {
     if (isLoggedIn) load();
   }, [isLoggedIn]);
 
-  // Load saved Starting XI from Redis AFTER players are loaded
+  // Load saved Starting XI + bench from Redis AFTER players are loaded
   useEffect(() => {
     let cancelled = false;
 
     async function run() {
       setLoadingSaved(true);
       try {
-        const data = await loadSavedTeam(); // { startingXIIds?: number[] } | null
+        const data = await loadSavedTeam(); // { startingXIIds?: number[]; benchIds?: number[] } | null
         if (cancelled) return;
 
-        const ids = data?.startingXIIds ?? [];
-        if (!ids.length) {
-          setStartingXI([]);
-          setXiLocked(false);
-          return;
-        }
+        const xiIds = data?.startingXIIds ?? [];
+        const benchIds = data?.benchIds ?? [];
 
-        const idSet = new Set(ids);
-        const xiPlayers = players.filter((p) => idSet.has(p.id));
+        const xiSet = new Set(xiIds);
+        const benchSet = new Set(benchIds);
+
+        const xiPlayers = players.filter((p) => xiSet.has(p.id));
+        const benchPlayers = players.filter((p) => benchSet.has(p.id));
 
         setStartingXI(xiPlayers);
+        setBench(benchPlayers);
+
+        // Lock if XI is complete
         setXiLocked(xiPlayers.length === 11);
 
-        // Ensure XI players are also in squad list
+        // Ensure XI + bench players are also in squad list
         setSelected((prev) => {
           const existing = new Set(prev.map((p) => p.id));
           const merged = [...prev];
-          for (const p of xiPlayers) {
+          for (const p of [...xiPlayers, ...benchPlayers]) {
             if (!existing.has(p.id)) merged.push(p);
           }
           return merged;
@@ -156,6 +159,7 @@ export default function App() {
     setIsAdmin(false);
     setSelected([]);
     setStartingXI([]);
+    setBench([]);
     setXiLocked(true);
     setPage('builder');
     setTeamViewTab('startingXI');
@@ -185,19 +189,30 @@ export default function App() {
     });
   }
 
-  // Save XI both locally + to Redis
-  const saveXI = async (xi: Player[]) => {
+  // Save XI + bench both locally + to Redis
+  const saveXI = async (payload: { startingXI: Player[]; bench: Player[] }) => {
+    const xi = payload.startingXI;
+    const b = payload.bench;
+
     setStartingXI(xi);
+    setBench(b);
 
     setSelected((prev) => {
       const ids = new Set(prev.map((p) => p.id));
-      return [...prev, ...xi.filter((p) => !ids.has(p.id))];
+      const merged = [...prev];
+      for (const p of [...xi, ...b]) {
+        if (!ids.has(p.id)) merged.push(p);
+      }
+      return merged;
     });
 
     try {
-      await saveStartingXI({ startingXIIds: xi.map((p) => p.id) });
+      await saveStartingXI({
+        startingXIIds: xi.map((p) => p.id),
+        benchIds: b.map((p) => p.id),
+      });
     } catch {
-      // optional: setError("Failed to save Starting XI");
+      // optional: setError("Failed to save team");
     }
 
     setTeamViewTab('startingXI');
@@ -216,44 +231,38 @@ export default function App() {
         <header className="app-topbar">
           <div className="app-title">Veikkausliigapörssi</div>
           <div className="app-user">
-            <span className="app-user-name">Welcome, {userName}</span>
+            <span className="app-user-name">Tervehdys {userName}</span>
             <button onClick={handleLogout} className="app-btn app-btn-danger">
-              Logout
+              Kirjaudu ulos
             </button>
           </div>
         </header>
 
         <main className="app-main">
           <div className="app-card">
-            <h1 className="app-h1">Team Builder</h1>
-
             {error && <div className="app-alert">{error}</div>}
 
             <div className="app-section">
               <div className="app-section-header">
-                <h2 className="app-h2">
-                  Squad ({selected.length}/15) — Budget: {totalValue().toFixed(1)} / {INITIAL_BUDGET}
-                </h2>
-
                 <div className="app-actions">
                   <button
                     className={`app-btn ${teamViewTab === 'startingXI' ? 'app-btn-active' : ''}`}
                     onClick={() => setTeamViewTab('startingXI')}
                   >
-                    Starting XI
+                    Avauskokoonpano & penkki
                   </button>
                   <button
                     className={`app-btn ${teamViewTab === 'players' ? 'app-btn-active' : ''}`}
                     onClick={() => setTeamViewTab('players')}
                   >
-                    Players
+                    Pelaajat
                   </button>
                 </div>
               </div>
 
               {teamViewTab === 'startingXI' ? (
                 <div>
-                  {loadingSaved && <div className="app-muted">Loading saved team…</div>}
+                  {loadingSaved && <div className="app-muted">Ladataan tallennettu joukkue…</div>}
 
                   {startingXI.length === 11 && xiLocked && (
                     <div className="app-actions" style={{ marginBottom: 12 }}>
@@ -267,6 +276,7 @@ export default function App() {
                     players={players}
                     teams={teams}
                     initial={startingXI}
+                    initialBench={bench}
                     onSave={saveXI}
                     budget={INITIAL_BUDGET}
                     readOnly={startingXI.length === 11 && xiLocked}
@@ -274,18 +284,55 @@ export default function App() {
                 </div>
               ) : (
                 <>
+                  {/* Selected players list (squad) */}
+                  {selected.length === 0 ? (
+                    <div className="app-muted">Et ole valinnut vielä yhtään pelaajaa.</div>
+                  ) : (
+                    <div className="selected-players-list">
+                      <table className="app-table">
+                        <thead>
+                          <tr>
+                            <th>Nimi</th>
+                            <th>Pelipaikka</th>
+                            <th>Joukkue</th>
+                            <th>Arvo (M)</th>
+                            <th></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selected.map((p) => {
+                            const teamName = teams.find((t) => t.id === p.teamId)?.name ?? '';
+                            return (
+                              <tr key={p.id}>
+                                <td>{p.name}</td>
+                                <td>{p.position}</td>
+                                <td>{teamName}</td>
+                                <td>{p.value.toFixed(1)}</td>
+                                <td>
+                                  <button className="app-btn app-btn-danger" onClick={() => removePlayer(p.id)}>
+                                    Poista
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
                   {/* Filters */}
                   <div className="app-section">
-                    <h2 className="app-h2">Filters</h2>
+                    <h2 className="app-h2">Suodattimet</h2>
                     <div className="filter-group">
                       <div className="filter-row">
-                        <label>Team:</label>
+                        <label>Joukkue:</label>
                         <select
                           value={filterTeamId ?? ''}
                           onChange={(e) => setFilterTeamId(e.target.value ? Number(e.target.value) : null)}
                           className="app-btn"
                         >
-                          <option value="">All Teams</option>
+                          <option value="">Kaikki joukkueet</option>
                           {teams.map((t) => (
                             <option key={t.id} value={t.id}>
                               {t.name}
@@ -295,7 +342,7 @@ export default function App() {
                       </div>
 
                       <div className="filter-row">
-                        <label>Positions:</label>
+                        <label>Pelipaikat:</label>
                         <div className="position-buttons">
                           {(['GK', 'DEF', 'MID', 'FWD'] as const).map((pos) => (
                             <button
@@ -317,10 +364,10 @@ export default function App() {
                     <table className="app-table">
                       <thead>
                         <tr>
-                          <th>Name</th>
-                          <th>Position</th>
-                          <th>Team</th>
-                          <th>Value (M)</th>
+                          <th>Nimi</th>
+                          <th>Pelipaikka</th>
+                          <th>Joukkue</th>
+                          <th>Arvo (M)</th>
                           <th></th>
                         </tr>
                       </thead>
@@ -345,7 +392,7 @@ export default function App() {
                                   }
                                   onClick={() => addPlayer(p)}
                                 >
-                                  Add
+                                  Lisää
                                 </button>
                               </td>
                             </tr>
