@@ -142,6 +142,9 @@ export const StartingXI: FC<Props> = ({ players, teams, initial = [], onSave, bu
     const max = (LIMITS as any)[p.position].max as number;
     if (counts(p.position) >= max) return false;
 
+    // ✅ Budget check
+    if (totalValue + p.value > budget) return false;
+
     return true;
   }
 
@@ -328,6 +331,12 @@ export const StartingXI: FC<Props> = ({ players, teams, initial = [], onSave, bu
             </div>
           </div>
 
+          {remainingBudget < 0 && (
+            <div className="starting-xi-warning" role="alert">
+              Budjetti ylittyy. Poista tai vaihda pelaajia.
+            </div>
+          )}
+
           {!isValidFormation() && (
             <div className="starting-xi-warning" role="alert">
               Avaus ei ole kelvollinen valitulle formaatiolle. Täytä kaikki paikat.
@@ -344,12 +353,7 @@ export const StartingXI: FC<Props> = ({ players, teams, initial = [], onSave, bu
 
         <div className="starting-xi-controls">
           {!readOnly && (
-            <button
-              type="button"
-              className="xi-save"
-              onClick={() => onSave(assignedPlayers)}
-              disabled={saveDisabled}
-            >
+            <button type="button" className="xi-save" onClick={() => onSave(assignedPlayers)} disabled={saveDisabled}>
               Tallenna avauskokoonpano
             </button>
           )}

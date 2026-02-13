@@ -36,13 +36,16 @@ export default function App() {
   const [startingXI, setStartingXI] = useState<Player[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const [teamViewTab, setTeamViewTab] = useState<'startingXI' | 'team' | 'players'>('startingXI');
+  const [teamViewTab, setTeamViewTab] = useState<'startingXI' | 'players'>('startingXI');
   const [filterTeamId, setFilterTeamId] = useState<number | null>(null);
   const [filterPositions, setFilterPositions] = useState<Set<'GK' | 'DEF' | 'MID' | 'FWD'>>(
     new Set(['GK', 'DEF', 'MID', 'FWD'])
   );
 
   const [loadingSaved, setLoadingSaved] = useState(false);
+
+  // Lock/unlock Starting XI editing
+  const [xiLocked, setXiLocked] = useState(true);
 
   // -------------------- MEMOS (must be before any return) --------------------
   const filteredPlayers = useMemo(() => {
@@ -100,14 +103,15 @@ export default function App() {
         const ids = data?.startingXIIds ?? [];
         if (!ids.length) {
           setStartingXI([]);
+          setXiLocked(false);
           return;
         }
 
         const idSet = new Set(ids);
         const xiPlayers = players.filter((p) => idSet.has(p.id));
 
-        // Set starting XI
         setStartingXI(xiPlayers);
+        setXiLocked(xiPlayers.length === 11);
 
         // Ensure XI players are also in squad list
         setSelected((prev) => {
@@ -152,10 +156,11 @@ export default function App() {
     setIsAdmin(false);
     setSelected([]);
     setStartingXI([]);
+    setXiLocked(true);
     setPage('builder');
     setTeamViewTab('startingXI');
     localStorage.removeItem('session');
-    localStorage.removeItem("authToken");
+    localStorage.removeItem('authToken');
   }
 
   function addPlayer(player: Player) {
@@ -195,7 +200,8 @@ export default function App() {
       // optional: setError("Failed to save Starting XI");
     }
 
-    setTeamViewTab('team');
+    setTeamViewTab('startingXI');
+    setXiLocked(true);
   };
 
   // -------------------- RENDER --------------------
@@ -237,12 +243,6 @@ export default function App() {
                     Starting XI
                   </button>
                   <button
-                    className={`app-btn ${teamViewTab === 'team' ? 'app-btn-active' : ''}`}
-                    onClick={() => setTeamViewTab('team')}
-                  >
-                    Team
-                  </button>
-                  <button
                     className={`app-btn ${teamViewTab === 'players' ? 'app-btn-active' : ''}`}
                     onClick={() => setTeamViewTab('players')}
                   >
@@ -254,56 +254,27 @@ export default function App() {
               {teamViewTab === 'startingXI' ? (
                 <div>
                   {loadingSaved && <div className="app-muted">Loading saved team…</div>}
+
+                  {startingXI.length === 11 && xiLocked && (
+                    <div className="app-actions" style={{ marginBottom: 12 }}>
+                      <button className="app-btn app-btn-primary" onClick={() => setXiLocked(false)}>
+                        Muokkaa avauskokoonpanoa
+                      </button>
+                    </div>
+                  )}
+
                   <StartingXI
                     players={players}
                     teams={teams}
                     initial={startingXI}
                     onSave={saveXI}
                     budget={INITIAL_BUDGET}
+                    readOnly={startingXI.length === 11 && xiLocked}
                   />
                 </div>
-              ) : teamViewTab === 'team' ? (
-                <>
-                  {selected.length === 0 ? (
-                    <div className="app-muted">No players selected yet.</div>
-                  ) : (
-                    <>
-                      <h2 className="app-h2">Your Squad</h2>
-                      <ul className="app-list">
-                        {selected.map((p) => (
-                          <li key={p.id} className="app-list-item">
-                            <div className="app-list-main">
-                              <div className="app-list-title">{p.name}</div>
-                              <div className="app-list-sub">
-                                {p.position} — {teams.find((t) => t.id === p.teamId)?.name} — {p.value.toFixed(1)} M
-                              </div>
-                            </div>
-                            <button className="app-btn app-btn-danger" onClick={() => removePlayer(p.id)}>
-                              Remove
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </>
-                  )}
-
-                  {startingXI.length > 0 && (
-                    <div className="starting-xi-display">
-                      <h2 className="app-h2">Starting XI</h2>
-                      <div className="starting-xi-grid">
-                        {startingXI.map((p) => (
-                          <div key={p.id} className="starting-xi-player-card">
-                            <div className="xi-player-name">{p.name}</div>
-                            <div className="xi-player-badge">{p.position}</div>
-                            <div className="xi-player-price">{p.value.toFixed(1)} M</div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </>
               ) : (
                 <>
+                  {/* Filters */}
                   <div className="app-section">
                     <h2 className="app-h2">Filters</h2>
                     <div className="filter-group">
@@ -341,6 +312,7 @@ export default function App() {
                     </div>
                   </div>
 
+                  {/* All players table */}
                   <div className="app-table-wrap">
                     <table className="app-table">
                       <thead>
@@ -368,7 +340,9 @@ export default function App() {
                               <td>
                                 <button
                                   className="app-btn app-btn-primary"
-                                  disabled={isSelectedRow || selected.length >= 15 || sameTeamCount >= 3 || willExceedBudget}
+                                  disabled={
+                                    isSelectedRow || selected.length >= 15 || sameTeamCount >= 3 || willExceedBudget
+                                  }
                                   onClick={() => addPlayer(p)}
                                 >
                                   Add
