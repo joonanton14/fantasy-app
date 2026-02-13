@@ -155,8 +155,7 @@ export default function App() {
     setPage('builder');
     setTeamViewTab('startingXI');
     localStorage.removeItem('session');
-    // optional
-    // localStorage.removeItem('authToken');
+    localStorage.removeItem("authToken");
   }
 
   function addPlayer(player: Player) {
