@@ -23,6 +23,8 @@ const INITIAL_BUDGET = 100;
 
 export default function App() {
   // -------------------- STATE --------------------
+  const [authChecked, setAuthChecked] = useState(false);
+
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState<number | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
@@ -48,7 +50,7 @@ export default function App() {
   // Lock/unlock Starting XI editing
   const [xiLocked, setXiLocked] = useState(true);
 
-  // -------------------- MEMOS (must be before any return) --------------------
+  // -------------------- MEMOS --------------------
   const filteredPlayers = useMemo(() => {
     return players.filter((p) => {
       if (filterTeamId !== null && p.teamId !== filterTeamId) return false;
@@ -57,70 +59,95 @@ export default function App() {
     });
   }, [players, filterTeamId, filterPositions]);
 
-  // Load players + teams after login
+  // -------------------- AUTH RESTORE (cookie) --------------------
   useEffect(() => {
+    let cancelled = false;
+
+    async function restore() {
+      setError(null);
+
+      // 1) Fast UI restore from localStorage (optional)
+      const saved = localStorage.getItem('session');
+      if (saved) {
+        try {
+          const { userId, userName, isAdmin } = JSON.parse(saved);
+          if (!cancelled) {
+            setUserId(userId ?? null);
+            setUserName(userName ?? null);
+            setIsAdmin(!!isAdmin);
+            setIsLoggedIn(true);
+            setPage(isAdmin ? 'admin' : 'builder');
+            setAuthChecked(true);
+          }
+          return;
+        } catch {
+          localStorage.removeItem('session');
+        }
+      }
+
+      // 2) Source of truth: cookie session
+      try {
+        const res = await apiCall('/auth/me', { method: 'GET' });
+        if (!res.ok) {
+          if (!cancelled) {
+            setIsLoggedIn(false);
+            setUserId(null);
+            setUserName(null);
+            setIsAdmin(false);
+          }
+          return;
+        }
+
+        const me = await res.json();
+        if (cancelled) return;
+
+        setIsLoggedIn(true);
+        setUserId(null);
+        setUserName(me.name);
+        setIsAdmin(!!me.isAdmin);
+        setPage(me.isAdmin ? 'admin' : 'builder');
+
+        localStorage.setItem('session', JSON.stringify({ userId: null, userName: me.name, isAdmin: !!me.isAdmin }));
+      } catch {
+        // ignore (network / first load)
+      } finally {
+        if (!cancelled) setAuthChecked(true);
+      }
+    }
+
+    restore();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // -------------------- LOAD PLAYERS + TEAMS AFTER LOGIN --------------------
+  useEffect(() => {
+    let cancelled = false;
+
     async function load() {
+      setError(null);
       try {
         const [playersRes, teamsRes] = await Promise.all([apiCall('/players'), apiCall('/teams')]);
         const playersData: Player[] = await playersRes.json();
         const teamsData: Team[] = await teamsRes.json();
+        if (cancelled) return;
         setPlayers(playersData);
         setTeams(teamsData);
       } catch {
-        setError('Failed to load players or teams');
+        if (!cancelled) setError('Failed to load players or teams');
       }
     }
+
     if (isLoggedIn) load();
+
+    return () => {
+      cancelled = true;
+    };
   }, [isLoggedIn]);
 
-  useEffect(() => {
-  let cancelled = false;
-
-  async function restore() {
-    // 1) Try localStorage (fast UI)
-    const saved = localStorage.getItem("session");
-    if (saved) {
-      try {
-        const { userId, userName, isAdmin } = JSON.parse(saved);
-        setUserId(userId);
-        setUserName(userName);
-        setIsAdmin(isAdmin);
-        setIsLoggedIn(true);
-        setPage(isAdmin ? "admin" : "builder");
-        return;
-      } catch {
-        localStorage.removeItem("session");
-      }
-    }
-
-    // 2) Fallback: ask server using cookie
-    try {
-      const res = await apiCall("/auth/me", { method: "GET" }); // apiCall has credentials: "include"
-      if (!res.ok) return;
-
-      const me = await res.json();
-      if (cancelled) return;
-
-      setIsLoggedIn(true);
-      setUserName(me.name);
-      setIsAdmin(!!me.isAdmin);
-      setPage(me.isAdmin ? "admin" : "builder");
-
-      // optional: store UI session (so next refresh is instant)
-      localStorage.setItem("session", JSON.stringify({ userId: null, userName: me.name, isAdmin: !!me.isAdmin }));
-    } catch {
-      // ignore
-    }
-  }
-
-  restore();
-
-  return () => {
-    cancelled = true;
-  };
-}, []);
-
-  // Load saved Starting XI + bench from Redis AFTER players are loaded
+  // -------------------- LOAD SAVED TEAM AFTER PLAYERS --------------------
   useEffect(() => {
     let cancelled = false;
 
@@ -142,10 +169,8 @@ export default function App() {
         setStartingXI(xiPlayers);
         setBench(benchPlayers);
 
-        // Lock if XI is complete
         setXiLocked(xiPlayers.length === 11);
 
-        // Ensure XI + bench players are also in squad list
         setSelected((prev) => {
           const existing = new Set(prev.map((p) => p.id));
           const merged = [...prev];
@@ -177,25 +202,30 @@ export default function App() {
     setIsAdmin(isAdmin);
     setIsLoggedIn(true);
     setPage(isAdmin ? 'admin' : 'builder');
+
+    // keep UI fast on refresh (optional)
+    localStorage.setItem('session', JSON.stringify({ userId, userName, isAdmin }));
   }
 
-async function handleLogout() {
-  try {
-    await apiCall("/auth/logout", { method: "POST" });
-  } catch {}
+  async function handleLogout() {
+    try {
+      await apiCall('/auth/logout', { method: 'POST' });
+    } catch {}
 
-  setIsLoggedIn(false);
-  setUserId(null);
-  setUserName(null);
-  setIsAdmin(false);
-  setSelected([]);
-  setStartingXI([]);
-  setBench([]);
-  setXiLocked(true);
-  setPage('builder');
-  setTeamViewTab('startingXI');
-  localStorage.removeItem('session');
-}
+    setIsLoggedIn(false);
+    setUserId(null);
+    setUserName(null);
+    setIsAdmin(false);
+    setSelected([]);
+    setStartingXI([]);
+    setBench([]);
+    setXiLocked(true);
+    setPage('builder');
+    setTeamViewTab('startingXI');
+    setPlayers([]);
+    setTeams([]);
+    localStorage.removeItem('session');
+  }
 
   function addPlayer(player: Player) {
     if (selected.some((p) => p.id === player.id)) return;
@@ -219,7 +249,6 @@ async function handleLogout() {
     });
   }
 
-  // Save XI + bench both locally + to Redis
   const saveXI = async (payload: { startingXI: Player[]; bench: Player[] }) => {
     const xi = payload.startingXI;
     const b = payload.bench;
@@ -241,15 +270,17 @@ async function handleLogout() {
         startingXIIds: xi.map((p) => p.id),
         benchIds: b.map((p) => p.id),
       });
-    } catch {
-      // optional: setError("Failed to save team");
-    }
+    } catch {}
 
     setTeamViewTab('startingXI');
     setXiLocked(true);
   };
 
   // -------------------- RENDER --------------------
+  if (!authChecked) {
+    return <div className="app-muted" style={{ padding: 16 }}>Loading…</div>;
+  }
+
   if (!isLoggedIn) {
     return <Login onLoginSuccess={handleLoginSuccess} />;
   }
@@ -314,7 +345,6 @@ async function handleLogout() {
                 </div>
               ) : (
                 <>
-                  {/* Selected players list (squad) */}
                   {selected.length === 0 ? (
                     <div className="app-muted">Et ole valinnut vielä yhtään pelaajaa.</div>
                   ) : (
@@ -351,7 +381,6 @@ async function handleLogout() {
                     </div>
                   )}
 
-                  {/* Filters */}
                   <div className="app-section">
                     <h2 className="app-h2">Suodattimet</h2>
                     <div className="filter-group">
@@ -389,7 +418,6 @@ async function handleLogout() {
                     </div>
                   </div>
 
-                  {/* All players table */}
                   <div className="app-table-wrap">
                     <table className="app-table">
                       <thead>
