@@ -154,7 +154,7 @@ export default function App() {
   async function loadLb() {
     setLoadingLb(true);
     try {
-      const res = await apiCall("/leaderboards", { method: "GET" });
+      const res = await apiCall("/leaderboard", { method: "GET" });
       if (!res.ok) return;
       const data = await res.json();
       if (!cancelled) setLeaderboard(data.rows ?? []);
@@ -221,7 +221,7 @@ export default function App() {
   async function loadLb() {
     setLoadingLb(true);
     try {
-      const res = await apiCall("/leaderboards", { method: "GET" });
+      const res = await apiCall("/leaderboard", { method: "GET" });
       if (!res.ok) return;
       const data = await res.json();
       if (!cancelled) setLeaderboard(data.rows ?? []);
@@ -237,7 +237,7 @@ export default function App() {
 async function loadLeaderboard() {
   setLoadingLb(true);
   try {
-    const res = await apiCall("/leaderboards", { method: "GET" });
+    const res = await apiCall("/leaderboard", { method: "GET" });
     if (!res.ok) return;
     const data = await res.json();
     setLeaderboard(data.rows ?? []);
