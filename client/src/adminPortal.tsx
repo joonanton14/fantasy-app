@@ -25,6 +25,49 @@ type Fixture = {
 
 type TabKey = "players" | "fixtures" | "points";
 
+type PlayerEventInput = {
+  minutes: "0" | "1_59" | "60+";
+  goals: number;
+  assists: number;
+  cleanSheet: boolean;
+  penMissed: number;
+  penSaved: number; // GK only
+  yellow: number;
+  red: number;
+  ownGoals: number;
+};
+
+export function calcPoints(pos: Position, e: PlayerEventInput): number {
+  let pts = 0;
+
+  // minutes played
+  if (e.minutes === "1_59" || e.minutes === "60+") pts += 2;
+
+  // goals
+  const goalPts = pos === "GK" ? 10 : pos === "DEF" ? 6 : pos === "MID" ? 5 : 4;
+  pts += e.goals * goalPts;
+
+  // assists
+  pts += e.assists * 3;
+
+  // clean sheet
+  if (e.cleanSheet) {
+    if (pos === "GK" || pos === "DEF") pts += 4;
+    else if (pos === "MID") pts += 1;
+  }
+
+  // penalties
+  pts += e.penMissed * -2;
+  if (pos === "GK") pts += e.penSaved * 3;
+
+  // discipline
+  pts += e.yellow * -1;
+  pts += e.red * -3;
+  pts += e.ownGoals * -2;
+
+  return pts;
+}
+
 function fmtDate(iso: string) {
   // Keep it simple: show local browser time
   const d = new Date(iso);
