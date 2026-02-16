@@ -1,255 +1,383 @@
-import { useEffect, useState } from 'react';
-import { apiCall } from './api';
+import { useEffect, useMemo, useState } from "react";
+import { apiCall } from "./api";
+
+type Position = "GK" | "DEF" | "MID" | "FWD";
+
+interface Player {
+  id: number;
+  name: string;
+  position: Position;
+  teamId: number;
+  value: number;
+}
 
 interface Team {
   id: number;
   name: string;
 }
 
-interface Player {
-  id: number;
-  name: string;
-  position: 'GK' | 'DEF' | 'MID' | 'FWD';
-  teamId: number;
-  value: number;
+type PointsMap = Record<number, number>;
+
+function parseIntSafe(v: string): number | null {
+  if (v.trim() === "") return null;
+  const n = Number(v);
+  if (!Number.isFinite(n)) return null;
+  if (!Number.isInteger(n)) return null;
+  return n;
 }
 
-/**
- * AdminPortal component provides a simple UI for managing teams and players.
- * It allows admins to add new teams and players, and displays existing
- * teams and players in lists. In a real application you would
- * authenticate admins before allowing access to this component.
- */
 export default function AdminPortal() {
-  const [teams, setTeams] = useState<Team[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [loadingBase, setLoadingBase] = useState(false);
 
-  // state for new team form
-  const [newTeamName, setNewTeamName] = useState('');
-  const [teamMessage, setTeamMessage] = useState<string | null>(null);
+  const [gw, setGw] = useState<number>(1);
+  const [search, setSearch] = useState("");
+  const [filterTeamId, setFilterTeamId] = useState<number | null>(null);
+  const [filterPos, setFilterPos] = useState<Position | "ALL">("ALL");
+  const [onlyEdited, setOnlyEdited] = useState(false);
 
-  // state for new player form
-  const [playerName, setPlayerName] = useState('');
-  const [playerPosition, setPlayerPosition] = useState<'GK' | 'DEF' | 'MID' | 'FWD'>('GK');
-  const [playerTeamId, setPlayerTeamId] = useState<number>(0);
-  const [playerValue, setPlayerValue] = useState<number>(4);
-  const [playerMessage, setPlayerMessage] = useState<string | null>(null);
+  const [points, setPoints] = useState<PointsMap>({});
+  const [loadingPoints, setLoadingPoints] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  // Load teams and players on mount
+  const [status, setStatus] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const [leaderboard, setLeaderboard] = useState<Array<{ username: string; total: number }> | null>(null);
+  const [loadingLb, setLoadingLb] = useState(false);
+
+  // Load players + teams once
   useEffect(() => {
-    async function load() {
+    let cancelled = false;
+
+    async function run() {
+      setLoadingBase(true);
+      setError(null);
       try {
-        const [teamRes, playerRes] = await Promise.all([
-          apiCall('/teams'),
-          apiCall('/players')
-        ]);
-        const teamData: Team[] = await teamRes.json();
-        const playerData: Player[] = await playerRes.json();
-        setTeams(teamData);
-        setPlayers(playerData);
-        // pre-select first team for player form if available
-        if (teamData.length > 0) {
-          setPlayerTeamId(teamData[0].id);
-        }
-      } catch (err) {
-        // ignore errors for now
+        const [playersRes, teamsRes] = await Promise.all([apiCall("/players"), apiCall("/teams")]);
+        const playersData: Player[] = await playersRes.json();
+        const teamsData: Team[] = await teamsRes.json();
+        if (cancelled) return;
+        setPlayers(playersData);
+        setTeams(teamsData);
+      } catch (e) {
+        if (cancelled) return;
+        setError("Failed to load players/teams");
+      } finally {
+        if (!cancelled) setLoadingBase(false);
       }
     }
-    load();
+
+    run();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  // handle new team submission
-  async function addTeam(e: React.FormEvent) {
-    e.preventDefault();
-    setTeamMessage(null);
+  const teamNameById = useMemo(() => {
+    const m = new Map<number, string>();
+    for (const t of teams) m.set(t.id, t.name);
+    return m;
+  }, [teams]);
+
+  const editedCount = useMemo(() => Object.keys(points).length, [points]);
+
+  const filteredPlayers = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return players
+      .filter((p) => {
+        if (filterTeamId !== null && p.teamId !== filterTeamId) return false;
+        if (filterPos !== "ALL" && p.position !== filterPos) return false;
+
+        if (onlyEdited && points[p.id] === undefined) return false;
+
+        if (!q) return true;
+        const tn = teamNameById.get(p.teamId)?.toLowerCase() ?? "";
+        return p.name.toLowerCase().includes(q) || tn.includes(q) || String(p.id).includes(q);
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [players, search, filterTeamId, filterPos, onlyEdited, points, teamNameById]);
+
+  async function loadGwPoints() {
+    setLoadingPoints(true);
+    setError(null);
+    setStatus(null);
     try {
-      const res = await apiCall('/admin/teams', {
-        method: 'POST',
-        body: JSON.stringify({ name: newTeamName })
-      });
-      if (res.ok) {
-        const team = await res.json();
-        setTeams([...teams, team]);
-        setTeamMessage(`Team "${team.name}" created.`);
-        setNewTeamName('');
-        // update selected team for player form if none selected
-        if (playerTeamId === 0) setPlayerTeamId(team.id);
-      } else {
-        const err = await res.json();
-        setTeamMessage(`Error: ${err.error ?? 'Unable to create team'}`);
+      const res = await apiCall(`/admin/points?gw=${gw}`, { method: "GET" });
+
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error((j as any)?.error || "Failed to load points");
       }
-    } catch (err) {
-      setTeamMessage('Network error: unable to create team');
+
+      const j = await res.json();
+      const raw = (j?.points ?? {}) as Record<string, number>;
+
+      const next: PointsMap = {};
+      for (const [k, v] of Object.entries(raw)) {
+        const pid = Number(k);
+        if (Number.isInteger(pid) && Number.isInteger(v)) next[pid] = v;
+      }
+
+      setPoints(next);
+      setStatus(`Loaded GW ${gw} points (${Object.keys(next).length} players).`);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to load points");
+    } finally {
+      setLoadingPoints(false);
     }
   }
 
-  // handle new player submission
-  async function addPlayer(e: React.FormEvent) {
-    e.preventDefault();
-    setPlayerMessage(null);
+  async function saveGwPoints() {
+    setSaving(true);
+    setError(null);
+    setStatus(null);
+
     try {
-      const res = await apiCall('/admin/players', {
-        method: 'POST',
-        body: JSON.stringify({
-          name: playerName,
-          position: playerPosition,
-          teamId: playerTeamId,
-          value: playerValue
-        })
-      });
-      if (res.ok) {
-        const player = await res.json();
-        setPlayers([...players, player]);
-        setPlayerMessage(`Player "${player.name}" created.`);
-        setPlayerName('');
-        setPlayerPosition('GK');
-        setPlayerValue(4);
-      } else {
-        const err = await res.json();
-        setPlayerMessage(`Error: ${err.error ?? 'Unable to create player'}`);
+      // Convert to string-key object for storage
+      const payload: Record<string, number> = {};
+      for (const [pidStr, val] of Object.entries(points)) {
+        const pid = Number(pidStr);
+        if (!Number.isInteger(pid)) continue;
+        if (!Number.isInteger(val)) continue;
+        payload[String(pid)] = val;
       }
-    } catch (err) {
-      setPlayerMessage('Network error: unable to create player');
+
+      const res =await apiCall("/admin/points", {
+  method: "POST",
+  body: JSON.stringify({ gw, points: payload }),
+});
+
+
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error((j as any)?.error || "Failed to save points");
+      }
+
+      setStatus(`Saved GW ${gw} points (${Object.keys(payload).length} players).`);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to save points");
+    } finally {
+      setSaving(false);
     }
+  }
+
+  async function loadLeaderboardPreview() {
+    setLoadingLb(true);
+    setError(null);
+    setStatus(null);
+    try {
+      const res = await fetch(`/api/leaderboard?gw=${encodeURIComponent(String(gw))}`, {
+        method: "GET",
+      });
+
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error((j as any)?.error || "Failed to load leaderboard");
+      }
+
+      const j = await res.json();
+      setLeaderboard((j?.leaderboard ?? []) as Array<{ username: string; total: number }>);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to load leaderboard");
+    } finally {
+      setLoadingLb(false);
+    }
+  }
+
+  function setPlayerPoints(playerId: number, valueStr: string) {
+    const parsed = parseIntSafe(valueStr);
+    setPoints((prev) => {
+      const next = { ...prev };
+      if (parsed === null) delete next[playerId];
+      else next[playerId] = parsed;
+      return next;
+    });
+  }
+
+  function clearAll() {
+    setPoints({});
+    setLeaderboard(null);
+    setStatus("Cleared all unsaved edits.");
+    setError(null);
   }
 
   return (
-    <div>
-      <h2 className="app-h1">Admin Portal</h2>
-      
-      <div className="admin-section">
-        <h3 className="admin-section-title">Add New Team</h3>
-        <form onSubmit={addTeam} className="admin-form">
-          <div className="admin-form-row">
-            <label htmlFor="team-name">Team Name</label>
-            <input
-              id="team-name"
-              type="text"
-              value={newTeamName}
-              onChange={(e) => setNewTeamName(e.target.value)}
-              required
-              placeholder="Enter team name"
-            />
-          </div>
-          <div className="admin-form-actions">
-            <button type="submit" className="app-btn app-btn-primary">Add Team</button>
-          </div>
-        </form>
-        {teamMessage && <div className={`admin-message ${teamMessage.startsWith('Error') ? 'error' : 'success'}`}>{teamMessage}</div>}
-      </div>
+    <div className="app-card">
+      <h1 className="app-h1">Admin Portal</h1>
 
-      <div className="admin-section">
-        <h3 className="admin-section-title">Add New Player</h3>
-      <div className="admin-section">
-        <h3 className="admin-section-title">Add New Player</h3>
-        {teams.length === 0 ? (
-          <div className="app-alert">Please create a team first.</div>
-        ) : (
-          <form onSubmit={addPlayer} className="admin-form">
-            <div className="admin-form-row">
-              <label htmlFor="player-name">Name</label>
+      {error && <div className="app-alert">{error}</div>}
+      {status && <div className="app-muted" style={{ marginBottom: 10 }}>{status}</div>}
+
+      <div className="app-section">
+        <div className="app-section-header">
+          <h2 className="app-h2">Gameweek Points</h2>
+
+          <div className="app-actions" style={{ gap: 8, flexWrap: "wrap" }}>
+            <label className="app-muted" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              GW
               <input
-                id="player-name"
-                type="text"
-                value={playerName}
-                onChange={(e) => setPlayerName(e.target.value)}
-                required
-                placeholder="Player name"
+                type="number"
+                min={1}
+                value={gw}
+                onChange={(e) => setGw(Math.max(1, Number(e.target.value || 1)))}
+                style={{ width: 90 }}
               />
+            </label>
+
+            <button className="app-btn" onClick={loadGwPoints} disabled={loadingPoints || saving}>
+              {loadingPoints ? "Loading…" : "Load GW"}
+            </button>
+
+            <button className="app-btn app-btn-primary" onClick={saveGwPoints} disabled={saving || loadingPoints}>
+              {saving ? "Saving…" : "Save GW"}
+            </button>
+
+            <button className="app-btn app-btn-danger" onClick={clearAll} disabled={saving || loadingPoints}>
+              Clear edits
+            </button>
+
+            <button className="app-btn" onClick={loadLeaderboardPreview} disabled={loadingLb}>
+              {loadingLb ? "Loading…" : "Leaderboard preview"}
+            </button>
+
+            <div className="app-muted" style={{ alignSelf: "center" }}>
+              Edited: <b>{editedCount}</b>
             </div>
-            <div className="admin-form-row">
-              <label htmlFor="player-position">Position</label>
+          </div>
+        </div>
+
+        <div className="filter-group" style={{ marginTop: 12 }}>
+          <div className="filter-row" style={{ gap: 12, flexWrap: "wrap" }}>
+            <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <span className="app-muted">Search</span>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Name / team / id…"
+                style={{ minWidth: 260 }}
+              />
+            </label>
+
+            <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <span className="app-muted">Team</span>
               <select
-                id="player-position"
-                value={playerPosition}
-                onChange={(e) => setPlayerPosition(e.target.value as 'GK' | 'DEF' | 'MID' | 'FWD')}
+                value={filterTeamId ?? ""}
+                onChange={(e) => setFilterTeamId(e.target.value ? Number(e.target.value) : null)}
               >
-                <option value="GK">GK (Goalkeeper)</option>
-                <option value="DEF">DEF (Defender)</option>
-                <option value="MID">MID (Midfielder)</option>
-                <option value="FWD">FWD (Forward)</option>
-              </select>
-            </div>
-            <div className="admin-form-row">
-              <label htmlFor="player-team">Team</label>
-              <select
-                id="player-team"
-                value={playerTeamId}
-                onChange={(e) => setPlayerTeamId(Number(e.target.value))}
-              >
+                <option value="">All</option>
                 {teams.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.name}
                   </option>
                 ))}
               </select>
-            </div>
-            <div className="admin-form-row">
-              <label htmlFor="player-value">Value (4–12M)</label>
-              <input
-                id="player-value"
-                type="number"
-                step="0.1"
-                min="4"
-                max="12"
-                value={playerValue}
-                onChange={(e) => setPlayerValue(Number(e.target.value))}
-              />
-            </div>
-            <div className="admin-form-actions">
-              <button type="submit" className="app-btn app-btn-primary">Add Player</button>
-            </div>
-          </form>
-        )}
-        {playerMessage && <div className={`admin-message ${playerMessage.startsWith('Error') ? 'error' : 'success'}`}>{playerMessage}</div>}
-      </div>
+            </label>
 
-      <div className="admin-section">
-        <h3 className="admin-section-title">Teams ({teams.length})</h3>
-        {teams.length === 0 ? (
-          <div className="app-muted">No teams available.</div>
-        ) : (
-          <ul className="admin-list">
-            {teams.map((t) => (
-              <li key={t.id}>{t.name}</li>
-            ))}
-          </ul>
-        )}
-      </div>
+            <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <span className="app-muted">Position</span>
+              <select value={filterPos} onChange={(e) => setFilterPos(e.target.value as any)}>
+                <option value="ALL">All</option>
+                <option value="GK">GK</option>
+                <option value="DEF">DEF</option>
+                <option value="MID">MID</option>
+                <option value="FWD">FWD</option>
+              </select>
+            </label>
 
-      <div className="admin-section">
-        <h3 className="admin-section-title">Players ({players.length})</h3>
-        {players.length === 0 ? (
-          <div className="app-muted">No players available.</div>
-        ) : (
-          <div className="admin-table-wrap">
-            <table className="admin-table">
-              <thead>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 22 }}>
+              <input type="checkbox" checked={onlyEdited} onChange={(e) => setOnlyEdited(e.target.checked)} />
+              Only edited
+            </label>
+          </div>
+        </div>
+
+        <div className="app-table-wrap" style={{ marginTop: 12 }}>
+          <table className="app-table">
+            <thead>
+              <tr>
+                <th style={{ width: 70 }}>ID</th>
+                <th>Name</th>
+                <th style={{ width: 90 }}>Pos</th>
+                <th>Team</th>
+                <th style={{ width: 130 }}>Points</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loadingBase ? (
                 <tr>
-                  <th>Name</th>
-                  <th>Position</th>
-                  <th>Team</th>
-                  <th>Value</th>
+                  <td colSpan={5} className="app-muted">
+                    Loading players…
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {players.map((p) => {
-                  const team = teams.find((t) => t.id === p.teamId);
+              ) : filteredPlayers.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="app-muted">
+                    No players found.
+                  </td>
+                </tr>
+              ) : (
+                filteredPlayers.map((p) => {
+                  const teamName = teamNameById.get(p.teamId) ?? "";
+                  const current = points[p.id];
                   return (
                     <tr key={p.id}>
+                      <td className="app-muted">{p.id}</td>
                       <td>{p.name}</td>
                       <td>{p.position}</td>
-                      <td>{team?.name ?? p.teamId}</td>
-                      <td>{p.value.toFixed(1)}M</td>
+                      <td className="app-muted">{teamName}</td>
+                      <td>
+                        <input
+                          type="number"
+                          step={1}
+                          value={current ?? ""}
+                          onChange={(e) => setPlayerPoints(p.id, e.target.value)}
+                          placeholder="—"
+                          style={{ width: 110 }}
+                        />
+                      </td>
                     </tr>
                   );
-                })}
-              </tbody>
-            </table>
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {leaderboard && (
+          <div style={{ marginTop: 16 }}>
+            <h2 className="app-h2">Leaderboard preview (GW {gw})</h2>
+            {leaderboard.length === 0 ? (
+              <div className="app-muted">No teams yet.</div>
+            ) : (
+              <div className="app-table-wrap">
+                <table className="app-table">
+                  <thead>
+                    <tr>
+                      <th style={{ width: 60 }}>#</th>
+                      <th>User</th>
+                      <th style={{ width: 120 }}>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {leaderboard.slice(0, 20).map((r, idx) => (
+                      <tr key={`${r.username}-${idx}`}>
+                        <td className="app-muted">{idx + 1}</td>
+                        <td>{r.username}</td>
+                        <td>
+                          <b>{r.total}</b>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
       </div>
     </div>
-  </div>
   );
 }

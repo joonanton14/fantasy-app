@@ -36,11 +36,6 @@ export default function Login({ onLoginSuccess }: LoginProps) {
 
     const user = await res.json();
 
-    // store session token for calling Redis-protected endpoints
-    if (user.token) {
-      localStorage.setItem("authToken", user.token);
-    }
-
     onLoginSuccess(user.id, user.name, user.isAdmin || false);
 
     } catch (err) {

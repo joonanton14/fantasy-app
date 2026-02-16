@@ -1772,3 +1772,11 @@ button {
   gap: 10px;
 }
 
+input[type="text"], input[type="number"], select {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(0,0,0,0.2);
+  color: inherit;
+}
+

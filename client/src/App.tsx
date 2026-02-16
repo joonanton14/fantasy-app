@@ -57,24 +57,6 @@ export default function App() {
     });
   }, [players, filterTeamId, filterPositions]);
 
-  // -------------------- EFFECTS --------------------
-  // Restore session from localStorage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem('session');
-    if (saved) {
-      try {
-        const { userId, userName, isAdmin } = JSON.parse(saved);
-        setUserId(userId);
-        setUserName(userName);
-        setIsAdmin(isAdmin);
-        setIsLoggedIn(true);
-        setPage(isAdmin ? 'admin' : 'builder');
-      } catch {
-        localStorage.removeItem('session');
-      }
-    }
-  }, []);
-
   // Load players + teams after login
   useEffect(() => {
     async function load() {
@@ -148,24 +130,25 @@ export default function App() {
     setIsAdmin(isAdmin);
     setIsLoggedIn(true);
     setPage(isAdmin ? 'admin' : 'builder');
-
-    localStorage.setItem('session', JSON.stringify({ userId, userName, isAdmin }));
   }
 
-  function handleLogout() {
-    setIsLoggedIn(false);
-    setUserId(null);
-    setUserName(null);
-    setIsAdmin(false);
-    setSelected([]);
-    setStartingXI([]);
-    setBench([]);
-    setXiLocked(true);
-    setPage('builder');
-    setTeamViewTab('startingXI');
-    localStorage.removeItem('session');
-    localStorage.removeItem('authToken');
-  }
+async function handleLogout() {
+  try {
+    await apiCall("/auth/logout", { method: "POST" });
+  } catch {}
+
+  setIsLoggedIn(false);
+  setUserId(null);
+  setUserName(null);
+  setIsAdmin(false);
+  setSelected([]);
+  setStartingXI([]);
+  setBench([]);
+  setXiLocked(true);
+  setPage('builder');
+  setTeamViewTab('startingXI');
+  localStorage.removeItem('session');
+}
 
   function addPlayer(player: Player) {
     if (selected.some((p) => p.id === player.id)) return;
