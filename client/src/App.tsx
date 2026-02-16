@@ -73,6 +73,53 @@ export default function App() {
     if (isLoggedIn) load();
   }, [isLoggedIn]);
 
+  useEffect(() => {
+  let cancelled = false;
+
+  async function restore() {
+    // 1) Try localStorage (fast UI)
+    const saved = localStorage.getItem("session");
+    if (saved) {
+      try {
+        const { userId, userName, isAdmin } = JSON.parse(saved);
+        setUserId(userId);
+        setUserName(userName);
+        setIsAdmin(isAdmin);
+        setIsLoggedIn(true);
+        setPage(isAdmin ? "admin" : "builder");
+        return;
+      } catch {
+        localStorage.removeItem("session");
+      }
+    }
+
+    // 2) Fallback: ask server using cookie
+    try {
+      const res = await apiCall("/auth/me", { method: "GET" }); // apiCall has credentials: "include"
+      if (!res.ok) return;
+
+      const me = await res.json();
+      if (cancelled) return;
+
+      setIsLoggedIn(true);
+      setUserName(me.name);
+      setIsAdmin(!!me.isAdmin);
+      setPage(me.isAdmin ? "admin" : "builder");
+
+      // optional: store UI session (so next refresh is instant)
+      localStorage.setItem("session", JSON.stringify({ userId: null, userName: me.name, isAdmin: !!me.isAdmin }));
+    } catch {
+      // ignore
+    }
+  }
+
+  restore();
+
+  return () => {
+    cancelled = true;
+  };
+}, []);
+
   // Load saved Starting XI + bench from Redis AFTER players are loaded
   useEffect(() => {
     let cancelled = false;
