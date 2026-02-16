@@ -292,7 +292,7 @@ export default function AdminPortal() {
         </div>
 
         <div>
-          <label style={{ fontSize: 12, opacity: 0.75 }}>Minutes</label>
+          <label style={{ fontSize: 12, opacity: 0.75 }}>Minuutit</label>
           <select
             className="app-btn"
             value={ev.minutes}
@@ -300,7 +300,7 @@ export default function AdminPortal() {
             style={{ width: "100%" }}
           >
             <option value="0">0</option>
-            <option value="1_59">1–59</option>
+            <option value="1_59">1-59</option>
             <option value="60+">60+</option>
           </select>
         </div>
@@ -325,7 +325,7 @@ export default function AdminPortal() {
             />
           </div>
           <div>
-            <label style={{ fontSize: 12, opacity: 0.75 }}>YC</label>
+            <label style={{ fontSize: 12, opacity: 0.75 }}>KK</label>
             <input
               className="app-btn"
               value={String(ev.yellow)}
@@ -334,7 +334,7 @@ export default function AdminPortal() {
             />
           </div>
           <div>
-            <label style={{ fontSize: 12, opacity: 0.75 }}>RC</label>
+            <label style={{ fontSize: 12, opacity: 0.75 }}>PK</label>
             <input
               className="app-btn"
               value={String(ev.red)}
@@ -346,7 +346,7 @@ export default function AdminPortal() {
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr) 0.9fr", gap: 6, alignItems: "end" }}>
           <div>
-            <label style={{ fontSize: 12, opacity: 0.75 }}>CS</label>
+            <label style={{ fontSize: 12, opacity: 0.75 }}>NP</label>
             <input
               type="checkbox"
               checked={ev.cleanSheet}
@@ -355,7 +355,7 @@ export default function AdminPortal() {
             />
           </div>
           <div>
-            <label style={{ fontSize: 12, opacity: 0.75 }}>OG</label>
+            <label style={{ fontSize: 12, opacity: 0.75 }}>OM</label>
             <input
               className="app-btn"
               value={String(ev.ownGoals)}
@@ -364,7 +364,7 @@ export default function AdminPortal() {
             />
           </div>
           <div>
-            <label style={{ fontSize: 12, opacity: 0.75 }}>PM</label>
+            <label style={{ fontSize: 12, opacity: 0.75 }}>ERP</label>
             <input
               className="app-btn"
               value={String(ev.penMissed)}
@@ -373,7 +373,7 @@ export default function AdminPortal() {
             />
           </div>
           <div>
-            <label style={{ fontSize: 12, opacity: 0.75 }}>PS</label>
+            <label style={{ fontSize: 12, opacity: 0.75 }}>TRP</label>
             <input
               className="app-btn"
               value={String(ev.penSaved)}
@@ -394,29 +394,26 @@ export default function AdminPortal() {
     <div style={{ display: "grid", gap: 12 }}>
       <div className="app-actions">
         <button className={`app-btn ${tab === "players" ? "app-btn-active" : ""}`} onClick={() => setTab("players")}>
-          Players
+          Pelaajat
         </button>
         <button className={`app-btn ${tab === "fixtures" ? "app-btn-active" : ""}`} onClick={() => setTab("fixtures")}>
-          Fixtures
+          Ottelut
         </button>
         <button className={`app-btn ${tab === "score" ? "app-btn-active" : ""}`} onClick={() => setTab("score")}>
-          Game scoring
+          Otteluiden pisteet
         </button>
       </div>
 
-      {loadingBase && <div className="app-muted">Loading admin data…</div>}
+      {loadingBase && <div className="app-muted">Ladataan dataa…</div>}
 
       {tab === "players" && (
         <div className="app-card" style={{ padding: 12 }}>
-          <h2 className="app-h2">Players</h2>
-          <div className="app-muted" style={{ marginBottom: 8 }}>
-            Search + quick view
-          </div>
+          <h2 className="app-h2">Pelaajat</h2>
 
           <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
             <input
               className="app-btn"
-              placeholder="Search player…"
+              placeholder="Hae pelaajia…"
               value={playerSearch}
               onChange={(e) => setPlayerSearch(e.target.value)}
               style={{ flex: 1 }}
@@ -427,10 +424,10 @@ export default function AdminPortal() {
             <table className="app-table">
               <thead>
                 <tr>
-                  <th>Name</th>
-                  <th>Pos</th>
-                  <th>Team</th>
-                  <th>Value</th>
+                  <th>Nimi</th>
+                  <th>Pelipaikka</th>
+                  <th>Joukkue</th>
+                  <th>Arvo</th>
                 </tr>
               </thead>
               <tbody>
@@ -456,7 +453,7 @@ export default function AdminPortal() {
 
       {tab === "fixtures" && (
         <div className="app-card" style={{ padding: 12 }}>
-          <h2 className="app-h2">Fixtures</h2>
+          <h2 className="app-h2">Ottelut</h2>
           {fixturesErr && <div className="app-alert">{fixturesErr}</div>}
 
           {fixtures.length === 0 ? (
@@ -470,8 +467,8 @@ export default function AdminPortal() {
                 <thead>
                   <tr>
                     <th>ID</th>
-                    <th>Match</th>
-                    <th>Date</th>
+                    <th>Peli</th>
+                    <th>Päivämäärä</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -494,15 +491,15 @@ export default function AdminPortal() {
 
       {tab === "score" && (
         <div className="app-card" style={{ padding: 12 }}>
-          <h2 className="app-h2">Game scoring</h2>
+          <h2 className="app-h2">Pisteet</h2>
           <div className="app-muted" style={{ marginBottom: 10 }}>
-            Save events → Finalize game (autosubs + formation rules) → leaderboard updates
+            Tallenna tulokset ja päätä kierros niin näet taulukon.
           </div>
 
           <div style={{ display: "grid", gap: 8, marginBottom: 12 }}>
             {fixtures.length > 0 && (
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <label style={{ minWidth: 70 }}>Fixture</label>
+                <label style={{ minWidth: 70 }}>Peli</label>
                 <select
                   className="app-btn"
                   value={selectedGameId ?? ""}
@@ -516,7 +513,7 @@ export default function AdminPortal() {
                   }}
                   style={{ flex: 1 }}
                 >
-                  <option value="">Select…</option>
+                  <option value="">Valitse…</option>
                   {fixtures
                     .slice()
                     .sort((a, b) => a.id - b.id)
@@ -530,10 +527,10 @@ export default function AdminPortal() {
             )}
 
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <label style={{ minWidth: 70 }}>gameId</label>
+              <label style={{ minWidth: 70 }}>peliId</label>
               <input
                 className="app-btn"
-                placeholder="Type gameId (e.g. 1)"
+                placeholder="Type gameId"
                 value={manualGameId}
                 onChange={(e) => {
                   setManualGameId(e.target.value);
@@ -548,7 +545,7 @@ export default function AdminPortal() {
                 disabled={!effectiveGameId}
                 onClick={() => effectiveGameId && loadGameEvents(effectiveGameId)}
               >
-                Load
+                Lataa
               </button>
               <button
                 className="app-btn"
@@ -561,7 +558,7 @@ export default function AdminPortal() {
                   setFinalizeStatus(null);
                 }}
               >
-                Clear
+                Tyhjennä
               </button>
             </div>
 
@@ -573,10 +570,10 @@ export default function AdminPortal() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
               <div style={{ border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: 10 }}>
                 <div style={{ fontWeight: 800, marginBottom: 8 }}>
-                  Home: {teamsById.get(selectedFixture.homeTeamId)?.name ?? selectedFixture.homeTeamId}
+                  Koti: {teamsById.get(selectedFixture.homeTeamId)?.name ?? selectedFixture.homeTeamId}
                 </div>
                 {homePlayers.length === 0 ? (
-                  <div className="app-muted">No players for this team.</div>
+                  <div className="app-muted">Ei pelaajia tälle joukkueelle.</div>
                 ) : (
                   <div style={{ display: "grid", gap: 8 }}>
                     {homePlayers.map((p) => (
@@ -588,10 +585,10 @@ export default function AdminPortal() {
 
               <div style={{ border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: 10 }}>
                 <div style={{ fontWeight: 800, marginBottom: 8 }}>
-                  Away: {teamsById.get(selectedFixture.awayTeamId)?.name ?? selectedFixture.awayTeamId}
+                  Vieras: {teamsById.get(selectedFixture.awayTeamId)?.name ?? selectedFixture.awayTeamId}
                 </div>
                 {awayPlayers.length === 0 ? (
-                  <div className="app-muted">No players for this team.</div>
+                  <div className="app-muted">Ei pelaajia tälle joukkueelle.</div>
                 ) : (
                   <div style={{ display: "grid", gap: 8 }}>
                     {awayPlayers.map((p) => (
@@ -606,9 +603,9 @@ export default function AdminPortal() {
           {/* If fixture missing, allow scoring “any players” (fallback) */}
           {!selectedFixture && (
             <div style={{ border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: 10, marginBottom: 12 }}>
-              <div style={{ fontWeight: 800, marginBottom: 8 }}>No fixture selected</div>
+              <div style={{ fontWeight: 800, marginBottom: 8 }}>Ei peliä valittuna</div>
               <div className="app-muted" style={{ marginBottom: 8 }}>
-                If you don’t have fixtures locally, you can still enter events for any players and save them for this gameId.
+                Jos sinulla ei ole paikallisia peliä, voit silti syöttää tapahtumia mille tahansa pelaajalle ja tallentaa ne tälle peliId:lle.
               </div>
 
               <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
@@ -629,7 +626,7 @@ export default function AdminPortal() {
 
               {filteredPlayers.length > 40 && (
                 <div className="app-muted" style={{ marginTop: 8 }}>
-                  Showing first 40 results. Narrow your search.
+                  Näytetään vain 40 ensimmäistä tulosta. Rajaa hakua nähdäksesi loput.
                 </div>
               )}
             </div>
@@ -641,7 +638,7 @@ export default function AdminPortal() {
               disabled={!effectiveGameId}
               onClick={() => effectiveGameId && saveGameEvents(effectiveGameId)}
             >
-              Save events
+              Tallenna
             </button>
 
             <button
@@ -650,7 +647,7 @@ export default function AdminPortal() {
               onClick={() => effectiveGameId && finalizeGame(effectiveGameId)}
               title="Computes official per-user points with autosubs + formation constraints and stores it in Redis."
             >
-              Finalize game
+              Päätä pelit
             </button>
 
             {saveStatus && <span className="app-muted">{saveStatus}</span>}
@@ -659,14 +656,14 @@ export default function AdminPortal() {
 
           {finalizeResults.length > 0 && (
             <div style={{ marginTop: 12 }}>
-              <h3 className="app-h2">Finalize results</h3>
+              <h3 className="app-h2">Päätetyt tulokset</h3>
               <div className="app-table-wrap">
                 <table className="app-table">
                   <thead>
                     <tr>
-                      <th>User</th>
-                      <th>Points</th>
-                      <th>Subs used</th>
+                      <th>Käyttäjä</th>
+                      <th>Pisteet</th>
+                      <th>Vaihdot käytetty</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -681,7 +678,7 @@ export default function AdminPortal() {
                 </table>
               </div>
               <div className="app-muted" style={{ marginTop: 6 }}>
-                These points are now saved per-user for this gameId.
+                Nämä pisteet on nyt tallennettu käyttäjäkohtaisesti tälle peliId:lle.
               </div>
             </div>
           )}

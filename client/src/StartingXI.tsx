@@ -388,8 +388,8 @@ export const StartingXI: FC<Props> = ({
                           e.stopPropagation();
                           removeFromBenchSlot(s.id);
                         }}
-                        aria-label="Remove player"
-                        title="Remove"
+                        aria-label="Poista pelaaja"
+                        title="Poista"
                       >
                         ×
                       </button>
@@ -428,7 +428,7 @@ export const StartingXI: FC<Props> = ({
 
         {!isValidBench() && (
           <div className="starting-xi-warning" role="alert" style={{ marginTop: 8 }}>
-            Penkki: valitse 1 maalivahti ja 3 kenttäpelaajaa.
+            Valitse 1 maalivahti ja 3 kenttäpelaajaa.
           </div>
         )}
       </div>
@@ -442,14 +442,6 @@ export const StartingXI: FC<Props> = ({
           <h2>Avauskokoonpano</h2>
 
           <div className="starting-xi-meta">
-            <div className="meta-pill">
-              XI: <b>{xiPlayers.length}</b>/11
-            </div>
-
-            <div className="meta-pill">
-              Penkki: <b>{benchPlayers.length}</b>/4
-            </div>
-
             <div className="meta-pill">
               Käytetty: <b>{totalValue.toFixed(1)}</b> / {budget} M
             </div>
@@ -477,10 +469,6 @@ export const StartingXI: FC<Props> = ({
             <div className="meta-pill">
               Jäljellä: <b>{remainingBudget.toFixed(1)}</b> M
             </div>
-
-            <div className="meta-pill">
-              3 / joukkue <span className="meta-sub">(max)</span>
-            </div>
           </div>
 
           {remainingBudget < 0 && (
@@ -491,7 +479,7 @@ export const StartingXI: FC<Props> = ({
 
           {!isValidXI() && (
             <div className="starting-xi-warning" role="alert">
-              Avaus ei ole kelvollinen. Täytä kaikki paikat.
+              Avaus ei ole kelvollinen.
             </div>
           )}
         </header>

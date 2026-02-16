@@ -24,7 +24,8 @@ const INITIAL_BUDGET = 100;
 export default function App() {
   // -------------------- STATE --------------------
   const [authChecked, setAuthChecked] = useState(false);
-
+  const [leaderboard, setLeaderboard] = useState<Array<{ username: string; points: number }>>([]);
+  const [loadingLb, setLoadingLb] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState<number | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
@@ -39,7 +40,7 @@ export default function App() {
   const [bench, setBench] = useState<Player[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const [teamViewTab, setTeamViewTab] = useState<'startingXI' | 'players'>('startingXI');
+  const [teamViewTab, setTeamViewTab] = useState<'startingXI' | 'players' | 'leaderboard'>('startingXI');
   const [filterTeamId, setFilterTeamId] = useState<number | null>(null);
   const [filterPositions, setFilterPositions] = useState<Set<'GK' | 'DEF' | 'MID' | 'FWD'>>(
     new Set(['GK', 'DEF', 'MID', 'FWD'])
@@ -147,6 +148,27 @@ export default function App() {
     };
   }, [isLoggedIn]);
 
+  useEffect(() => {
+  let cancelled = false;
+
+  async function loadLb() {
+    setLoadingLb(true);
+    try {
+      const res = await apiCall("/leaderboards", { method: "GET" });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!cancelled) setLeaderboard(data.rows ?? []);
+    } finally {
+      if (!cancelled) setLoadingLb(false);
+    }
+  }
+
+  if (isLoggedIn) loadLb();
+  return () => {
+    cancelled = true;
+  };
+}, [isLoggedIn]);
+
   // -------------------- LOAD SAVED TEAM AFTER PLAYERS --------------------
   useEffect(() => {
     let cancelled = false;
@@ -192,6 +214,37 @@ export default function App() {
       cancelled = true;
     };
   }, [isLoggedIn, players]);
+
+  useEffect(() => {
+  let cancelled = false;
+
+  async function loadLb() {
+    setLoadingLb(true);
+    try {
+      const res = await apiCall("/leaderboards", { method: "GET" });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!cancelled) setLeaderboard(data.rows ?? []);
+    } finally {
+      if (!cancelled) setLoadingLb(false);
+    }
+  }
+
+  if (isLoggedIn) loadLb();
+  return () => { cancelled = true; };
+}, [isLoggedIn]);
+
+async function loadLeaderboard() {
+  setLoadingLb(true);
+  try {
+    const res = await apiCall("/leaderboards", { method: "GET" });
+    if (!res.ok) return;
+    const data = await res.json();
+    setLeaderboard(data.rows ?? []);
+  } finally {
+    setLoadingLb(false);
+  }
+}
 
   // -------------------- HELPERS --------------------
   const totalValue = () => selected.reduce((sum, p) => sum + p.value, 0);
@@ -310,7 +363,7 @@ export default function App() {
                     className={`app-btn ${teamViewTab === 'startingXI' ? 'app-btn-active' : ''}`}
                     onClick={() => setTeamViewTab('startingXI')}
                   >
-                    Avauskokoonpano & penkki
+                    Kokoonpano
                   </button>
                   <button
                     className={`app-btn ${teamViewTab === 'players' ? 'app-btn-active' : ''}`}
@@ -318,6 +371,16 @@ export default function App() {
                   >
                     Pelaajat
                   </button>
+                  <button
+  className={`app-btn ${teamViewTab === 'leaderboard' ? 'app-btn-active' : ''}`}
+  onClick={() => {
+    setTeamViewTab('leaderboard');
+    loadLeaderboard();
+  }}
+>
+  Tulostaulu
+</button>
+
                 </div>
               </div>
 
@@ -474,7 +537,7 @@ export default function App() {
       <nav>
         <div className="nav-left">
           <button className={page === 'admin' ? 'active' : undefined} onClick={() => setPage('admin')}>
-            Admin Portal
+            Admin hallintapaneeli
           </button>
         </div>
         <div className="nav-right">
