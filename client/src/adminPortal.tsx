@@ -1,5 +1,4 @@
-// src/adminPortal.tsx
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { apiCall } from "./api";
 
 type Position = "GK" | "DEF" | "MID" | "FWD";
@@ -24,19 +23,21 @@ type Fixture = {
   date: string; // ISO
 };
 
+type MinutesBucket = "0" | "1_59" | "60+";
+
 type PlayerEventInput = {
-  minutes: "0" | "1_59" | "60+";
+  minutes: MinutesBucket;
   goals: number;
   assists: number;
   cleanSheet: boolean;
   penMissed: number;
-  penSaved: number; // GK only
+  penSaved: number;
   yellow: number;
   red: number;
   ownGoals: number;
 };
 
-const DEFAULT_EVENTS: PlayerEventInput = {
+const DEFAULT_EVENT: PlayerEventInput = {
   minutes: "0",
   goals: 0,
   assists: 0,
@@ -48,693 +49,641 @@ const DEFAULT_EVENTS: PlayerEventInput = {
   ownGoals: 0,
 };
 
-function toInt(v: string) {
+// same as api/lib/scoring.ts so admin sees the same points preview
+function calcPoints(pos: Position, ev: PlayerEventInput): number {
+  let pts = 0;
+
+  if (ev.minutes === "1_59") pts += 1;
+  if (ev.minutes === "60+") pts += 2;
+
+  if (ev.goals > 0) {
+    if (pos === "GK") pts += ev.goals * 10;
+    else if (pos === "DEF") pts += ev.goals * 6;
+    else if (pos === "MID") pts += ev.goals * 5;
+    else pts += ev.goals * 4;
+  }
+
+  pts += ev.assists * 3;
+
+  if (ev.cleanSheet) {
+    if (pos === "GK" || pos === "DEF") pts += 4;
+    else if (pos === "MID") pts += 1;
+  }
+
+  if (pos === "GK") pts += ev.penSaved * 3;
+  pts += ev.penMissed * -2;
+
+  pts += ev.yellow * -1;
+  pts += ev.red * -3;
+  pts += ev.ownGoals * -2;
+
+  return pts;
+}
+
+function toInt(v: string): number {
   const n = Number(v);
   if (!Number.isFinite(n)) return 0;
   return Math.max(0, Math.trunc(n));
 }
 
-function calcPoints(pos: Position, e: PlayerEventInput): number {
-  let pts = 0;
-
-  // Minutes Played: played in game = 2pts (we keep 2pts for 1–59 and 60+)
-  if (e.minutes === "1_59" || e.minutes === "60+") pts += 2;
-
-  // Goals
-  const goalPts = pos === "GK" ? 10 : pos === "DEF" ? 6 : pos === "MID" ? 5 : 4;
-  pts += e.goals * goalPts;
-
-  // Assists
-  pts += e.assists * 3;
-
-  // Clean sheets
-  if (e.cleanSheet) {
-    if (pos === "GK" || pos === "DEF") pts += 4;
-    else if (pos === "MID") pts += 1;
-  }
-
-  // Penalties
-  pts += e.penMissed * -2;
-  if (pos === "GK") pts += e.penSaved * 3;
-
-  // Discipline / misc
-  pts += e.yellow * -1;
-  pts += e.red * -3;
-  pts += e.ownGoals * -2;
-
-  return pts;
-}
-
-function formatFiDate(iso: string) {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString("fi-FI", {
-    weekday: "short",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+function fmtFixture(f: Fixture, teamsById: Map<number, Team>) {
+  const home = teamsById.get(f.homeTeamId)?.name ?? `#${f.homeTeamId}`;
+  const away = teamsById.get(f.awayTeamId)?.name ?? `#${f.awayTeamId}`;
+  const d = new Date(f.date);
+  const dateStr = isNaN(d.getTime()) ? f.date : d.toLocaleString();
+  return `${f.id} — ${home} vs ${away} — ${dateStr}`;
 }
 
 export default function AdminPortal() {
-  const [tab, setTab] = useState<"players" | "fixtures" | "points">("players");
+  const [tab, setTab] = useState<"players" | "fixtures" | "score">("players");
 
   const [players, setPlayers] = useState<Player[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
+  const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
+
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
+  const [fixturesErr, setFixturesErr] = useState<string | null>(null);
 
-  const [loading, setLoading] = useState(true);
-  const [fixturesError, setFixturesError] = useState<string | null>(null);
-  const [playersError, setPlayersError] = useState<string | null>(null);
+  const [loadingBase, setLoadingBase] = useState(false);
 
-  // Players tab: search + filters
-  const [playerQ, setPlayerQ] = useState("");
-  const [playerTeamId, setPlayerTeamId] = useState<number | "all">("all");
-  const [playerPos, setPlayerPos] = useState<Position | "all">("all");
-
-  // Fixtures tab: search
-  const [fixtureQ, setFixtureQ] = useState("");
-
-  // Points tab: selected fixture + editor state
+  // scoring state
   const [selectedGameId, setSelectedGameId] = useState<number | null>(null);
-  const [eventsByPlayerId, setEventsByPlayerId] = useState<Record<number, PlayerEventInput>>({});
-  const [manualPointsByPlayerId, setManualPointsByPlayerId] = useState<Record<number, string>>({});
+  const [manualGameId, setManualGameId] = useState<string>("");
 
-  const [pointsLoading, setPointsLoading] = useState(false);
-  const [pointsError, setPointsError] = useState<string | null>(null);
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [events, setEvents] = useState<Record<string, PlayerEventInput>>({});
+  const [loadEventsStatus, setLoadEventsStatus] = useState<string | null>(null);
+  const [saveStatus, setSaveStatus] = useState<string | null>(null);
+  const [finalizeStatus, setFinalizeStatus] = useState<string | null>(null);
+  const [finalizeResults, setFinalizeResults] = useState<
+    Array<{ username: string; points: number; subsUsed: number[] }>
+  >([]);
 
-  const teamNameById = useMemo(() => {
-    const m = new Map<number, string>();
-    for (const t of teams) m.set(t.id, t.name);
-    return m;
-  }, [teams]);
+  // player search
+  const [playerSearch, setPlayerSearch] = useState("");
 
-  const fixturesById = useMemo(() => {
-    const m = new Map<number, Fixture>();
-    for (const f of fixtures) m.set(f.id, f);
-    return m;
-  }, [fixtures]);
-
-  const selectedFixture = useMemo(() => {
-    if (!selectedGameId) return null;
-    return fixturesById.get(selectedGameId) ?? null;
-  }, [fixturesById, selectedGameId]);
-
-  const selectedTeams = useMemo(() => {
-    if (!selectedFixture) return null;
-    const home = teamNameById.get(selectedFixture.homeTeamId) ?? String(selectedFixture.homeTeamId);
-    const away = teamNameById.get(selectedFixture.awayTeamId) ?? String(selectedFixture.awayTeamId);
-    return { home, away };
-  }, [selectedFixture, teamNameById]);
-
-  const playersInSelectedGame = useMemo(() => {
-    if (!selectedFixture) return [];
-    return players
-      .filter((p) => p.teamId === selectedFixture.homeTeamId || p.teamId === selectedFixture.awayTeamId)
-      .sort((a, b) => {
-        // GK, DEF, MID, FWD ordering-ish
-        const order: Record<Position, number> = { GK: 0, DEF: 1, MID: 2, FWD: 3 };
-        const o = order[a.position] - order[b.position];
-        if (o !== 0) return o;
-        return a.name.localeCompare(b.name);
-      });
-  }, [players, selectedFixture]);
-
-  function setPlayerEvent(pid: number, patch: Partial<PlayerEventInput>) {
-    setEventsByPlayerId((prev) => ({
-      ...prev,
-      [pid]: { ...(prev[pid] ?? DEFAULT_EVENTS), ...patch },
-    }));
-  }
-
-  // ---- initial load (players/teams/fixtures)
+  // load players + teams
   useEffect(() => {
     let cancelled = false;
 
-    async function loadAll() {
-      setLoading(true);
-      setPlayersError(null);
-      setFixturesError(null);
-
+    async function load() {
+      setLoadingBase(true);
       try {
-        const [pRes, tRes, fRes] = await Promise.all([
-          apiCall("/players", { method: "GET" }),
-          apiCall("/teams", { method: "GET" }),
-          apiCall("/admin/fixtures", { method: "GET" }),
-        ]);
-
+        const [pRes, tRes] = await Promise.all([apiCall("/players"), apiCall("/teams")]);
         if (!pRes.ok) throw new Error("Failed to load players");
         if (!tRes.ok) throw new Error("Failed to load teams");
-        if (!fRes.ok) {
-          const j = await fRes.json().catch(() => ({}));
-          const msg = (j as any)?.error || "Failed to load fixtures (admin)";
-          throw new Error(msg);
-        }
-
         const p = (await pRes.json()) as Player[];
         const t = (await tRes.json()) as Team[];
-        const fj = (await fRes.json()) as { fixtures: Fixture[] };
-
         if (cancelled) return;
         setPlayers(p);
         setTeams(t);
-        setFixtures(Array.isArray(fj?.fixtures) ? fj.fixtures : []);
       } catch (e) {
-        const msg = e instanceof Error ? e.message : "Load failed";
-        if (!cancelled) {
-          // Split message if possible
-          if (msg.toLowerCase().includes("fixture")) setFixturesError(msg);
-          else setPlayersError(msg);
-        }
+        if (!cancelled) setFixturesErr(e instanceof Error ? e.message : "Failed to load base data");
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setLoadingBase(false);
       }
     }
 
-    loadAll();
+    load();
     return () => {
       cancelled = true;
     };
   }, []);
 
-  // ---- when selecting a game, load saved totals
+  // load fixtures (optional)
   useEffect(() => {
     let cancelled = false;
 
-    async function loadPoints() {
-      if (!selectedGameId) return;
-
-      setPointsLoading(true);
-      setPointsError(null);
-      setSaveStatus("idle");
-
+    async function loadFx() {
+      setFixturesErr(null);
       try {
-        const res = await apiCall(`/admin/game-points?gameId=${encodeURIComponent(String(selectedGameId))}`, {
-          method: "GET",
-        });
-
+        const res = await apiCall("/admin/fixtures", { method: "GET" });
         if (!res.ok) {
-          const j = await res.json().catch(() => ({}));
-          throw new Error((j as any)?.error || "Failed to load points");
+          // not fatal, user can type gameId manually
+          throw new Error("Failed to load fixtures (admin)");
         }
-
-        const j = (await res.json()) as { gameId: number; points: Record<string, number> };
-        if (cancelled) return;
-
-        const saved = j?.points ?? {};
-        const manual: Record<number, string> = {};
-        for (const [pidStr, pts] of Object.entries(saved)) {
-          const pid = Number(pidStr);
-          if (Number.isInteger(pid)) manual[pid] = String(pts);
-        }
-
-        // We only saved totals -> can't rebuild events reliably
-        // So: start fresh events, and prefill Manual from saved totals.
-        setEventsByPlayerId({});
-        setManualPointsByPlayerId(manual);
+        const json = await res.json();
+        const fx = (json.fixtures ?? []) as Fixture[];
+        if (!cancelled) setFixtures(fx);
       } catch (e) {
-        if (!cancelled) setPointsError(e instanceof Error ? e.message : "Failed to load points");
-      } finally {
-        if (!cancelled) setPointsLoading(false);
+        if (!cancelled) setFixturesErr(e instanceof Error ? e.message : "Failed to load fixtures");
       }
     }
 
-    loadPoints();
+    loadFx();
     return () => {
       cancelled = true;
     };
-  }, [selectedGameId]);
+  }, []);
 
-  async function saveGamePoints() {
-    if (!selectedGameId) return;
+  const selectedFixture = useMemo(() => {
+    if (!selectedGameId) return null;
+    return fixtures.find((f) => f.id === selectedGameId) ?? null;
+  }, [fixtures, selectedGameId]);
 
-    setSaveStatus("saving");
-    setPointsError(null);
+  const effectiveGameId = useMemo(() => {
+    if (selectedGameId) return selectedGameId;
+    const n = Number(manualGameId);
+    if (Number.isInteger(n) && n > 0) return n;
+    return null;
+  }, [selectedGameId, manualGameId]);
 
-    const points: Record<string, number> = {};
+  const homeTeamId = selectedFixture?.homeTeamId ?? null;
+  const awayTeamId = selectedFixture?.awayTeamId ?? null;
 
-    for (const p of playersInSelectedGame) {
-      const ev = eventsByPlayerId[p.id] ?? DEFAULT_EVENTS;
-      const autoTotal = calcPoints(p.position, ev);
+  const homePlayers = useMemo(() => {
+    if (!homeTeamId) return [];
+    return players.filter((p) => p.teamId === homeTeamId).sort((a, b) => a.name.localeCompare(b.name));
+  }, [players, homeTeamId]);
 
-      const manualStr = manualPointsByPlayerId[p.id] ?? "";
-      const manualNum = manualStr.trim() === "" ? null : Number(manualStr);
-
-      const final = manualNum != null && Number.isFinite(manualNum) ? Math.trunc(manualNum) : autoTotal;
-
-      // Save only if non-zero (optional). If you want to save zeros too, remove this.
-      if (final !== 0) points[String(p.id)] = final;
-    }
-
-    try {
-      const res = await apiCall("/admin/game-points", {
-        method: "POST",
-        body: JSON.stringify({ gameId: selectedGameId, points }),
-      });
-
-      if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        throw new Error((j as any)?.error || "Save failed");
-      }
-
-      setSaveStatus("saved");
-      window.setTimeout(() => setSaveStatus("idle"), 1200);
-    } catch (e) {
-      setSaveStatus("idle");
-      setPointsError(e instanceof Error ? e.message : "Save failed");
-    }
-  }
+  const awayPlayers = useMemo(() => {
+    if (!awayTeamId) return [];
+    return players.filter((p) => p.teamId === awayTeamId).sort((a, b) => a.name.localeCompare(b.name));
+  }, [players, awayTeamId]);
 
   const filteredPlayers = useMemo(() => {
-    const q = playerQ.trim().toLowerCase();
-    return players
-      .filter((p) => {
-        if (playerTeamId !== "all" && p.teamId !== playerTeamId) return false;
-        if (playerPos !== "all" && p.position !== playerPos) return false;
-        if (q) {
-          const teamName = teamNameById.get(p.teamId) ?? "";
-          const hay = `${p.name} ${teamName} ${p.position}`.toLowerCase();
-          if (!hay.includes(q)) return false;
-        }
-        return true;
-      })
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [players, playerQ, playerTeamId, playerPos, teamNameById]);
+    const q = playerSearch.trim().toLowerCase();
+    if (!q) return players;
+    return players.filter((p) => p.name.toLowerCase().includes(q));
+  }, [players, playerSearch]);
 
-  const filteredFixtures = useMemo(() => {
-    const q = fixtureQ.trim().toLowerCase();
-    return fixtures
-      .filter((f) => {
-        if (!q) return true;
-        const home = teamNameById.get(f.homeTeamId) ?? String(f.homeTeamId);
-        const away = teamNameById.get(f.awayTeamId) ?? String(f.awayTeamId);
-        const hay = `${f.id} ${home} ${away} ${formatFiDate(f.date)}`.toLowerCase();
-        return hay.includes(q);
-      })
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [fixtures, fixtureQ, teamNameById]);
+  async function loadGameEvents(gameId: number) {
+    setLoadEventsStatus(null);
+    setSaveStatus(null);
+    setFinalizeStatus(null);
+    setFinalizeResults([]);
 
-  const pointsSummary = useMemo(() => {
-    if (!selectedFixture) return { autoSum: 0, manualCount: 0 };
-
-    let sum = 0;
-    let manualCount = 0;
-
-    for (const p of playersInSelectedGame) {
-      const ev = eventsByPlayerId[p.id] ?? DEFAULT_EVENTS;
-      const autoTotal = calcPoints(p.position, ev);
-
-      const manualStr = manualPointsByPlayerId[p.id] ?? "";
-      const manualNum = manualStr.trim() === "" ? null : Number(manualStr);
-
-      const final = manualNum != null && Number.isFinite(manualNum) ? Math.trunc(manualNum) : autoTotal;
-      if (manualNum != null && Number.isFinite(manualNum)) manualCount++;
-      sum += final;
+    try {
+      setLoadEventsStatus("Loading saved events…");
+      const res = await apiCall(`/admin/game-events?gameId=${encodeURIComponent(String(gameId))}`, { method: "GET" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as any).error || "Failed to load game events");
+      }
+      const data = await res.json();
+      setEvents(data.events ?? {});
+      setLoadEventsStatus("Loaded.");
+      setTimeout(() => setLoadEventsStatus(null), 1000);
+    } catch (e) {
+      setLoadEventsStatus(e instanceof Error ? e.message : "Failed to load events");
     }
-
-    return { autoSum: sum, manualCount };
-  }, [selectedFixture, playersInSelectedGame, eventsByPlayerId, manualPointsByPlayerId]);
-
-  if (loading) {
-    return <div className="app-muted" style={{ padding: 16 }}>Loading admin…</div>;
   }
 
-  return (
-    <div>
-      <div className="app-section-header" style={{ marginBottom: 12 }}>
-        <div className="app-actions">
-          <button className={`app-btn ${tab === "players" ? "app-btn-active" : ""}`} onClick={() => setTab("players")}>
-            Players
-          </button>
-          <button className={`app-btn ${tab === "fixtures" ? "app-btn-active" : ""}`} onClick={() => setTab("fixtures")}>
-            Fixtures
-          </button>
-          <button className={`app-btn ${tab === "points" ? "app-btn-active" : ""}`} onClick={() => setTab("points")}>
-            Game points
-          </button>
+  async function saveGameEvents(gameId: number) {
+    setSaveStatus(null);
+    try {
+      setSaveStatus("Saving…");
+      const res = await apiCall("/admin/game-events", {
+        method: "POST",
+        body: JSON.stringify({ gameId, events }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as any).error || "Failed to save events");
+      }
+      setSaveStatus("Saved ✅");
+      setTimeout(() => setSaveStatus(null), 1200);
+    } catch (e) {
+      setSaveStatus(e instanceof Error ? e.message : "Failed to save events");
+    }
+  }
+
+  async function finalizeGame(gameId: number) {
+    setFinalizeStatus(null);
+    try {
+      setFinalizeStatus("Finalizing (autosubs + formation rules)…");
+      const res = await apiCall("/admin/finalize-game", {
+        method: "POST",
+        body: JSON.stringify({ gameId }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as any).error || "Failed to finalize game");
+      }
+      const data = await res.json();
+      setFinalizeResults(data.results ?? []);
+      setFinalizeStatus("Finalized ✅");
+      setTimeout(() => setFinalizeStatus(null), 1500);
+    } catch (e) {
+      setFinalizeStatus(e instanceof Error ? e.message : "Failed to finalize");
+    }
+  }
+
+  function getEv(pid: number): PlayerEventInput {
+    return events[String(pid)] ?? DEFAULT_EVENT;
+  }
+
+  function setEv(pid: number, next: PlayerEventInput) {
+    setEvents((prev) => ({ ...prev, [String(pid)]: next }));
+  }
+
+  const EventRow = ({ p }: { p: Player }) => {
+    const ev = getEv(p.id);
+    const pts = calcPoints(p.position, ev);
+
+    return (
+      <div className="admin-row" style={{ display: "grid", gridTemplateColumns: "1.2fr 0.7fr 1.1fr 1fr", gap: 8, alignItems: "center", padding: "8px 0", borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {p.name}
+          </div>
+          <div style={{ fontSize: 12, opacity: 0.75 }}>
+            {teamsById.get(p.teamId)?.name ?? p.teamId} — {p.position}
+          </div>
+        </div>
+
+        <div>
+          <label style={{ fontSize: 12, opacity: 0.75 }}>Minutes</label>
+          <select
+            className="app-btn"
+            value={ev.minutes}
+            onChange={(e) => setEv(p.id, { ...ev, minutes: e.target.value as MinutesBucket })}
+            style={{ width: "100%" }}
+          >
+            <option value="0">0</option>
+            <option value="1_59">1–59</option>
+            <option value="60+">60+</option>
+          </select>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
+          <div>
+            <label style={{ fontSize: 12, opacity: 0.75 }}>G</label>
+            <input
+              className="app-btn"
+              value={String(ev.goals)}
+              onChange={(e) => setEv(p.id, { ...ev, goals: toInt(e.target.value) })}
+              style={{ width: "100%" }}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, opacity: 0.75 }}>A</label>
+            <input
+              className="app-btn"
+              value={String(ev.assists)}
+              onChange={(e) => setEv(p.id, { ...ev, assists: toInt(e.target.value) })}
+              style={{ width: "100%" }}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, opacity: 0.75 }}>YC</label>
+            <input
+              className="app-btn"
+              value={String(ev.yellow)}
+              onChange={(e) => setEv(p.id, { ...ev, yellow: toInt(e.target.value) })}
+              style={{ width: "100%" }}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, opacity: 0.75 }}>RC</label>
+            <input
+              className="app-btn"
+              value={String(ev.red)}
+              onChange={(e) => setEv(p.id, { ...ev, red: toInt(e.target.value) })}
+              style={{ width: "100%" }}
+            />
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr) 0.9fr", gap: 6, alignItems: "end" }}>
+          <div>
+            <label style={{ fontSize: 12, opacity: 0.75 }}>CS</label>
+            <input
+              type="checkbox"
+              checked={ev.cleanSheet}
+              onChange={(e) => setEv(p.id, { ...ev, cleanSheet: e.target.checked })}
+              style={{ width: 18, height: 18 }}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, opacity: 0.75 }}>OG</label>
+            <input
+              className="app-btn"
+              value={String(ev.ownGoals)}
+              onChange={(e) => setEv(p.id, { ...ev, ownGoals: toInt(e.target.value) })}
+              style={{ width: "100%" }}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, opacity: 0.75 }}>PM</label>
+            <input
+              className="app-btn"
+              value={String(ev.penMissed)}
+              onChange={(e) => setEv(p.id, { ...ev, penMissed: toInt(e.target.value) })}
+              style={{ width: "100%" }}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, opacity: 0.75 }}>PS</label>
+            <input
+              className="app-btn"
+              value={String(ev.penSaved)}
+              onChange={(e) => setEv(p.id, { ...ev, penSaved: toInt(e.target.value) })}
+              style={{ width: "100%" }}
+            />
+          </div>
+
+          <div style={{ gridColumn: "1 / -1", textAlign: "right", fontWeight: 700 }}>
+            {pts} pts
+          </div>
         </div>
       </div>
+    );
+  };
 
-      {(playersError || fixturesError) && (
-        <div className="app-alert" style={{ marginBottom: 12 }}>
-          {playersError || fixturesError}
-        </div>
-      )}
+  return (
+    <div style={{ display: "grid", gap: 12 }}>
+      <div className="app-actions">
+        <button className={`app-btn ${tab === "players" ? "app-btn-active" : ""}`} onClick={() => setTab("players")}>
+          Players
+        </button>
+        <button className={`app-btn ${tab === "fixtures" ? "app-btn-active" : ""}`} onClick={() => setTab("fixtures")}>
+          Fixtures
+        </button>
+        <button className={`app-btn ${tab === "score" ? "app-btn-active" : ""}`} onClick={() => setTab("score")}>
+          Game scoring
+        </button>
+      </div>
+
+      {loadingBase && <div className="app-muted">Loading admin data…</div>}
 
       {tab === "players" && (
         <div className="app-card" style={{ padding: 12 }}>
           <h2 className="app-h2">Players</h2>
-
-          <div className="filter-group" style={{ marginTop: 10 }}>
-            <div className="filter-row">
-              <label>Search:</label>
-              <input
-                className="app-btn"
-                style={{ width: 260 }}
-                value={playerQ}
-                onChange={(e) => setPlayerQ(e.target.value)}
-                placeholder="name / team / position"
-              />
-            </div>
-
-            <div className="filter-row">
-              <label>Team:</label>
-              <select
-                className="app-btn"
-                value={playerTeamId === "all" ? "" : String(playerTeamId)}
-                onChange={(e) => setPlayerTeamId(e.target.value ? Number(e.target.value) : "all")}
-              >
-                <option value="">All</option>
-                {teams.map((t) => (
-                  <option key={t.id} value={t.id}>{t.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="filter-row">
-              <label>Position:</label>
-              <select
-                className="app-btn"
-                value={playerPos === "all" ? "" : playerPos}
-                onChange={(e) => setPlayerPos(e.target.value ? (e.target.value as any) : "all")}
-              >
-                <option value="">All</option>
-                <option value="GK">GK</option>
-                <option value="DEF">DEF</option>
-                <option value="MID">MID</option>
-                <option value="FWD">FWD</option>
-              </select>
-            </div>
+          <div className="app-muted" style={{ marginBottom: 8 }}>
+            Search + quick view
           </div>
 
-          <div className="app-table-wrap" style={{ marginTop: 12 }}>
+          <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+            <input
+              className="app-btn"
+              placeholder="Search player…"
+              value={playerSearch}
+              onChange={(e) => setPlayerSearch(e.target.value)}
+              style={{ flex: 1 }}
+            />
+          </div>
+
+          <div className="app-table-wrap">
             <table className="app-table">
               <thead>
                 <tr>
                   <th>Name</th>
-                  <th>Team</th>
                   <th>Pos</th>
+                  <th>Team</th>
                   <th>Value</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredPlayers.map((p) => (
+                {filteredPlayers.slice(0, 200).map((p) => (
                   <tr key={p.id}>
                     <td>{p.name}</td>
-                    <td>{teamNameById.get(p.teamId) ?? ""}</td>
                     <td>{p.position}</td>
+                    <td>{teamsById.get(p.teamId)?.name ?? p.teamId}</td>
                     <td>{p.value.toFixed(1)} M</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+
+          {filteredPlayers.length > 200 && (
+            <div className="app-muted" style={{ marginTop: 8 }}>
+              Showing first 200 results (narrow your search to see more).
+            </div>
+          )}
         </div>
       )}
 
       {tab === "fixtures" && (
         <div className="app-card" style={{ padding: 12 }}>
           <h2 className="app-h2">Fixtures</h2>
+          {fixturesErr && <div className="app-alert">{fixturesErr}</div>}
 
-          <div className="filter-row" style={{ marginTop: 10 }}>
-            <label>Search:</label>
-            <input
-              className="app-btn"
-              style={{ width: 340 }}
-              value={fixtureQ}
-              onChange={(e) => setFixtureQ(e.target.value)}
-              placeholder="team / date / id"
-            />
-          </div>
-
-          <div className="app-table-wrap" style={{ marginTop: 12 }}>
-            <table className="app-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Date</th>
-                  <th>Match</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredFixtures.map((f) => {
-                  const home = teamNameById.get(f.homeTeamId) ?? String(f.homeTeamId);
-                  const away = teamNameById.get(f.awayTeamId) ?? String(f.awayTeamId);
-                  const isSel = selectedGameId === f.id;
-
-                  return (
-                    <tr key={f.id} className={isSel ? "app-row-selected" : undefined}>
+          {fixtures.length === 0 ? (
+            <div className="app-muted">
+              No fixtures loaded. If you don’t have <code>/api/admin/fixtures</code> yet, you can still use “Game scoring”
+              tab and type a gameId manually.
+            </div>
+          ) : (
+            <div className="app-table-wrap">
+              <table className="app-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Match</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {fixtures.slice().sort((a, b) => a.id - b.id).map((f) => (
+                    <tr key={f.id}>
                       <td>{f.id}</td>
-                      <td>{formatFiDate(f.date)}</td>
-                      <td>{home} – {away}</td>
                       <td>
-                        <button
-                          className="app-btn app-btn-primary"
-                          onClick={() => {
-                            setSelectedGameId(f.id);
-                            setTab("points");
-                          }}
-                        >
-                          Add points
-                        </button>
+                        {teamsById.get(f.homeTeamId)?.name ?? f.homeTeamId} vs{" "}
+                        {teamsById.get(f.awayTeamId)?.name ?? f.awayTeamId}
                       </td>
+                      <td>{new Date(f.date).toLocaleString()}</td>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
-      {tab === "points" && (
+      {tab === "score" && (
         <div className="app-card" style={{ padding: 12 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 12 }}>
-            <div>
-              <h2 className="app-h2">Game points</h2>
-              <div className="app-muted">
-                Select a fixture, then fill events. Total is calculated automatically.
-                You can override totals in “Manual” if needed.
-              </div>
-            </div>
-
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <label className="app-muted">Fixture:</label>
-              <select
-                className="app-btn"
-                value={selectedGameId ?? ""}
-                onChange={(e) => setSelectedGameId(e.target.value ? Number(e.target.value) : null)}
-              >
-                <option value="">Select…</option>
-                {fixtures
-                  .slice()
-                  .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-                  .map((f) => {
-                    const home = teamNameById.get(f.homeTeamId) ?? String(f.homeTeamId);
-                    const away = teamNameById.get(f.awayTeamId) ?? String(f.awayTeamId);
-                    return (
-                      <option key={f.id} value={f.id}>
-                        #{f.id} {home}–{away} ({formatFiDate(f.date)})
-                      </option>
-                    );
-                  })}
-              </select>
-
-              <button
-                className="app-btn app-btn-primary"
-                onClick={saveGamePoints}
-                disabled={!selectedGameId || pointsLoading || saveStatus === "saving"}
-                title={!selectedGameId ? "Select fixture first" : undefined}
-              >
-                {saveStatus === "saving" ? "Saving…" : saveStatus === "saved" ? "Saved ✓" : "Save"}
-              </button>
-            </div>
+          <h2 className="app-h2">Game scoring</h2>
+          <div className="app-muted" style={{ marginBottom: 10 }}>
+            Save events → Finalize game (autosubs + formation rules) → leaderboard updates
           </div>
 
-          {pointsError && <div className="app-alert" style={{ marginTop: 12 }}>{pointsError}</div>}
+          <div style={{ display: "grid", gap: 8, marginBottom: 12 }}>
+            {fixtures.length > 0 && (
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <label style={{ minWidth: 70 }}>Fixture</label>
+                <select
+                  className="app-btn"
+                  value={selectedGameId ?? ""}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    const id = v ? Number(v) : null;
+                    setSelectedGameId(id);
+                    setManualGameId("");
+                    setEvents({});
+                    setFinalizeResults([]);
+                  }}
+                  style={{ flex: 1 }}
+                >
+                  <option value="">Select…</option>
+                  {fixtures
+                    .slice()
+                    .sort((a, b) => a.id - b.id)
+                    .map((f) => (
+                      <option key={f.id} value={f.id}>
+                        {fmtFixture(f, teamsById)}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            )}
 
-          {!selectedFixture ? (
-            <div className="app-muted" style={{ marginTop: 12 }}>
-              Pick a fixture from the dropdown (or from the Fixtures tab).
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <label style={{ minWidth: 70 }}>gameId</label>
+              <input
+                className="app-btn"
+                placeholder="Type gameId (e.g. 1)"
+                value={manualGameId}
+                onChange={(e) => {
+                  setManualGameId(e.target.value);
+                  setSelectedGameId(null);
+                  setEvents({});
+                  setFinalizeResults([]);
+                }}
+                style={{ flex: 1 }}
+              />
+              <button
+                className="app-btn app-btn-primary"
+                disabled={!effectiveGameId}
+                onClick={() => effectiveGameId && loadGameEvents(effectiveGameId)}
+              >
+                Load
+              </button>
+              <button
+                className="app-btn"
+                disabled={!effectiveGameId}
+                onClick={() => {
+                  setEvents({});
+                  setFinalizeResults([]);
+                  setLoadEventsStatus(null);
+                  setSaveStatus(null);
+                  setFinalizeStatus(null);
+                }}
+              >
+                Clear
+              </button>
             </div>
-          ) : (
-            <>
-              <div style={{ marginTop: 10 }} className="app-muted">
-                <b>
-                  #{selectedFixture.id} {selectedTeams?.home} – {selectedTeams?.away}
-                </b>{" "}
-                • {formatFiDate(selectedFixture.date)} • Players: {playersInSelectedGame.length} • Manual overrides:{" "}
-                {pointsSummary.manualCount} • Sum of saved totals: <b>{pointsSummary.autoSum}</b>
+
+            {loadEventsStatus && <div className="app-muted">{loadEventsStatus}</div>}
+          </div>
+
+          {/* If we have a fixture, show split home/away input */}
+          {selectedFixture && (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+              <div style={{ border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: 10 }}>
+                <div style={{ fontWeight: 800, marginBottom: 8 }}>
+                  Home: {teamsById.get(selectedFixture.homeTeamId)?.name ?? selectedFixture.homeTeamId}
+                </div>
+                {homePlayers.length === 0 ? (
+                  <div className="app-muted">No players for this team.</div>
+                ) : (
+                  <div style={{ display: "grid", gap: 8 }}>
+                    {homePlayers.map((p) => (
+                      <EventRow key={p.id} p={p} />
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {pointsLoading ? (
-                <div className="app-muted" style={{ marginTop: 12 }}>Loading saved points…</div>
-              ) : (
-                <div className="app-table-wrap" style={{ marginTop: 12 }}>
-                  <table className="app-table">
-                    <thead>
-                      <tr>
-                        <th>Pelaaja</th>
-                        <th>Joukkue</th>
-                        <th>Pos</th>
-                        <th>Min</th>
-                        <th>G</th>
-                        <th>A</th>
-                        <th>CS</th>
-                        <th>PM</th>
-                        <th>PS</th>
-                        <th>Y</th>
-                        <th>R</th>
-                        <th>OG</th>
-                        <th>Total</th>
-                        <th style={{ width: 130 }}>Manual</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {playersInSelectedGame.map((p) => {
-                        const tName = teamNameById.get(p.teamId) ?? "";
-                        const ev = eventsByPlayerId[p.id] ?? DEFAULT_EVENTS;
-
-                        const autoTotal = calcPoints(p.position, ev);
-
-                        const manualStr = manualPointsByPlayerId[p.id] ?? "";
-                        const manualNum = manualStr.trim() === "" ? null : Number(manualStr);
-
-                        const finalToShow =
-                          manualNum != null && Number.isFinite(manualNum) ? Math.trunc(manualNum) : autoTotal;
-
-                        return (
-                          <tr key={p.id}>
-                            <td>{p.name}</td>
-                            <td>{tName}</td>
-                            <td>{p.position}</td>
-
-                            <td>
-                              <select
-                                className="app-btn"
-                                value={ev.minutes}
-                                onChange={(e) => setPlayerEvent(p.id, { minutes: e.target.value as any })}
-                              >
-                                <option value="0">0</option>
-                                <option value="1_59">1–59</option>
-                                <option value="60+">60+</option>
-                              </select>
-                            </td>
-
-                            <td>
-                              <input
-                                className="app-btn"
-                                style={{ width: 58 }}
-                                inputMode="numeric"
-                                value={String(ev.goals)}
-                                onChange={(e) => setPlayerEvent(p.id, { goals: toInt(e.target.value) })}
-                              />
-                            </td>
-
-                            <td>
-                              <input
-                                className="app-btn"
-                                style={{ width: 58 }}
-                                inputMode="numeric"
-                                value={String(ev.assists)}
-                                onChange={(e) => setPlayerEvent(p.id, { assists: toInt(e.target.value) })}
-                              />
-                            </td>
-
-                            <td style={{ textAlign: "center" }}>
-                              <input
-                                type="checkbox"
-                                checked={ev.cleanSheet}
-                                onChange={(e) => setPlayerEvent(p.id, { cleanSheet: e.target.checked })}
-                              />
-                            </td>
-
-                            <td>
-                              <input
-                                className="app-btn"
-                                style={{ width: 58 }}
-                                inputMode="numeric"
-                                value={String(ev.penMissed)}
-                                onChange={(e) => setPlayerEvent(p.id, { penMissed: toInt(e.target.value) })}
-                              />
-                            </td>
-
-                            <td>
-                              <input
-                                className="app-btn"
-                                style={{ width: 58 }}
-                                inputMode="numeric"
-                                value={String(ev.penSaved)}
-                                disabled={p.position !== "GK"}
-                                title={p.position !== "GK" ? "Only GK" : undefined}
-                                onChange={(e) => setPlayerEvent(p.id, { penSaved: toInt(e.target.value) })}
-                              />
-                            </td>
-
-                            <td>
-                              <input
-                                className="app-btn"
-                                style={{ width: 58 }}
-                                inputMode="numeric"
-                                value={String(ev.yellow)}
-                                onChange={(e) => setPlayerEvent(p.id, { yellow: toInt(e.target.value) })}
-                              />
-                            </td>
-
-                            <td>
-                              <input
-                                className="app-btn"
-                                style={{ width: 58 }}
-                                inputMode="numeric"
-                                value={String(ev.red)}
-                                onChange={(e) => setPlayerEvent(p.id, { red: toInt(e.target.value) })}
-                              />
-                            </td>
-
-                            <td>
-                              <input
-                                className="app-btn"
-                                style={{ width: 58 }}
-                                inputMode="numeric"
-                                value={String(ev.ownGoals)}
-                                onChange={(e) => setPlayerEvent(p.id, { ownGoals: toInt(e.target.value) })}
-                              />
-                            </td>
-
-                            <td>
-                              <b>{finalToShow}</b>{" "}
-                              {manualNum == null ? <span className="app-muted">(auto)</span> : <span className="app-muted">(manual)</span>}
-                            </td>
-
-                            <td>
-                              <input
-                                className="app-btn"
-                                style={{ width: "100%" }}
-                                inputMode="numeric"
-                                placeholder="override"
-                                value={manualStr}
-                                onChange={(e) =>
-                                  setManualPointsByPlayerId((prev) => ({ ...prev, [p.id]: e.target.value }))
-                                }
-                              />
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-
-                  <div className="app-muted" style={{ marginTop: 10 }}>
-                    Tip: if you want the dropdown selections to persist when you reopen the same fixture, we should store
-                    the <i>breakdown</i> (events) to Redis as well, not just total points.
+              <div style={{ border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: 10 }}>
+                <div style={{ fontWeight: 800, marginBottom: 8 }}>
+                  Away: {teamsById.get(selectedFixture.awayTeamId)?.name ?? selectedFixture.awayTeamId}
+                </div>
+                {awayPlayers.length === 0 ? (
+                  <div className="app-muted">No players for this team.</div>
+                ) : (
+                  <div style={{ display: "grid", gap: 8 }}>
+                    {awayPlayers.map((p) => (
+                      <EventRow key={p.id} p={p} />
+                    ))}
                   </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* If fixture missing, allow scoring “any players” (fallback) */}
+          {!selectedFixture && (
+            <div style={{ border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: 10, marginBottom: 12 }}>
+              <div style={{ fontWeight: 800, marginBottom: 8 }}>No fixture selected</div>
+              <div className="app-muted" style={{ marginBottom: 8 }}>
+                If you don’t have fixtures locally, you can still enter events for any players and save them for this gameId.
+              </div>
+
+              <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+                <input
+                  className="app-btn"
+                  placeholder="Search player…"
+                  value={playerSearch}
+                  onChange={(e) => setPlayerSearch(e.target.value)}
+                  style={{ flex: 1 }}
+                />
+              </div>
+
+              <div style={{ display: "grid", gap: 8 }}>
+                {filteredPlayers.slice(0, 40).map((p) => (
+                  <EventRow key={p.id} p={p} />
+                ))}
+              </div>
+
+              {filteredPlayers.length > 40 && (
+                <div className="app-muted" style={{ marginTop: 8 }}>
+                  Showing first 40 results. Narrow your search.
                 </div>
               )}
-            </>
+            </div>
+          )}
+
+          <div className="app-actions" style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <button
+              className="app-btn app-btn-primary"
+              disabled={!effectiveGameId}
+              onClick={() => effectiveGameId && saveGameEvents(effectiveGameId)}
+            >
+              Save events
+            </button>
+
+            <button
+              className="app-btn"
+              disabled={!effectiveGameId}
+              onClick={() => effectiveGameId && finalizeGame(effectiveGameId)}
+              title="Computes official per-user points with autosubs + formation constraints and stores it in Redis."
+            >
+              Finalize game
+            </button>
+
+            {saveStatus && <span className="app-muted">{saveStatus}</span>}
+            {finalizeStatus && <span className="app-muted">{finalizeStatus}</span>}
+          </div>
+
+          {finalizeResults.length > 0 && (
+            <div style={{ marginTop: 12 }}>
+              <h3 className="app-h2">Finalize results</h3>
+              <div className="app-table-wrap">
+                <table className="app-table">
+                  <thead>
+                    <tr>
+                      <th>User</th>
+                      <th>Points</th>
+                      <th>Subs used</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {finalizeResults.map((r) => (
+                      <tr key={r.username}>
+                        <td>{r.username}</td>
+                        <td style={{ fontWeight: 800 }}>{r.points}</td>
+                        <td>{r.subsUsed?.length ? r.subsUsed.join(", ") : "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="app-muted" style={{ marginTop: 6 }}>
+                These points are now saved per-user for this gameId.
+              </div>
+            </div>
           )}
         </div>
       )}

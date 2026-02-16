@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { redis, PREFIX } from "./lib/redis";
-import { getSessionFromReq } from "./lib/session";
+import { redis, PREFIX } from "../lib/redis";
+import { getSessionFromReq } from "../lib/session";
 
 type SavedTeam = {
   startingXIIds: number[];

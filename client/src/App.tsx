@@ -473,17 +473,14 @@ export default function App() {
     <div className="app-shell">
       <nav>
         <div className="nav-left">
-          <button className={page === 'builder' ? 'active' : undefined} onClick={() => setPage('builder')}>
-            Team Builder
-          </button>
           <button className={page === 'admin' ? 'active' : undefined} onClick={() => setPage('admin')}>
             Admin Portal
           </button>
         </div>
         <div className="nav-right">
-          <span className="user-info">Welcome, {userName}!</span>
+          <span className="user-info">Morjes, {userName}!</span>
           <button onClick={handleLogout} className="logout-button">
-            Logout
+            Kirjaudu ulos
           </button>
         </div>
       </nav>
@@ -493,8 +490,7 @@ export default function App() {
           {page === 'admin' && <AdminPortal />}
           {page === 'builder' && (
             <>
-              <h1 className="app-h1">Fantasy League Team Builder</h1>
-              <div className="app-muted">Admin builder view (optional)</div>
+              <h1 className="app-h1">Veikkauliigapörssi admin</h1>
             </>
           )}
         </div>

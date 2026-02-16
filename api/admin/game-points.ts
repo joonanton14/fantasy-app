@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { redis, PREFIX } from "../lib/redis";
-import { getSessionFromReq } from "../lib/session";
+import { redis, PREFIX } from "../../lib/redis";
+import { getSessionFromReq } from "../../lib/session";
 
 function isInt(n: unknown): n is number {
   return typeof n === "number" && Number.isInteger(n);

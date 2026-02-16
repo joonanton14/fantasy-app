@@ -456,7 +456,7 @@ export const StartingXI: FC<Props> = ({
 
             <div className="meta-pill meta-formation">
               <span>
-                Formaatiо: <b>{formation}</b>
+                Formaatio: <b>{formation}</b>
               </span>
 
               <select
@@ -491,7 +491,7 @@ export const StartingXI: FC<Props> = ({
 
           {!isValidXI() && (
             <div className="starting-xi-warning" role="alert">
-              Avaus ei ole kelvollinen valitulle formaatiolle. Täytä kaikki paikat.
+              Avaus ei ole kelvollinen. Täytä kaikki paikat.
             </div>
           )}
         </header>
@@ -513,7 +513,7 @@ export const StartingXI: FC<Props> = ({
               onClick={() => onSave({ startingXI: xiPlayers, bench: benchPlayers })}
               disabled={saveDisabled}
             >
-              Tallenna avaus + penkki
+              Tallenna
             </button>
           )}
         </div>
