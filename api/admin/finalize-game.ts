@@ -1,8 +1,8 @@
 // api/admin/finalize-game.ts
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { redis, PREFIX } from "./lib/redis";
-import { getSessionFromReq } from "./lib/session";
-import { scoreTeamForGameWithAutosub, type TeamData, type PlayerLite, type PlayerEventInput } from "./lib/scoring";
+import { redis, PREFIX } from "../lib/redis";
+import { getSessionFromReq } from "../lib/session";
+import { scoreTeamForGameWithAutosub, type TeamData, type PlayerLite, type PlayerEventInput } from "../lib/scoring";
 
 // IMPORTANT: keep this list in one place (same as login usernames)
 const USERS = ["admin", "joona", "olli", "otto"] as const;
