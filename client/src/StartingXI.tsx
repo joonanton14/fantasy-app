@@ -60,6 +60,19 @@ const BENCH_SLOTS: BenchSlot[] = [
   { id: 'bench-3', label: 'PENKKI', kind: 'FIELD' },
 ];
 
+const handleSave = async ({ startingXI, bench }: { startingXI: Player[]; bench: Player[] }) => {
+  await fetch("/api/user-team", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      data: {
+        startingXIIds: startingXI.map((p) => p.id),
+        benchIds: bench.map((p) => p.id),
+      },
+    }),
+  });
+};
+
 export const StartingXI: FC<Props> = ({
   players,
   teams,
@@ -498,7 +511,7 @@ export const StartingXI: FC<Props> = ({
             <button
               type="button"
               className="xi-save"
-              onClick={() => onSave({ startingXI: xiPlayers, bench: benchPlayers })}
+              onClick={() => handleSave({ startingXI: xiPlayers, bench: benchPlayers })}
               disabled={saveDisabled}
             >
               Tallenna
