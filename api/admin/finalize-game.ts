@@ -33,16 +33,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     //
     // For now, we assume you can import players from your API data module:
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { players } = require("../../server/src/data") as { players: Array<{ id: number; position: PlayerLite["position"] }> };
+    const { players } = require("../../../server/src/data") as { players: Array<{ id: number; position: PlayerLite["position"] }> };
+    
 
     const playersById = new Map<number, PlayerLite>();
     for (const p of players) playersById.set(p.id, { id: p.id, position: p.position });
-
+    
     // 3) compute each user
     const results: Array<{ username: string; points: number; subsUsed: number[] }> = [];
-    const testIds = [82, 75, 194, 201, 84, 88, 90, 77, 86, 87];
-console.log("PLAYERS_BY_ID_SIZE", playersById.size);
-console.log("HAS_TEST_IDS", Object.fromEntries(testIds.map(id => [id, playersById.has(id)])));
 
     for (const username of USERS) {
       const teamKey = `${PREFIX}:team:${username}`;
