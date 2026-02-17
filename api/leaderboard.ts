@@ -1,77 +1,34 @@
-// api/admin/finalize-game.ts
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { redis, PREFIX } from "../lib/redis";
-import { getSessionFromReq } from "../lib/session";
-import { scoreTeamForGameWithAutosub, type TeamData, type PlayerLite, type PlayerEventInput } from "../lib/scoring";
 
-// IMPORTANT: keep this list in one place (same as login usernames)
 const USERS = ["admin", "joona", "olli", "otto"] as const;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
-    const session = await getSessionFromReq(req);
-    if (!session) return res.status(401).json({ error: "Unauthorized" });
-    if (!session.isAdmin) return res.status(403).json({ error: "Forbidden" });
-
-    if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
-
-    const gameId = Number(req.body?.gameId);
-    if (!Number.isInteger(gameId) || gameId <= 0) return res.status(400).json({ error: "Invalid gameId" });
-
-    // 1) load events
-    const eventsKey = `${PREFIX}:game:${gameId}:events`;
-    const eventsById = (await redis.get<Record<string, PlayerEventInput>>(eventsKey)) ?? {};
-
-    // 2) load players (positions) from your existing /api/players source of truth.
-    // Since you're in Vercel function, easiest is to store players in Redis once,
-    // BUT for now: reuse the JSON you already have server-side if your /api/players reads from disk.
-    //
-    // If you already have a server module for players, import it here.
-    // Example: import { players } from "../../server/src/data";
-    //
-    // If that path doesn't exist in Vercel build, tell me your exact players source.
-    //
-    // For now, we assume you can import players from your API data module:
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { players } = require("../../server/src/data") as { players: Array<{ id: number; position: PlayerLite["position"] }> };
-
-    const playersById = new Map<number, PlayerLite>();
-    for (const p of players) playersById.set(p.id, { id: p.id, position: p.position });
-
-    // 3) compute each user
-    const results: Array<{ username: string; points: number; subsUsed: number[] }> = [];
-
-    for (const username of USERS) {
-      const teamKey = `${PREFIX}:team:${username}`;
-      const team = (await redis.get<TeamData>(teamKey)) ?? null;
-
-      const startingXIIds = team?.startingXIIds ?? [];
-      const benchIds = team?.benchIds ?? [];
-
-      if (!startingXIIds.length) {
-        results.push({ username, points: 0, subsUsed: [] });
-        await redis.set(`${PREFIX}:user:${username}:game:${gameId}:points`, 0);
-        continue;
-      }
-
-      const { total, subsUsed } = scoreTeamForGameWithAutosub({
-        team: { startingXIIds, benchIds },
-        playersById,
-        eventsById,
-      });
-
-      results.push({ username, points: total, subsUsed });
-
-      await redis.set(`${PREFIX}:user:${username}:game:${gameId}:points`, total);
-      await redis.set(`${PREFIX}:user:${username}:game:${gameId}:subs`, subsUsed);
+    if (req.method !== "GET") {
+      res.setHeader("Allow", "GET");
+      return res.status(405).json({ error: "Method not allowed" });
     }
 
-    // 4) mark finalized
-    await redis.sadd(`${PREFIX}:games_finalized`, String(gameId));
+    // Example: sum points over all finalized games
+    const gameIds = (await redis.smembers(`${PREFIX}:games_finalized`)) ?? [];
 
-    return res.status(200).json({ ok: true, gameId, results });
+    const rows = await Promise.all(
+      USERS.map(async (username) => {
+        let total = 0;
+        for (const gid of gameIds) {
+          const pts =
+            (await redis.get<number>(`${PREFIX}:user:${username}:game:${gid}:points`)) ?? 0;
+          total += Number(pts) || 0;
+        }
+        return { username, total };
+      })
+    );
+
+    rows.sort((a, b) => b.total - a.total);
+    return res.status(200).json({ ok: true, games: gameIds.map(Number), leaderboard: rows });
   } catch (e: unknown) {
-    console.error("FINALIZE_GAME_CRASH", e);
+    console.error("LEADERBOARD_CRASH", e);
     return res.status(500).json({ error: e instanceof Error ? e.message : "Server error" });
   }
 }
