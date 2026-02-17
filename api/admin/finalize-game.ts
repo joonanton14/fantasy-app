@@ -21,7 +21,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // 1) load events
     const eventsKey = `${PREFIX}:game:${gameId}:events`;
     const eventsById = (await redis.get<Record<string, PlayerEventInput>>(eventsKey)) ?? {};
-
+    
     // 2) load players (positions) from your existing /api/players source of truth.
     // Since you're in Vercel function, easiest is to store players in Redis once,
     // BUT for now: reuse the JSON you already have server-side if your /api/players reads from disk.
@@ -40,6 +40,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // 3) compute each user
     const results: Array<{ username: string; points: number; subsUsed: number[] }> = [];
+    const testIds = [82, 75, 194, 201, 84, 88, 90, 77, 86, 87];
+console.log("PLAYERS_BY_ID_SIZE", playersById.size);
+console.log("HAS_TEST_IDS", Object.fromEntries(testIds.map(id => [id, playersById.has(id)])));
 
     for (const username of USERS) {
       const teamKey = `${PREFIX}:team:${username}`;
