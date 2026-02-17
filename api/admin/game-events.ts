@@ -1,219 +1,87 @@
-// api/lib/scoring.ts
-export type Position = "GK" | "DEF" | "MID" | "FWD";
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { redis, PREFIX } from "../../lib/redis";
+import { getSessionFromReq } from "../../lib/session";
+import { DEFAULT_EVENTS, type PlayerEventInput } from "../../lib/scoring";
 
-export type PlayerLite = { id: number; position: Position };
-
-export type TeamData = {
-  startingXIIds: number[]; // 11
-  benchIds: number[]; // 4: [GK, out1, out2, out3] (order matters)
-};
-
-export type MinutesBucket = "0" | "1_59" | "60+";
-
-export type PlayerEventInput = {
-  minutes: MinutesBucket;
-  goals: number;
-  assists: number;
-  cleanSheet: boolean;
-  penMissed: number;
-  penSaved: number; // only GK typically
-  yellow: number;
-  red: number;
-  ownGoals: number;
-};
-
-export const DEFAULT_EVENTS: PlayerEventInput = {
-  minutes: "0",
-  goals: 0,
-  assists: 0,
-  cleanSheet: false,
-  penMissed: 0,
-  penSaved: 0,
-  yellow: 0,
-  red: 0,
-  ownGoals: 0,
-};
-
-const LIMITS = {
-  DEF: { min: 3, max: 5 },
-  MID: { min: 3, max: 5 },
-  FWD: { min: 1, max: 3 },
-} as const;
-
-function played(ev?: PlayerEventInput | null) {
-  return !!ev && ev.minutes !== "0";
+function isPlainObject(x: unknown): x is Record<string, any> {
+  return !!x && typeof x === "object" && !Array.isArray(x);
 }
 
-export function calcPoints(pos: Position, ev: PlayerEventInput): number {
-  let pts = 0;
+function normalizeEvent(input: any): PlayerEventInput {
+  const ev = { ...DEFAULT_EVENTS, ...(isPlainObject(input) ? input : {}) };
 
-  // minutes played
-  if (ev.minutes === "1_59") pts += 1;
-  if (ev.minutes === "60+") pts += 2;
-
-  // goals
-  if (ev.goals > 0) {
-    if (pos === "GK") pts += ev.goals * 10;
-    else if (pos === "DEF") pts += ev.goals * 6;
-    else if (pos === "MID") pts += ev.goals * 5;
-    else pts += ev.goals * 4; // FWD
+  // Hard normalize minutes to your allowed buckets
+  if (ev.minutes !== "0" && ev.minutes !== "1_59" && ev.minutes !== "60+") {
+    ev.minutes = "0";
   }
 
-  // assists
-  pts += ev.assists * 3;
+  // Force numeric fields to integers >= 0 (or allow negatives if you want)
+  const int0 = (v: any) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? Math.trunc(n) : 0;
+  };
 
-  // clean sheets
-  if (ev.cleanSheet) {
-    if (pos === "GK" || pos === "DEF") pts += 4;
-    else if (pos === "MID") pts += 1;
-  }
+  ev.goals = int0(ev.goals);
+  ev.assists = int0(ev.assists);
+  ev.penMissed = int0(ev.penMissed);
+  ev.penSaved = int0(ev.penSaved);
+  ev.yellow = int0(ev.yellow);
+  ev.red = int0(ev.red);
+  ev.ownGoals = int0(ev.ownGoals);
+  ev.cleanSheet = Boolean(ev.cleanSheet);
 
-  // pens
-  pts += ev.penSaved * (pos === "GK" ? 3 : 0);
-  pts += ev.penMissed * -2;
-
-  // discipline / misc
-  pts += ev.yellow * -1;
-  pts += ev.red * -3;
-  pts += ev.ownGoals * -2;
-
-  return pts;
+  return ev;
 }
 
-type Counts = { GK: number; DEF: number; MID: number; FWD: number };
-function emptyCounts(): Counts {
-  return { GK: 0, DEF: 0, MID: 0, FWD: 0 };
-}
-function addCount(c: Counts, pos: Position, delta: number) {
-  c[pos] += delta;
-}
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  try {
+    const session = await getSessionFromReq(req);
+    if (!session) return res.status(401).json({ error: "Unauthorized" });
+    if (!session.isAdmin) return res.status(403).json({ error: "Forbidden" });
 
-function withinMax(c: Counts) {
-  if (c.GK > 1) return false;
-  if (c.DEF > LIMITS.DEF.max) return false;
-  if (c.MID > LIMITS.MID.max) return false;
-  if (c.FWD > LIMITS.FWD.max) return false;
-  return true;
-}
-
-function canReachMins(c: Counts, remainingSlots: number) {
-  const needDEF = Math.max(0, LIMITS.DEF.min - c.DEF);
-  const needMID = Math.max(0, LIMITS.MID.min - c.MID);
-  const needFWD = Math.max(0, LIMITS.FWD.min - c.FWD);
-  return needDEF + needMID + needFWD <= remainingSlots;
-}
-
-/**
- * Bench order + formation constraints autosub.
- * - Replace DNP starters with bench players that played
- * - Only accept a bench player if it doesn't violate max
- *   AND still allows reaching mins with remaining subs.
- */
-export function scoreTeamForGameWithAutosub(args: {
-  team: TeamData;
-  playersById: Map<number, PlayerLite>;
-  eventsById: Record<string, PlayerEventInput>;
-}) {
-  const { team, playersById, eventsById } = args;
-
-  const starters = team.startingXIIds ?? [];
-  const bench = team.benchIds ?? [];
-
-  const counts = emptyCounts();
-  const usedSubs = new Set<number>();
-  let total = 0;
-
-  // DNP outfield starters by pos
-  const dnpOutfield: Record<"DEF" | "MID" | "FWD", number[]> = { DEF: [], MID: [], FWD: [] };
-
-  // --- starters (outfield first) ---
-  for (const sid of starters) {
-    const sp = playersById.get(sid);
-    if (!sp) continue;
-
-    const ev = eventsById[String(sid)];
-
-    if (sp.position === "GK") continue;
-
-    if (played(ev)) {
-      addCount(counts, sp.position, 1);
-      total += calcPoints(sp.position, ev);
-    } else {
-      dnpOutfield[sp.position].push(sid);
+    const gameId = Number((req.method === "GET" ? req.query?.gameId : req.body?.gameId));
+    if (!Number.isInteger(gameId) || gameId <= 0) {
+      return res.status(400).json({ error: "Invalid gameId" });
     }
-  }
 
-  // --- GK slot ---
-  const starterGK = starters.find((id) => playersById.get(id)?.position === "GK") ?? null;
-  const benchGK = bench.find((id) => playersById.get(id)?.position === "GK") ?? null;
+    const key = `${PREFIX}:game:${gameId}:events`;
 
-  if (starterGK) {
-    const ev = eventsById[String(starterGK)];
-    if (played(ev)) {
-      addCount(counts, "GK", 1);
-      total += calcPoints("GK", ev);
-    } else if (benchGK) {
-      const bev = eventsById[String(benchGK)];
-      if (played(bev)) {
-        usedSubs.add(benchGK);
-        addCount(counts, "GK", 1);
-        total += calcPoints("GK", bev);
+    if (req.method === "GET") {
+      const eventsById = (await redis.get<Record<string, PlayerEventInput>>(key)) ?? {};
+      return res.status(200).json({ ok: true, gameId, eventsById });
+    }
+
+    if (req.method === "POST") {
+      // Expect frontend to send: { gameId, eventsById: { "123": {...}, "124": {...} } }
+      const raw = req.body?.eventsById ?? req.body?.events ?? req.body?.data;
+
+      if (!isPlainObject(raw)) {
+        return res.status(400).json({ error: "Missing eventsById object in body" });
       }
-    }
-  }
 
-  // --- bench outfield in order ---
-  const benchOutfield = bench.filter((id) => playersById.get(id)?.position !== "GK");
-
-  for (const bid of benchOutfield) {
-    if (usedSubs.has(bid)) continue;
-
-    const bp = playersById.get(bid);
-    if (!bp || bp.position === "GK") continue;
-
-    const bev = eventsById[String(bid)];
-    if (!played(bev)) continue;
-
-    const missingNow = dnpOutfield.DEF.length + dnpOutfield.MID.length + dnpOutfield.FWD.length;
-    if (missingNow <= 0) break;
-
-    // try add this bench player
-    const next: Counts = { ...counts };
-    addCount(next, bp.position, 1);
-
-    // max rule
-    if (!withinMax(next)) continue;
-
-    // must still be possible to satisfy mins with remaining subs
-    const remainingSlots = missingNow - 1;
-    if (!canReachMins(next, remainingSlots)) continue;
-
-    // consume one DNP starter slot (prefer same position, otherwise any)
-    const order =
-      bp.position === "DEF" ? (["DEF", "MID", "FWD"] as const)
-      : bp.position === "MID" ? (["MID", "DEF", "FWD"] as const)
-      : (["FWD", "MID", "DEF"] as const);
-
-    let replaced: "DEF" | "MID" | "FWD" | null = null;
-    for (const pos of order) {
-      if (dnpOutfield[pos].length > 0) {
-        replaced = pos;
-        break;
+      const normalized: Record<string, PlayerEventInput> = {};
+      for (const [pid, ev] of Object.entries(raw)) {
+        // keep only numeric-ish ids
+        const idNum = Number(pid);
+        if (!Number.isInteger(idNum) || idNum <= 0) continue;
+        normalized[String(idNum)] = normalizeEvent(ev);
       }
-    }
-    if (!replaced) {
-      // no missing starter? (shouldn't happen)
-      continue;
+
+      await redis.set(key, normalized);
+
+      return res.status(200).json({
+        ok: true,
+        gameId,
+        savedPlayers: Object.keys(normalized).length,
+      });
     }
 
-    dnpOutfield[replaced].shift();
-    counts.DEF = next.DEF;
-    counts.MID = next.MID;
-    counts.FWD = next.FWD;
-
-    usedSubs.add(bid);
-    total += calcPoints(bp.position, bev);
+    res.setHeader("Allow", "GET, POST");
+    return res.status(405).json({ error: "Method not allowed" });
+  } catch (e: unknown) {
+    console.error("GAME_EVENTS_CRASH", e);
+    return res.status(500).json({
+      error: e instanceof Error ? e.message : "Server error",
+    });
   }
-
-  return { total, subsUsed: Array.from(usedSubs), counts };
 }
