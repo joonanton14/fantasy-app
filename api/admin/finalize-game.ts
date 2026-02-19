@@ -11,11 +11,11 @@ import {
 
 import { players } from "../../server/src/data";
 
+type ScanReply = [string, string[]];
+
 function normalizeUsername(u: string) {
   return u.trim().toLowerCase();
 }
-
-type ScanReply = [string, string[]];
 
 async function scanAllTeamKeys(): Promise<string[]> {
   const match = `${PREFIX}:team:*`;
@@ -24,31 +24,71 @@ async function scanAllTeamKeys(): Promise<string[]> {
 
   while (true) {
     const reply = (await (redis as any).scan(cursor, { match, count: 200 })) as ScanReply;
-
     const nextCursor: string = reply[0];
     const keys: string[] = reply[1] ?? [];
-
     keysAll.push(...keys);
-
     cursor = nextCursor;
     if (cursor === "0") break;
   }
 
-  return keysAll;
+  // de-dupe just in case
+  return Array.from(new Set(keysAll));
 }
 
-async function scanAllTeamUsernames(): Promise<string[]> {
-  const keys = await scanAllTeamKeys();
+function coerceTeamFromHash(obj: any): TeamData | null {
+  if (!obj || typeof obj !== "object") return null;
 
-  const usernames = new Set<string>();
-  for (const key of keys) {
-    // key format: fantasy:team:<username>
-    const parts = String(key).split(":");
-    const maybeUser = parts[parts.length - 1] ?? "";
-    if (maybeUser) usernames.add(normalizeUsername(maybeUser));
+  const startingRaw = (obj.startingXIIds ?? obj.startingXI ?? obj.starting ?? null) as any;
+  const benchRaw = (obj.benchIds ?? obj.bench ?? null) as any;
+
+  // Upstash hgetall often returns strings -> convert to numbers
+  const toNumArray = (v: any): number[] => {
+    if (Array.isArray(v)) return v.map((x) => Number(x)).filter((n) => Number.isFinite(n));
+    if (typeof v === "string") {
+      // might be JSON stringified array
+      try {
+        const parsed = JSON.parse(v);
+        if (Array.isArray(parsed)) return parsed.map((x) => Number(x)).filter((n) => Number.isFinite(n));
+      } catch {}
+      // might be comma-separated
+      return v
+        .split(",")
+        .map((x) => Number(x.trim()))
+        .filter((n) => Number.isFinite(n));
+    }
+    return [];
+  };
+
+  const startingXIIds = toNumArray(startingRaw);
+  const benchIds = toNumArray(benchRaw);
+
+  return { startingXIIds, benchIds };
+}
+
+async function loadTeam(teamKey: string): Promise<{ team: TeamData | null; redisType: string | null }> {
+  // First try GET (string/json)
+  const fromGet = (await redis.get<TeamData>(teamKey)) ?? null;
+  if (fromGet && Array.isArray((fromGet as any).startingXIIds)) {
+    return { team: fromGet, redisType: "string/json(get)" };
   }
 
-  return Array.from(usernames);
+  // If GET failed, check redis type + try HGETALL
+  let t: string | null = null;
+  try {
+    t = (await (redis as any).type(teamKey)) as string; // "hash", "string", ...
+  } catch {
+    t = null;
+  }
+
+  try {
+    const h = (await (redis as any).hgetall(teamKey)) as any;
+    const coerced = coerceTeamFromHash(h);
+    if (coerced) return { team: coerced, redisType: t ?? "hash(hgetall)" };
+  } catch {
+    // ignore
+  }
+
+  return { team: null, redisType: t };
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -67,20 +107,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const eventsById = (await redis.get<Record<string, PlayerEventInput>>(eventsKey)) ?? {};
 
     const playersById = new Map<number, PlayerLite>();
-    for (const p of players) {
-      playersById.set(p.id, { id: p.id, position: p.position });
-    }
+    for (const p of players) playersById.set(p.id, { id: p.id, position: p.position });
 
-    const discoveredUsers = await scanAllTeamUsernames();
+    const teamKeys = await scanAllTeamKeys();
 
     const results: Array<{ username: string; points: number; subsUsed: number[] }> = [];
     const perUserDebug: Array<any> = [];
 
-    for (const usernameRaw of discoveredUsers) {
-      const username = normalizeUsername(usernameRaw);
-      const teamKey = `${PREFIX}:team:${username}`;
+    for (const teamKey of teamKeys) {
+      const usernamePart = String(teamKey).split(":").pop() ?? "";
+      const username = normalizeUsername(usernamePart);
 
-      const team = (await redis.get<TeamData>(teamKey)) ?? null;
+      const { team, redisType } = await loadTeam(teamKey);
 
       const startingXIIds = team?.startingXIIds ?? [];
       const benchIds = team?.benchIds ?? [];
@@ -101,9 +139,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       perUserDebug.push({
         username,
         teamKey,
+        redisType,
         teamExists: !!team,
         startingLen: startingXIIds.length,
         benchLen: benchIds.length,
+        startingFirst: startingXIIds[0] ?? null,
         startingMatches,
       });
     }
@@ -119,8 +159,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         eventsKey,
         eventsCount: Object.keys(eventsById).length,
         playersByIdSize: playersById.size,
-        discoveredUsersCount: discoveredUsers.length,
-        discoveredUsers,
+        discoveredTeamKeysCount: teamKeys.length,
+        discoveredTeamKeys: teamKeys.slice(0, 50),
         perUserDebug,
       },
     });
