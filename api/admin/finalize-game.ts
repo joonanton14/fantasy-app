@@ -21,9 +21,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!session.isAdmin) return res.status(403).json({ error: "Forbidden" });
     if (req.method !== "POST")
       return res.status(405).json({ error: "Method not allowed" });
-const sessionTeamKey = `${PREFIX}:team:${session.username}`;
-const sessionTeam = await redis.get(sessionTeamKey);
-
     const gameId = Number(req.body?.gameId);
     if (!Number.isInteger(gameId) || gameId <= 0)
       return res.status(400).json({ error: "Invalid gameId" });
@@ -47,7 +44,7 @@ const sessionTeam = await redis.get(sessionTeamKey);
 
     const results: Array<{ username: string; points: number; subsUsed: number[] }> = [];
     const teamStartingCounts: number[] = [];
-
+    
     // 🔎 debug per user
     const perUserDebug: Array<{
       username: string;
@@ -64,7 +61,8 @@ const sessionTeam = await redis.get(sessionTeamKey);
     for (const username of USERS) {
       const teamKey = `${PREFIX}:team:${username}`;
       const team = (await redis.get<TeamData>(teamKey)) ?? null;
-
+const sessionTeamKey = `${PREFIX}:team:${session.username}`;
+const sessionTeam = await redis.get(sessionTeamKey);
       const startingXIIds = team?.startingXIIds ?? [];
       const benchIds = team?.benchIds ?? [];
 
