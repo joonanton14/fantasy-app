@@ -22,6 +22,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const eventsKey = `${PREFIX}:game:${gameId}:events`;
     const eventsById = (await redis.get<Record<string, PlayerEventInput>>(eventsKey)) ?? {};
     
+
+    const teamKeys = USERS.map((u) => `${PREFIX}:team:${u}`);
+const teamsRaw = await Promise.all(teamKeys.map((k) => redis.get(k)));
+
+const debug = {
+  prefix: PREFIX,
+  eventsKey: `${PREFIX}:game:${gameId}:events`,
+  eventsCount: Object.keys(eventsById).length,
+  teamKeys,
+  teamStartingCounts: teamsRaw.map((t: any) => (t?.startingXIIds?.length ?? 0)),
+};
+
     // 2) load players (positions) from your existing /api/players source of truth.
     // Since you're in Vercel function, easiest is to store players in Redis once,
     // BUT for now: reuse the JSON you already have server-side if your /api/players reads from disk.
@@ -70,7 +82,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // 4) mark finalized
     await redis.sadd(`${PREFIX}:games_finalized`, String(gameId));
 
-    return res.status(200).json({ ok: true, gameId, results });
+    return res.status(200).json({ ok: true, gameId, results, debug });
   } catch (e: unknown) {
     console.error("FINALIZE_GAME_CRASH", e);
     return res.status(500).json({ error: e instanceof Error ? e.message : "Server error" });

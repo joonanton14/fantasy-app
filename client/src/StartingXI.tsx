@@ -511,7 +511,7 @@ export const StartingXI: FC<Props> = ({
             <button
               type="button"
               className="xi-save"
-              onClick={() => handleSave({ startingXI: xiPlayers, bench: benchPlayers })}
+              onClick={() => onSave({ startingXI: xiPlayers, bench: benchPlayers })}
               disabled={saveDisabled}
             >
               Tallenna
