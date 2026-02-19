@@ -21,6 +21,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!session.isAdmin) return res.status(403).json({ error: "Forbidden" });
     if (req.method !== "POST")
       return res.status(405).json({ error: "Method not allowed" });
+const sessionTeamKey = `${PREFIX}:team:${session.username}`;
+const sessionTeam = await redis.get(sessionTeamKey);
 
     const gameId = Number(req.body?.gameId);
     if (!Number.isInteger(gameId) || gameId <= 0)
