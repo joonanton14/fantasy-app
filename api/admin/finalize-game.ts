@@ -37,6 +37,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // ✅ debug: how many starting ids exist in playersById
       teamStartingCounts.push(startingXIIds.filter((id) => playersById.has(id)).length);
+      const rawStarting = team?.startingXIIds ?? [];
+const probeRaw = rawStarting[0];
+const probeNum = startingXIIds[0];
+
+console.log("TEAM_PROBE", {
+  username,
+  rawFirst: probeRaw,
+  rawType: typeof probeRaw,
+  numFirst: probeNum,
+  hasRaw: playersById.has(probeRaw as any),
+  hasNum: playersById.has(probeNum),
+});
 
       const { total, subsUsed } = scoreTeamForGameWithAutosub({
         team: { startingXIIds, benchIds },
