@@ -33,7 +33,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     //
     // For now, we assume you can import players from your API data module:
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { players } = require("../../../server/src/data") as { players: Array<{ id: number; position: PlayerLite["position"] }> };
+    const { players } = require("../../server/src/data") as { players: Array<{ id: number; position: PlayerLite["position"] }> };
     
 
     const playersById = new Map<number, PlayerLite>();
