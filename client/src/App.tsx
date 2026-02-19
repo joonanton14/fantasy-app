@@ -1,15 +1,16 @@
-import { useEffect, useState, useMemo } from 'react';
-import Login from './login';
-import AdminPortal from './adminPortal';
-import StartingXI from './StartingXI';
-import { apiCall } from './api';
-import './styles.css';
-import { loadSavedTeam, saveStartingXI } from './userTeam';
+// client/src/App.tsx
+import { useEffect, useState, useMemo } from "react";
+import Login from "./login";
+import AdminPortal from "./adminPortal";
+import StartingXI from "./StartingXI";
+import { apiCall } from "./api";
+import "./styles.css";
+import { loadSavedTeam, saveStartingXI } from "./userTeam";
 
 interface Player {
   id: number;
   name: string;
-  position: 'GK' | 'DEF' | 'MID' | 'FWD';
+  position: "GK" | "DEF" | "MID" | "FWD";
   teamId: number;
   value: number;
 }
@@ -19,19 +20,23 @@ interface Team {
   name: string;
 }
 
+type LeaderboardRow = { username: string; total: number };
+
 const INITIAL_BUDGET = 100;
 
 export default function App() {
   // -------------------- STATE --------------------
   const [authChecked, setAuthChecked] = useState(false);
-  const [leaderboard, setLeaderboard] = useState<Array<{ username: string; points: number }>>([]);
+
+  const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
   const [loadingLb, setLoadingLb] = useState(false);
+
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState<number | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const [page, setPage] = useState<'builder' | 'admin'>('builder');
+  const [page, setPage] = useState<"builder" | "admin">("builder");
 
   const [players, setPlayers] = useState<Player[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
@@ -40,10 +45,10 @@ export default function App() {
   const [bench, setBench] = useState<Player[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const [teamViewTab, setTeamViewTab] = useState<'startingXI' | 'players' | 'leaderboard'>('startingXI');
+  const [teamViewTab, setTeamViewTab] = useState<"startingXI" | "players" | "leaderboard">("startingXI");
   const [filterTeamId, setFilterTeamId] = useState<number | null>(null);
-  const [filterPositions, setFilterPositions] = useState<Set<'GK' | 'DEF' | 'MID' | 'FWD'>>(
-    new Set(['GK', 'DEF', 'MID', 'FWD'])
+  const [filterPositions, setFilterPositions] = useState<Set<"GK" | "DEF" | "MID" | "FWD">>(
+    new Set(["GK", "DEF", "MID", "FWD"])
   );
 
   const [loadingSaved, setLoadingSaved] = useState(false);
@@ -68,7 +73,7 @@ export default function App() {
       setError(null);
 
       // 1) Fast UI restore from localStorage (optional)
-      const saved = localStorage.getItem('session');
+      const saved = localStorage.getItem("session");
       if (saved) {
         try {
           const { userId, userName, isAdmin } = JSON.parse(saved);
@@ -77,18 +82,18 @@ export default function App() {
             setUserName(userName ?? null);
             setIsAdmin(!!isAdmin);
             setIsLoggedIn(true);
-            setPage(isAdmin ? 'admin' : 'builder');
+            setPage(isAdmin ? "admin" : "builder");
             setAuthChecked(true);
           }
           return;
         } catch {
-          localStorage.removeItem('session');
+          localStorage.removeItem("session");
         }
       }
 
       // 2) Source of truth: cookie session
       try {
-        const res = await apiCall('/auth/me', { method: 'GET' });
+        const res = await apiCall("/auth/me", { method: "GET" });
         if (!res.ok) {
           if (!cancelled) {
             setIsLoggedIn(false);
@@ -106,9 +111,9 @@ export default function App() {
         setUserId(null);
         setUserName(me.name);
         setIsAdmin(!!me.isAdmin);
-        setPage(me.isAdmin ? 'admin' : 'builder');
+        setPage(me.isAdmin ? "admin" : "builder");
 
-        localStorage.setItem('session', JSON.stringify({ userId: null, userName: me.name, isAdmin: !!me.isAdmin }));
+        localStorage.setItem("session", JSON.stringify({ userId: null, userName: me.name, isAdmin: !!me.isAdmin }));
       } catch {
         // ignore (network / first load)
       } finally {
@@ -130,14 +135,14 @@ export default function App() {
     async function load() {
       setError(null);
       try {
-        const [playersRes, teamsRes] = await Promise.all([apiCall('/players'), apiCall('/teams')]);
+        const [playersRes, teamsRes] = await Promise.all([apiCall("/players"), apiCall("/teams")]);
         const playersData: Player[] = await playersRes.json();
         const teamsData: Team[] = await teamsRes.json();
         if (cancelled) return;
         setPlayers(playersData);
         setTeams(teamsData);
       } catch {
-        if (!cancelled) setError('Failed to load players or teams');
+        if (!cancelled) setError("Failed to load players or teams");
       }
     }
 
@@ -148,26 +153,41 @@ export default function App() {
     };
   }, [isLoggedIn]);
 
-  useEffect(() => {
-  let cancelled = false;
-
-  async function loadLb() {
+  // -------------------- LEADERBOARD --------------------
+  async function loadLeaderboard() {
     setLoadingLb(true);
     try {
       const res = await apiCall("/leaderboard", { method: "GET" });
       if (!res.ok) return;
       const data = await res.json();
-      if (!cancelled) setLeaderboard(data.rows ?? []);
+      setLeaderboard((data?.rows ?? []) as LeaderboardRow[]);
     } finally {
-      if (!cancelled) setLoadingLb(false);
+      setLoadingLb(false);
     }
   }
 
-  if (isLoggedIn) loadLb();
-  return () => {
-    cancelled = true;
-  };
-}, [isLoggedIn]);
+  // Load once after login
+  useEffect(() => {
+    let cancelled = false;
+
+    async function run() {
+      setLoadingLb(true);
+      try {
+        const res = await apiCall("/leaderboard", { method: "GET" });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled) setLeaderboard((data?.rows ?? []) as LeaderboardRow[]);
+      } finally {
+        if (!cancelled) setLoadingLb(false);
+      }
+    }
+
+    if (isLoggedIn) run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoggedIn]);
 
   // -------------------- LOAD SAVED TEAM AFTER PLAYERS --------------------
   useEffect(() => {
@@ -215,37 +235,6 @@ export default function App() {
     };
   }, [isLoggedIn, players]);
 
-  useEffect(() => {
-  let cancelled = false;
-
-  async function loadLb() {
-    setLoadingLb(true);
-    try {
-      const res = await apiCall("/leaderboard", { method: "GET" });
-      if (!res.ok) return;
-      const data = await res.json();
-      if (!cancelled) setLeaderboard(data.rows ?? []);
-    } finally {
-      if (!cancelled) setLoadingLb(false);
-    }
-  }
-
-  if (isLoggedIn) loadLb();
-  return () => { cancelled = true; };
-}, [isLoggedIn]);
-
-async function loadLeaderboard() {
-  setLoadingLb(true);
-  try {
-    const res = await apiCall("/leaderboard", { method: "GET" });
-    if (!res.ok) return;
-    const data = await res.json();
-    setLeaderboard(data.rows ?? []);
-  } finally {
-    setLoadingLb(false);
-  }
-}
-
   // -------------------- HELPERS --------------------
   const totalValue = () => selected.reduce((sum, p) => sum + p.value, 0);
 
@@ -254,15 +243,15 @@ async function loadLeaderboard() {
     setUserName(userName);
     setIsAdmin(isAdmin);
     setIsLoggedIn(true);
-    setPage(isAdmin ? 'admin' : 'builder');
+    setPage(isAdmin ? "admin" : "builder");
 
     // keep UI fast on refresh (optional)
-    localStorage.setItem('session', JSON.stringify({ userId, userName, isAdmin }));
+    localStorage.setItem("session", JSON.stringify({ userId, userName, isAdmin }));
   }
 
   async function handleLogout() {
     try {
-      await apiCall('/auth/logout', { method: 'POST' });
+      await apiCall("/auth/logout", { method: "POST" });
     } catch {}
 
     setIsLoggedIn(false);
@@ -273,11 +262,11 @@ async function loadLeaderboard() {
     setStartingXI([]);
     setBench([]);
     setXiLocked(true);
-    setPage('builder');
-    setTeamViewTab('startingXI');
+    setPage("builder");
+    setTeamViewTab("startingXI");
     setPlayers([]);
     setTeams([]);
-    localStorage.removeItem('session');
+    localStorage.removeItem("session");
   }
 
   function addPlayer(player: Player) {
@@ -293,7 +282,7 @@ async function loadLeaderboard() {
     setSelected(selected.filter((p) => p.id !== id));
   }
 
-  function togglePositionFilter(pos: 'GK' | 'DEF' | 'MID' | 'FWD') {
+  function togglePositionFilter(pos: "GK" | "DEF" | "MID" | "FWD") {
     setFilterPositions((prev) => {
       const next = new Set(prev);
       if (next.has(pos)) next.delete(pos);
@@ -325,13 +314,17 @@ async function loadLeaderboard() {
       });
     } catch {}
 
-    setTeamViewTab('startingXI');
+    setTeamViewTab("startingXI");
     setXiLocked(true);
   };
 
   // -------------------- RENDER --------------------
   if (!authChecked) {
-    return <div className="app-muted" style={{ padding: 16 }}>Loading…</div>;
+    return (
+      <div className="app-muted" style={{ padding: 16 }}>
+        Loading…
+      </div>
+    );
   }
 
   if (!isLoggedIn) {
@@ -360,31 +353,30 @@ async function loadLeaderboard() {
               <div className="app-section-header">
                 <div className="app-actions">
                   <button
-                    className={`app-btn ${teamViewTab === 'startingXI' ? 'app-btn-active' : ''}`}
-                    onClick={() => setTeamViewTab('startingXI')}
+                    className={`app-btn ${teamViewTab === "startingXI" ? "app-btn-active" : ""}`}
+                    onClick={() => setTeamViewTab("startingXI")}
                   >
                     Kokoonpano
                   </button>
                   <button
-                    className={`app-btn ${teamViewTab === 'players' ? 'app-btn-active' : ''}`}
-                    onClick={() => setTeamViewTab('players')}
+                    className={`app-btn ${teamViewTab === "players" ? "app-btn-active" : ""}`}
+                    onClick={() => setTeamViewTab("players")}
                   >
                     Pelaajat
                   </button>
                   <button
-  className={`app-btn ${teamViewTab === 'leaderboard' ? 'app-btn-active' : ''}`}
-  onClick={() => {
-    setTeamViewTab('leaderboard');
-    loadLeaderboard();
-  }}
->
-  Tulostaulu
-</button>
-
+                    className={`app-btn ${teamViewTab === "leaderboard" ? "app-btn-active" : ""}`}
+                    onClick={() => {
+                      setTeamViewTab("leaderboard");
+                      loadLeaderboard();
+                    }}
+                  >
+                    Tulostaulu
+                  </button>
                 </div>
               </div>
 
-              {teamViewTab === 'startingXI' ? (
+              {teamViewTab === "startingXI" ? (
                 <div>
                   {loadingSaved && <div className="app-muted">Ladataan tallennettu joukkue…</div>}
 
@@ -406,6 +398,35 @@ async function loadLeaderboard() {
                     readOnly={startingXI.length === 11 && xiLocked}
                   />
                 </div>
+              ) : teamViewTab === "leaderboard" ? (
+                <div>
+                  <h2 className="app-h2">Tulostaulu</h2>
+
+                  {loadingLb ? (
+                    <div className="app-muted">Ladataan…</div>
+                  ) : leaderboard.length === 0 ? (
+                    <div className="app-muted">Ei dataa vielä.</div>
+                  ) : (
+                    <table className="app-table">
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Käyttäjä</th>
+                          <th style={{ textAlign: "right" }}>Pisteet</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {leaderboard.map((r, idx) => (
+                          <tr key={r.username}>
+                            <td>{idx + 1}</td>
+                            <td>{r.username}</td>
+                            <td style={{ textAlign: "right" }}>{r.total}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
               ) : (
                 <>
                   {selected.length === 0 ? (
@@ -424,7 +445,7 @@ async function loadLeaderboard() {
                         </thead>
                         <tbody>
                           {selected.map((p) => {
-                            const teamName = teams.find((t) => t.id === p.teamId)?.name ?? '';
+                            const teamName = teams.find((t) => t.id === p.teamId)?.name ?? "";
                             return (
                               <tr key={p.id}>
                                 <td>{p.name}</td>
@@ -450,7 +471,7 @@ async function loadLeaderboard() {
                       <div className="filter-row">
                         <label>Joukkue:</label>
                         <select
-                          value={filterTeamId ?? ''}
+                          value={filterTeamId ?? ""}
                           onChange={(e) => setFilterTeamId(e.target.value ? Number(e.target.value) : null)}
                           className="app-btn"
                         >
@@ -466,12 +487,12 @@ async function loadLeaderboard() {
                       <div className="filter-row">
                         <label>Pelipaikat:</label>
                         <div className="position-buttons">
-                          {(['GK', 'DEF', 'MID', 'FWD'] as const).map((pos) => (
+                          {(["GK", "DEF", "MID", "FWD"] as const).map((pos) => (
                             <button
                               key={pos}
-                              className={`app-btn ${filterPositions.has(pos) ? 'app-btn-active' : ''}`}
+                              className={`app-btn ${filterPositions.has(pos) ? "app-btn-active" : ""}`}
                               onClick={() => togglePositionFilter(pos)}
-                              title={`${filterPositions.has(pos) ? 'Hide' : 'Show'} ${pos}`}
+                              title={`${filterPositions.has(pos) ? "Hide" : "Show"} ${pos}`}
                             >
                               {pos}
                             </button>
@@ -497,10 +518,10 @@ async function loadLeaderboard() {
                           const isSelectedRow = selected.some((sel) => sel.id === p.id);
                           const sameTeamCount = selected.filter((sel) => sel.teamId === p.teamId).length;
                           const willExceedBudget = totalValue() + p.value > INITIAL_BUDGET;
-                          const teamName = teams.find((t) => t.id === p.teamId)?.name ?? '';
+                          const teamName = teams.find((t) => t.id === p.teamId)?.name ?? "";
 
                           return (
-                            <tr key={p.id} className={isSelectedRow ? 'app-row-selected' : undefined}>
+                            <tr key={p.id} className={isSelectedRow ? "app-row-selected" : undefined}>
                               <td>{p.name}</td>
                               <td>{p.position}</td>
                               <td>{teamName}</td>
@@ -508,9 +529,7 @@ async function loadLeaderboard() {
                               <td>
                                 <button
                                   className="app-btn app-btn-primary"
-                                  disabled={
-                                    isSelectedRow || selected.length >= 15 || sameTeamCount >= 3 || willExceedBudget
-                                  }
+                                  disabled={isSelectedRow || selected.length >= 15 || sameTeamCount >= 3 || willExceedBudget}
                                   onClick={() => addPlayer(p)}
                                 >
                                   Lisää
@@ -536,7 +555,7 @@ async function loadLeaderboard() {
     <div className="app-shell">
       <nav>
         <div className="nav-left">
-          <button className={page === 'admin' ? 'active' : undefined} onClick={() => setPage('admin')}>
+          <button className={page === "admin" ? "active" : undefined} onClick={() => setPage("admin")}>
             Admin hallintapaneeli
           </button>
         </div>
@@ -550,8 +569,8 @@ async function loadLeaderboard() {
 
       <main className="app-main">
         <div className="app-card">
-          {page === 'admin' && <AdminPortal />}
-          {page === 'builder' && (
+          {page === "admin" && <AdminPortal />}
+          {page === "builder" && (
             <>
               <h1 className="app-h1">Veikkauliigapörssi admin</h1>
             </>

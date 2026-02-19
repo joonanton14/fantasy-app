@@ -135,6 +135,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       await redis.set(`${PREFIX}:user:${username}:game:${gameId}:points`, total);
       await redis.set(`${PREFIX}:user:${username}:game:${gameId}:subs`, subsUsed);
+      await redis.hset(`${PREFIX}:user:${username}:gw_points`, { [String(gameId)]: total });
 
       perUserDebug.push({
         username,
