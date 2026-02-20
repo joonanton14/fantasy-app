@@ -5,14 +5,16 @@ import { getSessionFromReq } from "../lib/session";
 
 type Row = { username: string; total: number };
 
+function canon(u: string) {
+  return String(u ?? "").trim().toLowerCase();
+}
+
 async function scanKeys(match: string) {
   const keys: string[] = [];
   let cursor = "0";
 
   do {
     const resp = await redis.scan(cursor, { match, count: 200 });
-
-    // Upstash returns: [nextCursor, keys]
     const nextCursor = resp[0];
     const batch = resp[1];
 
@@ -26,10 +28,6 @@ async function scanKeys(match: string) {
 function parseHashTeam(teamHash: Record<string, string> | null) {
   if (!teamHash) return null;
 
-  // If your hash fields are different, adjust here.
-  // Common options:
-  // - startingXIIds stored as JSON string: "[1,2,3]"
-  // - OR stored as comma string: "1,2,3"
   const s = teamHash.startingXIIds ?? teamHash.starting ?? "";
   const b = teamHash.benchIds ?? teamHash.bench ?? "";
 
@@ -61,9 +59,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // discover users who have teams saved
     const teamKeys = await scanKeys(`${PREFIX}:team:*`);
-    const users = teamKeys
-      .map((k) => k.split(":").pop()!)
-      .filter(Boolean);
+    const rawUsers = teamKeys.map((k) => k.split(":").pop()!).filter(Boolean);
 
     // which games have been finalized?
     const finalized = await redis.smembers(`${PREFIX}:games_finalized`);
@@ -73,31 +69,78 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const rows: Row[] = [];
 
-    for (const username of users) {
-      // (optional) ensure team exists in redis (supports GET or hash)
-      const teamKey = `${PREFIX}:team:${username}`;
-      const teamGet = await redis.get<any>(teamKey);
-      let teamExists = !!teamGet;
+    // optional debug: show which points keys exist
+    const debugPerUser: Array<{
+      username: string;
+      teamKeyTried: string[];
+      canon: string;
+      pointsKeys: string[];
+      pointsValues: Array<number | null>;
+    }> = [];
+
+    for (const username of rawUsers) {
+      const c = canon(username);
+
+      // Team existence check (try both raw and canonical)
+      const teamKeyRaw = `${PREFIX}:team:${username}`;
+      const teamKeyCanon = `${PREFIX}:team:${c}`;
+
+      let teamExists = false;
+
+      const teamGetRaw = await redis.get<any>(teamKeyRaw);
+      const teamGetCanon = teamKeyRaw === teamKeyCanon ? null : await redis.get<any>(teamKeyCanon);
+      if (teamGetRaw || teamGetCanon) teamExists = true;
 
       if (!teamExists) {
-        const teamHash = await redis.hgetall<Record<string, string>>(teamKey);
-        const parsed = parseHashTeam(teamHash);
-        teamExists = !!parsed;
+        const teamHashRaw = await redis.hgetall<Record<string, string>>(teamKeyRaw);
+        const parsedRaw = parseHashTeam(teamHashRaw);
+        const teamHashCanon = teamKeyRaw === teamKeyCanon ? null : await redis.hgetall<Record<string, string>>(teamKeyCanon);
+        const parsedCanon = teamHashCanon ? parseHashTeam(teamHashCanon) : null;
+
+        teamExists = !!parsedRaw || !!parsedCanon;
       }
+
       if (!teamExists) continue;
 
       let total = 0;
+
+      const pointsKeys: string[] = [];
+      const pointsValues: Array<number | null> = [];
+
       for (const gid of gameIds) {
-        const pts = await redis.get<number>(`${PREFIX}:user:${username}:game:${gid}:points`);
-        total += Number(pts ?? 0);
+        const key = `${PREFIX}:user:${c}:game:${gid}:points`;
+        pointsKeys.push(key);
+
+        const pts = await redis.get<number>(key);
+        const num = Number(pts ?? 0);
+        pointsValues.push(pts ?? null);
+
+        total += Number.isFinite(num) ? num : 0;
       }
 
       rows.push({ username, total });
+
+      debugPerUser.push({
+        username,
+        canon: c,
+        teamKeyTried: [teamKeyRaw, teamKeyCanon].filter((v, i, a) => a.indexOf(v) === i),
+        pointsKeys,
+        pointsValues,
+      });
     }
 
     rows.sort((a, b) => b.total - a.total);
 
-    return res.status(200).json({ rows, gamesFinalized: gameIds.length });
+    return res.status(200).json({
+      rows,
+      gamesFinalized: gameIds.length,
+      debug: {
+        discoveredUsers: rawUsers,
+        canonUsers: rawUsers.map(canon),
+        gameIds,
+        perUser: debugPerUser,
+      },
+    });
   } catch (e: unknown) {
     console.error("LEADERBOARD_CRASH", e);
     return res.status(500).json({ error: e instanceof Error ? e.message : "Server error" });
