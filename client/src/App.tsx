@@ -45,8 +45,13 @@ export default function App() {
   const [startingXI, setStartingXI] = useState<Player[]>([]);
   const [bench, setBench] = useState<Player[]>([]);
   const [error, setError] = useState<string | null>(null);
+  type Fixture = { id: number; homeTeamId: number; awayTeamId: number; date: string; round?: number };
 
-  const [teamViewTab, setTeamViewTab] = useState<"startingXI" | "players" | "leaderboard">("startingXI");
+  const [fixtures, setFixtures] = useState<Fixture[]>([]);
+  const [fixturesErr, setFixturesErr] = useState<string | null>(null);
+  const [loadingFixtures, setLoadingFixtures] = useState(false);
+  const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
+  const [teamViewTab, setTeamViewTab] = useState<"startingXI" | "players" | "leaderboard" | "fixtures">("startingXI");
   const [filterTeamId, setFilterTeamId] = useState<number | null>(null);
   const [filterPositions, setFilterPositions] = useState<Set<"GK" | "DEF" | "MID" | "FWD">>(
     new Set(["GK", "DEF", "MID", "FWD"])
@@ -154,6 +159,20 @@ export default function App() {
     };
   }, [isLoggedIn]);
 
+  async function loadFixtures() {
+  setLoadingFixtures(true);
+  setFixturesErr(null);
+  try {
+    const res = await apiCall("/fixtures", { method: "GET" }); // ✅ public endpoint
+    if (!res.ok) throw new Error("Failed to load fixtures");
+    const json = await res.json();
+    setFixtures((json.fixtures ?? []) as Fixture[]);
+  } catch (e) {
+    setFixturesErr(e instanceof Error ? e.message : "Failed to load fixtures");
+  } finally {
+    setLoadingFixtures(false);
+  }
+}
   // -------------------- LEADERBOARD --------------------
   async function loadLeaderboard() {
     setLoadingLb(true);
@@ -401,6 +420,15 @@ function saveCurrentRanks(rows: Array<{ username: string }>) {
                   >
                     Tulostaulu
                   </button>
+                  <button
+                    className={`app-btn ${teamViewTab === "fixtures" ? "app-btn-active" : ""}`}
+                    onClick={() => {
+                    setTeamViewTab("fixtures");
+                    loadFixtures();
+                  }}
+                  >
+                Ottelut
+              </button>
                 </div>
               </div>
 
@@ -426,7 +454,57 @@ function saveCurrentRanks(rows: Array<{ username: string }>) {
                     readOnly={startingXI.length === 11 && xiLocked}
                   />
                 </div>
-              ) : teamViewTab === "leaderboard" ? (
+              
+              )  : teamViewTab === "fixtures" ? (
+  <div>
+    <h2 className="app-h2">Ottelut</h2>
+
+    {fixturesErr && <div className="app-alert">{fixturesErr}</div>}
+
+    {loadingFixtures ? (
+      <div className="app-muted">Ladataan…</div>
+    ) : fixtures.length === 0 ? (
+      <div className="app-muted">Ei otteluita vielä.</div>
+    ) : (
+      <div className="app-table-wrap">
+        <table className="app-table">
+          <thead>
+            <tr>
+              <th>Kierros</th>
+              <th>ID</th>
+              <th>Peli</th>
+              <th>Päivämäärä</th>
+            </tr>
+          </thead>
+          <tbody>
+            {fixtures
+              .slice()
+              .sort((a, b) => (a.round ?? 999) - (b.round ?? 999) || a.id - b.id)
+              .map((f) => (
+                <tr key={f.id}>
+                  <td>{f.round ?? "-"}</td>
+                  <td>{f.id}</td>
+                  <td>
+                    {teamsById.get(f.homeTeamId)?.name ?? f.homeTeamId} vs{" "}
+                    {teamsById.get(f.awayTeamId)?.name ?? f.awayTeamId}
+                  </td>
+                  <td>
+                    {new Date(f.date).toLocaleString("fi-FI", {
+                      year: "numeric",
+                      month: "2-digit",
+                      day: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </div>
+) :  teamViewTab === "leaderboard" ? (
                 <div>
                   <h2 className="app-h2">Tulostaulu</h2>
 
