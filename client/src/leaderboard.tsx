@@ -1,87 +1,109 @@
-import { useEffect, useState } from "react";
-import { apiCall } from "./api";
+// api/leaderboard.ts
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { redis, PREFIX } from "../../lib/redis";
+import { getSessionFromReq } from "../../lib/session";
 
 type Row = { username: string; total: number; last: number };
-type LeaderboardResp = { rows: Row[]; gamesFinalized: number; lastGameId: number | null };
 
-export default function Leaderboard() {
-  const [rows, setRows] = useState<Row[]>([]);
-  const [gamesFinalized, setGamesFinalized] = useState<number>(0);
-  const [lastGameId, setLastGameId] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+async function scanKeys(match: string): Promise<string[]> {
+  const keys: string[] = [];
+  let cursor = "0";
 
-  useEffect(() => {
-    let cancelled = false;
+  do {
+    const resp = await redis.scan(cursor, { match, count: 200 });
+    const nextCursor = resp[0];
+    const batch = resp[1];
+    cursor = String(nextCursor);
+    keys.push(...(batch ?? []));
+  } while (cursor !== "0");
 
-    (async () => {
+  return keys;
+}
+
+function parseHashTeam(teamHash: Record<string, string> | null) {
+  if (!teamHash) return null;
+
+  const s = teamHash.startingXIIds ?? teamHash.starting ?? "";
+  const b = teamHash.benchIds ?? teamHash.bench ?? "";
+
+  const toArr = (v: string) => {
+    const trimmed = (v ?? "").trim();
+    if (!trimmed) return [];
+    if (trimmed.startsWith("[")) {
       try {
-        setLoading(true);
-        setError(null);
-
-        const res = await apiCall("/leaderboard", { method: "GET" });
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(`Leaderboard failed: ${res.status} ${text}`);
-        }
-
-        const data: LeaderboardResp = await res.json();
-        if (cancelled) return;
-
-        setRows(Array.isArray(data.rows) ? data.rows : []);
-        setGamesFinalized(Number(data.gamesFinalized ?? 0));
-        setLastGameId(data.lastGameId ?? null);
-      } catch (e: any) {
-        if (cancelled) return;
-        setError(e?.message ?? "Failed to load leaderboard");
-      } finally {
-        if (!cancelled) setLoading(false);
+        const arr = JSON.parse(trimmed);
+        return Array.isArray(arr) ? arr.map(Number).filter(Number.isFinite) : [];
+      } catch {
+        return [];
       }
-    })();
+    }
+    return trimmed
+      .split(",")
+      .map((x) => Number(x.trim()))
+      .filter(Number.isFinite);
+  };
 
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  return { startingXIIds: toArr(s), benchIds: toArr(b) };
+}
 
-  if (loading) return <div style={{ padding: 16 }}>Loading leaderboard…</div>;
-  if (error) return <div style={{ padding: 16, color: "red" }}>{error}</div>;
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  try {
+    const session = await getSessionFromReq(req);
+    if (!session) return res.status(401).json({ error: "Unauthorized" });
+    if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
 
-  return (
-    <div style={{ padding: 16 }}>
-      <h2>Tulostaulu</h2>
+    // Discover users by existing team keys
+    const teamKeys = await scanKeys(`${PREFIX}:team:*`);
+    const users = teamKeys.map((k) => k.split(":").pop()!).filter(Boolean);
 
-      <div style={{ opacity: 0.8, marginBottom: 12 }}>
-        Finalized games: {gamesFinalized}
-        {lastGameId ? <> • Last game: {lastGameId}</> : null}
-      </div>
+    // Finalized games
+    const finalized = await redis.smembers(`${PREFIX}:games_finalized`);
+    const gameIds = finalized
+      .map((x) => Number(x))
+      .filter((n) => Number.isInteger(n) && n > 0)
+      .sort((a, b) => a - b);
 
-      {rows.length === 0 ? (
-        <div>No leaderboard data yet.</div>
-      ) : (
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr>
-              <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #ddd" }}>#</th>
-              <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #ddd" }}>User</th>
-              <th style={{ textAlign: "right", padding: 8, borderBottom: "1px solid #ddd" }}>
-                Last{lastGameId ? ` (Game ${lastGameId})` : ""}
-              </th>
-              <th style={{ textAlign: "right", padding: 8, borderBottom: "1px solid #ddd" }}>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r, idx) => (
-              <tr key={r.username}>
-                <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>{idx + 1}</td>
-                <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>{r.username}</td>
-                <td style={{ padding: 8, textAlign: "right", borderBottom: "1px solid #eee" }}>{r.last}</td>
-                <td style={{ padding: 8, textAlign: "right", borderBottom: "1px solid #eee" }}>{r.total}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </div>
-  );
+    const lastGameId = gameIds.length ? gameIds[gameIds.length - 1] : null;
+
+    const rows: Row[] = [];
+
+    for (const username of users) {
+      const teamKey = `${PREFIX}:team:${username}`;
+
+      // Ensure team actually exists (supports GET object OR hash form)
+      const teamGet = await redis.get<any>(teamKey);
+      let teamExists = !!teamGet;
+
+      if (!teamExists) {
+        const teamHash = await redis.hgetall<Record<string, string>>(teamKey);
+        const parsed = parseHashTeam(teamHash);
+        teamExists = !!parsed;
+      }
+      if (!teamExists) continue;
+
+      let total = 0;
+      for (const gid of gameIds) {
+        const pts = await redis.get<number>(`${PREFIX}:user:${username}:game:${gid}:points`);
+        total += Number(pts ?? 0);
+      }
+
+      const last =
+        lastGameId == null
+          ? 0
+          : Number(await redis.get<number>(`${PREFIX}:user:${username}:game:${lastGameId}:points`)) || 0;
+
+      rows.push({ username, total, last });
+    }
+
+    rows.sort((a, b) => b.total - a.total);
+
+    return res.status(200).json({
+      rows,
+      gamesFinalized: gameIds.length,
+      lastGameId,
+    });
+  } catch (e: unknown) {
+    console.error("LEADERBOARD_CRASH", e);
+    return res.status(500).json({ error: e instanceof Error ? e.message : "Server error" });
+  }
 }

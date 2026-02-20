@@ -28,7 +28,7 @@ export default function App() {
   // -------------------- STATE --------------------
   const [authChecked, setAuthChecked] = useState(false);
 
-  const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
+  const [leaderboard, setLeaderboard] = useState<Array<{ username: string; total: number }>>([]);
   const [loadingLb, setLoadingLb] = useState(false);
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
