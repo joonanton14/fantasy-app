@@ -28,7 +28,8 @@ export default function App() {
   // -------------------- STATE --------------------
   const [authChecked, setAuthChecked] = useState(false);
 
-  const [leaderboard, setLeaderboard] = useState<Array<{ username: string; total: number }>>([]);
+  type LeaderboardRow = { username: string; total: number; last: number };
+  const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
   const [loadingLb, setLoadingLb] = useState(false);
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -407,24 +408,26 @@ export default function App() {
                   ) : leaderboard.length === 0 ? (
                     <div className="app-muted">Ei dataa vielä.</div>
                   ) : (
-                    <table className="app-table">
-                      <thead>
-                        <tr>
-                          <th>#</th>
-                          <th>Käyttäjä</th>
-                          <th style={{ textAlign: "right" }}>Pisteet</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {leaderboard.map((r, idx) => (
-                          <tr key={r.username}>
-                            <td>{idx + 1}</td>
-                            <td>{r.username}</td>
-                            <td style={{ textAlign: "right" }}>{r.total}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+<table className="app-table">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Käyttäjä</th>
+      <th style={{ textAlign: "right" }}>Viime kierros</th>
+      <th style={{ textAlign: "right" }}>Yhteensä</th>
+    </tr>
+  </thead>
+  <tbody>
+    {leaderboard.map((r, idx) => (
+      <tr key={r.username}>
+        <td>{idx + 1}</td>
+        <td>{r.username}</td>
+        <td style={{ textAlign: "right" }}>{r.last ?? 0}</td>
+        <td style={{ textAlign: "right" }}>{r.total ?? 0}</td>
+      </tr>
+    ))}
+  </tbody>
+</table>
                   )}
                 </div>
               ) : (
