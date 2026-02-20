@@ -35,6 +35,7 @@ export interface Fixture {
   id: number;
   homeTeamId: number;
   awayTeamId: number;
+  round: number;
   /**
    * ISO string indicating the date/time of the match.
    */
