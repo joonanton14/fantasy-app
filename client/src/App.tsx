@@ -162,6 +162,9 @@ export default function App() {
       if (!res.ok) return;
       const data = await res.json();
       setLeaderboard((data?.rows ?? []) as LeaderboardRow[]);
+      const rows = data.rows ?? [];
+      setLeaderboard(rows);
+      saveCurrentRanks(rows);
     } finally {
       setLoadingLb(false);
     }
@@ -269,6 +272,30 @@ export default function App() {
     setTeams([]);
     localStorage.removeItem("session");
   }
+
+  function rankDiffSymbol(username: string, currentRank: number): "up" | "down" | "same" | "new" {
+  const key = "lb_prev_ranks";
+  let prev: Record<string, number> = {};
+  try {
+    prev = JSON.parse(localStorage.getItem(key) || "{}");
+  } catch {
+    prev = {};
+  }
+
+  const prevRank = prev[username];
+  if (typeof prevRank !== "number") return "new"; // no previous data
+
+  if (currentRank < prevRank) return "up";
+  if (currentRank > prevRank) return "down";
+  return "same";
+}
+
+function saveCurrentRanks(rows: Array<{ username: string }>) {
+  const key = "lb_prev_ranks";
+  const next: Record<string, number> = {};
+  rows.forEach((r, i) => (next[r.username] = i + 1));
+  localStorage.setItem(key, JSON.stringify(next));
+}
 
   function addPlayer(player: Player) {
     if (selected.some((p) => p.id === player.id)) return;
@@ -411,6 +438,7 @@ export default function App() {
 <table className="app-table">
   <thead>
     <tr>
+      <th></th>
       <th>#</th>
       <th>Käyttäjä</th>
       <th style={{ textAlign: "right" }}>Viime kierros</th>
@@ -418,14 +446,32 @@ export default function App() {
     </tr>
   </thead>
   <tbody>
-    {leaderboard.map((r, idx) => (
-      <tr key={r.username}>
-        <td>{idx + 1}</td>
-        <td>{r.username}</td>
-        <td style={{ textAlign: "right" }}>{r.last ?? 0}</td>
-        <td style={{ textAlign: "right" }}>{r.total ?? 0}</td>
-      </tr>
-    ))}
+    {leaderboard.map((r, idx) => {
+  const rank = idx + 1;
+  const trend = rankDiffSymbol(r.username, rank);
+
+  const icon =
+    trend === "up" ? "▲"
+    : trend === "down" ? "▼"
+    : trend === "same" ? "•"
+    : "★"; // new
+
+  const title =
+    trend === "up" ? "Noussut"
+    : trend === "down" ? "Laskenut"
+    : trend === "same" ? "Ei muutosta"
+    : "Uusi";
+
+  return (
+    <tr key={r.username}>
+      <td title={title} style={{ width: 28, textAlign: "center", opacity: 0.85 }}>{icon}</td>
+      <td>{rank}</td>
+      <td>{r.username}</td>
+      <td style={{ textAlign: "right" }}>{r.last ?? 0}</td>
+      <td style={{ textAlign: "right" }}>{r.total ?? 0}</td>
+    </tr>
+  );
+})}
   </tbody>
 </table>
                   )}
