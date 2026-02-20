@@ -11,6 +11,7 @@ async function scanKeys(match: string): Promise<string[]> {
 
   do {
     const resp = await redis.scan(cursor, { match, count: 200 });
+    // Upstash REST returns tuple: [nextCursor, keys]
     const nextCursor = resp[0];
     const batch = resp[1];
     cursor = String(nextCursor);
@@ -46,17 +47,37 @@ function parseHashTeam(teamHash: Record<string, string> | null) {
   return { startingXIIds: toArr(s), benchIds: toArr(b) };
 }
 
+/**
+ * Points keys might be stored using lowercase usernames (joona),
+ * while team keys may be stored with original casing (Joona).
+ * This tries both and returns the first that exists.
+ */
+async function getPoints(username: string, gameId: number): Promise<number> {
+  const key1 = `${PREFIX}:user:${username}:game:${gameId}:points`;
+  const v1 = await redis.get<number>(key1);
+  if (v1 != null) return Number(v1) || 0;
+
+  const lower = username.toLowerCase();
+  if (lower !== username) {
+    const key2 = `${PREFIX}:user:${lower}:game:${gameId}:points`;
+    const v2 = await redis.get<number>(key2);
+    if (v2 != null) return Number(v2) || 0;
+  }
+
+  return 0;
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const session = await getSessionFromReq(req);
     if (!session) return res.status(401).json({ error: "Unauthorized" });
     if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
 
-    // Discover users by existing team keys
+    // discover users who have teams saved
     const teamKeys = await scanKeys(`${PREFIX}:team:*`);
     const users = teamKeys.map((k) => k.split(":").pop()!).filter(Boolean);
 
-    // Finalized games
+    // finalized games
     const finalized = await redis.smembers(`${PREFIX}:games_finalized`);
     const gameIds = finalized
       .map((x) => Number(x))
@@ -70,27 +91,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     for (const username of users) {
       const teamKey = `${PREFIX}:team:${username}`;
 
-      // Ensure team actually exists (supports GET object OR hash form)
+      // team exists? (supports GET object OR hash)
       const teamGet = await redis.get<any>(teamKey);
       let teamExists = !!teamGet;
 
       if (!teamExists) {
         const teamHash = await redis.hgetall<Record<string, string>>(teamKey);
-        const parsed = parseHashTeam(teamHash);
-        teamExists = !!parsed;
+        teamExists = !!parseHashTeam(teamHash);
       }
       if (!teamExists) continue;
 
       let total = 0;
       for (const gid of gameIds) {
-        const pts = await redis.get<number>(`${PREFIX}:user:${username}:game:${gid}:points`);
-        total += Number(pts ?? 0);
+        total += await getPoints(username, gid);
       }
 
-      const last =
-        lastGameId == null
-          ? 0
-          : Number(await redis.get<number>(`${PREFIX}:user:${username}:game:${lastGameId}:points`)) || 0;
+      const last = lastGameId == null ? 0 : await getPoints(username, lastGameId);
 
       rows.push({ username, total, last });
     }
