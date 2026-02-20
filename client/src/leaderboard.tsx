@@ -1,13 +1,8 @@
-// client/src/Leaderboard.tsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { apiCall } from "./api";
 
-type Row = { username: string; total: number; lastPoints: number };
-type LeaderboardResp = {
-  rows: Row[];
-  gamesFinalized: number;
-  lastGameId: number | null;
-};
+type Row = { username: string; total: number; last: number };
+type LeaderboardResp = { rows: Row[]; gamesFinalized: number; lastGameId: number | null };
 
 export default function Leaderboard() {
   const [rows, setRows] = useState<Row[]>([]);
@@ -15,14 +10,6 @@ export default function Leaderboard() {
   const [lastGameId, setLastGameId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // optional: sort defensively (server should already sort)
-  const sortedRows = useMemo(() => {
-    return [...rows].sort((a, b) => {
-      if (b.total !== a.total) return b.total - a.total;
-      return b.lastPoints - a.lastPoints;
-    });
-  }, [rows]);
 
   useEffect(() => {
     let cancelled = false;
@@ -43,11 +30,10 @@ export default function Leaderboard() {
 
         setRows(Array.isArray(data.rows) ? data.rows : []);
         setGamesFinalized(Number(data.gamesFinalized ?? 0));
-        setLastGameId(typeof data.lastGameId === "number" ? data.lastGameId : null);
-      } catch (e: unknown) {
+        setLastGameId(data.lastGameId ?? null);
+      } catch (e: any) {
         if (cancelled) return;
-        const msg = e instanceof Error ? e.message : "Failed to load leaderboard";
-        setError(msg);
+        setError(e?.message ?? "Failed to load leaderboard");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -63,14 +49,14 @@ export default function Leaderboard() {
 
   return (
     <div style={{ padding: 16 }}>
-      <h2>Leaderboard</h2>
+      <h2>Tulostaulu</h2>
 
       <div style={{ opacity: 0.8, marginBottom: 12 }}>
-        Games finalized: {gamesFinalized}
-        {lastGameId != null ? ` · Latest GW: ${lastGameId}` : ""}
+        Finalized games: {gamesFinalized}
+        {lastGameId ? <> • Last game: {lastGameId}</> : null}
       </div>
 
-      {sortedRows.length === 0 ? (
+      {rows.length === 0 ? (
         <div>No leaderboard data yet.</div>
       ) : (
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -78,21 +64,19 @@ export default function Leaderboard() {
             <tr>
               <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #ddd" }}>#</th>
               <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #ddd" }}>User</th>
-              <th style={{ textAlign: "right", padding: 8, borderBottom: "1px solid #ddd" }}>GW</th>
+              <th style={{ textAlign: "right", padding: 8, borderBottom: "1px solid #ddd" }}>
+                Last{lastGameId ? ` (Game ${lastGameId})` : ""}
+              </th>
               <th style={{ textAlign: "right", padding: 8, borderBottom: "1px solid #ddd" }}>Total</th>
             </tr>
           </thead>
           <tbody>
-            {sortedRows.map((r, idx) => (
+            {rows.map((r, idx) => (
               <tr key={r.username}>
                 <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>{idx + 1}</td>
                 <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>{r.username}</td>
-                <td style={{ padding: 8, textAlign: "right", borderBottom: "1px solid #eee" }}>
-                  {r.lastPoints ?? 0}
-                </td>
-                <td style={{ padding: 8, textAlign: "right", borderBottom: "1px solid #eee" }}>
-                  {r.total}
-                </td>
+                <td style={{ padding: 8, textAlign: "right", borderBottom: "1px solid #eee" }}>{r.last}</td>
+                <td style={{ padding: 8, textAlign: "right", borderBottom: "1px solid #eee" }}>{r.total}</td>
               </tr>
             ))}
           </tbody>
