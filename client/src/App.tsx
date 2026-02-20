@@ -160,19 +160,19 @@ export default function App() {
   }, [isLoggedIn]);
 
   async function loadFixtures() {
-  setLoadingFixtures(true);
-  setFixturesErr(null);
-  try {
-    const res = await apiCall("/fixtures", { method: "GET" }); // ✅ public endpoint
-    if (!res.ok) throw new Error("Failed to load fixtures");
-    const json = await res.json();
-    setFixtures((json.fixtures ?? []) as Fixture[]);
-  } catch (e) {
-    setFixturesErr(e instanceof Error ? e.message : "Failed to load fixtures");
-  } finally {
-    setLoadingFixtures(false);
+    setLoadingFixtures(true);
+    setFixturesErr(null);
+    try {
+      const res = await apiCall("admin/fixtures", { method: "GET" }); // ✅ public endpoint
+      if (!res.ok) throw new Error("Failed to load fixtures");
+      const json = await res.json();
+      setFixtures((json.fixtures ?? []) as Fixture[]);
+    } catch (e) {
+      setFixturesErr(e instanceof Error ? e.message : "Failed to load fixtures");
+    } finally {
+      setLoadingFixtures(false);
+    }
   }
-}
   // -------------------- LEADERBOARD --------------------
   async function loadLeaderboard() {
     setLoadingLb(true);
@@ -275,7 +275,7 @@ export default function App() {
   async function handleLogout() {
     try {
       await apiCall("/auth/logout", { method: "POST" });
-    } catch {}
+    } catch { }
 
     setIsLoggedIn(false);
     setUserId(null);
@@ -293,28 +293,28 @@ export default function App() {
   }
 
   function rankDiffSymbol(username: string, currentRank: number): "up" | "down" | "same" | "new" {
-  const key = "lb_prev_ranks";
-  let prev: Record<string, number> = {};
-  try {
-    prev = JSON.parse(localStorage.getItem(key) || "{}");
-  } catch {
-    prev = {};
+    const key = "lb_prev_ranks";
+    let prev: Record<string, number> = {};
+    try {
+      prev = JSON.parse(localStorage.getItem(key) || "{}");
+    } catch {
+      prev = {};
+    }
+
+    const prevRank = prev[username];
+    if (typeof prevRank !== "number") return "new"; // no previous data
+
+    if (currentRank < prevRank) return "up";
+    if (currentRank > prevRank) return "down";
+    return "same";
   }
 
-  const prevRank = prev[username];
-  if (typeof prevRank !== "number") return "new"; // no previous data
-
-  if (currentRank < prevRank) return "up";
-  if (currentRank > prevRank) return "down";
-  return "same";
-}
-
-function saveCurrentRanks(rows: Array<{ username: string }>) {
-  const key = "lb_prev_ranks";
-  const next: Record<string, number> = {};
-  rows.forEach((r, i) => (next[r.username] = i + 1));
-  localStorage.setItem(key, JSON.stringify(next));
-}
+  function saveCurrentRanks(rows: Array<{ username: string }>) {
+    const key = "lb_prev_ranks";
+    const next: Record<string, number> = {};
+    rows.forEach((r, i) => (next[r.username] = i + 1));
+    localStorage.setItem(key, JSON.stringify(next));
+  }
 
   function addPlayer(player: Player) {
     if (selected.some((p) => p.id === player.id)) return;
@@ -359,7 +359,7 @@ function saveCurrentRanks(rows: Array<{ username: string }>) {
         startingXIIds: xi.map((p) => p.id),
         benchIds: b.map((p) => p.id),
       });
-    } catch {}
+    } catch { }
 
     setTeamViewTab("startingXI");
     setXiLocked(true);
@@ -423,12 +423,12 @@ function saveCurrentRanks(rows: Array<{ username: string }>) {
                   <button
                     className={`app-btn ${teamViewTab === "fixtures" ? "app-btn-active" : ""}`}
                     onClick={() => {
-                    setTeamViewTab("fixtures");
-                    loadFixtures();
-                  }}
+                      setTeamViewTab("fixtures");
+                      loadFixtures();
+                    }}
                   >
-                Ottelut
-              </button>
+                    Ottelut
+                  </button>
                 </div>
               </div>
 
@@ -454,57 +454,57 @@ function saveCurrentRanks(rows: Array<{ username: string }>) {
                     readOnly={startingXI.length === 11 && xiLocked}
                   />
                 </div>
-              
-              )  : teamViewTab === "fixtures" ? (
-  <div>
-    <h2 className="app-h2">Ottelut</h2>
 
-    {fixturesErr && <div className="app-alert">{fixturesErr}</div>}
+              ) : teamViewTab === "fixtures" ? (
+                <div>
+                  <h2 className="app-h2">Ottelut</h2>
 
-    {loadingFixtures ? (
-      <div className="app-muted">Ladataan…</div>
-    ) : fixtures.length === 0 ? (
-      <div className="app-muted">Ei otteluita vielä.</div>
-    ) : (
-      <div className="app-table-wrap">
-        <table className="app-table">
-          <thead>
-            <tr>
-              <th>Kierros</th>
-              <th>ID</th>
-              <th>Peli</th>
-              <th>Päivämäärä</th>
-            </tr>
-          </thead>
-          <tbody>
-            {fixtures
-              .slice()
-              .sort((a, b) => (a.round ?? 999) - (b.round ?? 999) || a.id - b.id)
-              .map((f) => (
-                <tr key={f.id}>
-                  <td>{f.round ?? "-"}</td>
-                  <td>{f.id}</td>
-                  <td>
-                    {teamsById.get(f.homeTeamId)?.name ?? f.homeTeamId} vs{" "}
-                    {teamsById.get(f.awayTeamId)?.name ?? f.awayTeamId}
-                  </td>
-                  <td>
-                    {new Date(f.date).toLocaleString("fi-FI", {
-                      year: "numeric",
-                      month: "2-digit",
-                      day: "2-digit",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </td>
-                </tr>
-              ))}
-          </tbody>
-        </table>
-      </div>
-    )}
-  </div>
-) :  teamViewTab === "leaderboard" ? (
+                  {fixturesErr && <div className="app-alert">{fixturesErr}</div>}
+
+                  {loadingFixtures ? (
+                    <div className="app-muted">Ladataan…</div>
+                  ) : fixtures.length === 0 ? (
+                    <div className="app-muted">Ei otteluita vielä.</div>
+                  ) : (
+                    <div className="app-table-wrap">
+                      <table className="app-table">
+                        <thead>
+                          <tr>
+                            <th>Kierros</th>
+                            <th>ID</th>
+                            <th>Peli</th>
+                            <th>Päivämäärä</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {fixtures
+                            .slice()
+                            .sort((a, b) => (a.round ?? 999) - (b.round ?? 999) || a.id - b.id)
+                            .map((f) => (
+                              <tr key={f.id}>
+                                <td>{f.round ?? "-"}</td>
+                                <td>{f.id}</td>
+                                <td>
+                                  {teamsById.get(f.homeTeamId)?.name ?? f.homeTeamId} vs{" "}
+                                  {teamsById.get(f.awayTeamId)?.name ?? f.awayTeamId}
+                                </td>
+                                <td>
+                                  {new Date(f.date).toLocaleString("fi-FI", {
+                                    year: "numeric",
+                                    month: "2-digit",
+                                    day: "2-digit",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })}
+                                </td>
+                              </tr>
+                            ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              ) : teamViewTab === "leaderboard" ? (
                 <div>
                   <h2 className="app-h2">Tulostaulu</h2>
 
@@ -513,45 +513,45 @@ function saveCurrentRanks(rows: Array<{ username: string }>) {
                   ) : leaderboard.length === 0 ? (
                     <div className="app-muted">Ei dataa vielä.</div>
                   ) : (
-<table className="app-table">
-  <thead>
-    <tr>
-      <th></th>
-      <th>#</th>
-      <th>Käyttäjä</th>
-      <th style={{ textAlign: "right" }}>Viime kierros</th>
-      <th style={{ textAlign: "right" }}>Yhteensä</th>
-    </tr>
-  </thead>
-  <tbody>
-    {leaderboard.map((r, idx) => {
-  const rank = idx + 1;
-  const trend = rankDiffSymbol(r.username, rank);
+                    <table className="app-table">
+                      <thead>
+                        <tr>
+                          <th></th>
+                          <th>#</th>
+                          <th>Käyttäjä</th>
+                          <th style={{ textAlign: "right" }}>Viime kierros</th>
+                          <th style={{ textAlign: "right" }}>Yhteensä</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {leaderboard.map((r, idx) => {
+                          const rank = idx + 1;
+                          const trend = rankDiffSymbol(r.username, rank);
 
-  const icon =
-    trend === "up" ? "▲"
-    : trend === "down" ? "▼"
-    : trend === "same" ? "•"
-    : "★"; // new
+                          const icon =
+                            trend === "up" ? "▲"
+                              : trend === "down" ? "▼"
+                                : trend === "same" ? "•"
+                                  : "★"; // new
 
-  const title =
-    trend === "up" ? "Noussut"
-    : trend === "down" ? "Laskenut"
-    : trend === "same" ? "Ei muutosta"
-    : "Uusi";
+                          const title =
+                            trend === "up" ? "Noussut"
+                              : trend === "down" ? "Laskenut"
+                                : trend === "same" ? "Ei muutosta"
+                                  : "Uusi";
 
-  return (
-    <tr key={r.username}>
-      <td title={title} style={{ width: 28, textAlign: "center", opacity: 0.85 }}>{icon}</td>
-      <td>{rank}</td>
-      <td>{r.username}</td>
-      <td style={{ textAlign: "right" }}>{r.last ?? 0}</td>
-      <td style={{ textAlign: "right" }}>{r.total ?? 0}</td>
-    </tr>
-  );
-})}
-  </tbody>
-</table>
+                          return (
+                            <tr key={r.username}>
+                              <td title={title} style={{ width: 28, textAlign: "center", opacity: 0.85 }}>{icon}</td>
+                              <td>{rank}</td>
+                              <td>{r.username}</td>
+                              <td style={{ textAlign: "right" }}>{r.last ?? 0}</td>
+                              <td style={{ textAlign: "right" }}>{r.total ?? 0}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   )}
                 </div>
               ) : (
