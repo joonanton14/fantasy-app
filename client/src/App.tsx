@@ -163,7 +163,7 @@ export default function App() {
     setLoadingFixtures(true);
     setFixturesErr(null);
     try {
-      const res = await apiCall("admin/fixtures", { method: "GET" }); // ✅ public endpoint
+      const res = await apiCall("/admin/fixtures", { method: "GET" }); // ✅ public endpoint
       if (!res.ok) throw new Error("Failed to load fixtures");
       const json = await res.json();
       setFixtures((json.fixtures ?? []) as Fixture[]);
