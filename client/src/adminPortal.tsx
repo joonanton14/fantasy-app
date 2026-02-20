@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { JSX, useEffect, useMemo, useState } from "react";
 import { apiCall } from "./api";
 
 type Position = "GK" | "DEF" | "MID" | "FWD";
@@ -21,6 +21,7 @@ type Fixture = {
   homeTeamId: number;
   awayTeamId: number;
   date: string; // ISO
+  round?: number;
 };
 
 type MinutesBucket = "0" | "1_59" | "60+";
@@ -464,25 +465,52 @@ export default function AdminPortal() {
           ) : (
             <div className="app-table-wrap">
               <table className="app-table">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Peli</th>
-                    <th>Päivämäärä</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {fixtures.slice().sort((a, b) => a.id - b.id).map((f) => (
-                    <tr key={f.id}>
-                      <td>{f.id}</td>
-                      <td>
-                        {teamsById.get(f.homeTeamId)?.name ?? f.homeTeamId} vs{" "}
-                        {teamsById.get(f.awayTeamId)?.name ?? f.awayTeamId}
-                      </td>
-                      <td>{new Date(f.date).toLocaleString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
+<tbody>
+  {(() => {
+    const sorted = fixtures
+      .slice()
+      .sort((a, b) => (a.round ?? 999) - (b.round ?? 999) || a.id - b.id);
+
+    let lastRound: number | undefined;
+
+    return sorted.flatMap((f) => {
+      const out: JSX.Element[] = [];
+
+      if (f.round !== undefined && f.round !== lastRound) {
+        lastRound = f.round;
+        out.push(
+          <tr key={`round-${f.round}`}>
+            <td colSpan={4} style={{ fontWeight: 700 }}>
+              Kierros {f.round}
+            </td>
+          </tr>
+        );
+      }
+
+      out.push(
+        <tr key={f.id}>
+          <td>{f.round ?? "-"}</td>
+          <td>{f.id}</td>
+          <td>
+            {teamsById.get(f.homeTeamId)?.name ?? f.homeTeamId} vs{" "}
+            {teamsById.get(f.awayTeamId)?.name ?? f.awayTeamId}
+          </td>
+          <td>
+            {new Date(f.date).toLocaleString("fi-FI", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </td>
+        </tr>
+      );
+
+      return out;
+    });
+  })()}
+</tbody>
               </table>
             </div>
           )}
