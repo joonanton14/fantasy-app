@@ -107,7 +107,7 @@ function detectTeamForFile(fileName: string, data: unknown[]): Team | undefined 
     const playersDir = path.resolve(process.cwd(), 'players');
     if (!fs.existsSync(playersDir)) return;
 
-    const files = fs.readdirSync(playersDir).filter((f) => f.endsWith('.json'));
+    const files = fs.readdirSync(playersDir).filter((f) => f.endsWith('.json')).sort();
     let nextId = 1;
 
     for (const file of files) {

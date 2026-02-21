@@ -553,7 +553,7 @@ export default function AdminPortal() {
                 </select>
               </div>
             )}
-
+{/*
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
               <label style={{ minWidth: 70 }}>peliId</label>
               <input
@@ -589,7 +589,7 @@ export default function AdminPortal() {
                 Tyhjennä
               </button>
             </div>
-
+*/}
             {loadEventsStatus && <div className="app-muted">{loadEventsStatus}</div>}
           </div>
 
@@ -632,10 +632,6 @@ export default function AdminPortal() {
           {!selectedFixture && (
             <div style={{ border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: 10, marginBottom: 12 }}>
               <div style={{ fontWeight: 800, marginBottom: 8 }}>Ei peliä valittuna</div>
-              <div className="app-muted" style={{ marginBottom: 8 }}>
-                Jos sinulla ei ole paikallisia peliä, voit silti syöttää tapahtumia mille tahansa pelaajalle ja tallentaa ne tälle peliId:lle.
-              </div>
-
               <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
                 <input
                   className="app-btn"
