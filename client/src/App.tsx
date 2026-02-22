@@ -63,59 +63,59 @@ export default function App() {
   const [xiLocked, setXiLocked] = useState(true);
 
   type PlayerSort =
-  | "name_asc"
-  | "name_desc"
-  | "team_asc"
-  | "team_desc"
-  | "pos_asc"
-  | "value_desc"
-  | "value_asc"
-  | "id_desc"
-  | "id_asc";
+    | "name_asc"
+    | "name_desc"
+    | "team_asc"
+    | "team_desc"
+    | "pos_asc"
+    | "value_desc"
+    | "value_asc"
+    | "id_desc"
+    | "id_asc";
 
-const [playerSort, setPlayerSort] = useState<PlayerSort>("value_desc");
+  const [playerSort, setPlayerSort] = useState<PlayerSort>("value_desc");
   // -------------------- MEMOS --------------------
-const filteredPlayers = useMemo(() => {
-  const arr = players.filter((p) => {
-    if (filterTeamId !== null && p.teamId !== filterTeamId) return false;
-    if (!filterPositions.has(p.position)) return false;
-    return true;
-  });
+  const filteredPlayers = useMemo(() => {
+    const arr = players.filter((p) => {
+      if (filterTeamId !== null && p.teamId !== filterTeamId) return false;
+      if (!filterPositions.has(p.position)) return false;
+      return true;
+    });
 
-  const teamName = (teamId: number) => teamsById.get(teamId)?.name ?? "";
+    const teamName = (teamId: number) => teamsById.get(teamId)?.name ?? "";
 
-  arr.sort((a, b) => {
-    switch (playerSort) {
-      case "name_asc":
-        return a.name.localeCompare(b.name);
-      case "name_desc":
-        return b.name.localeCompare(a.name);
+    arr.sort((a, b) => {
+      switch (playerSort) {
+        case "name_asc":
+          return a.name.localeCompare(b.name);
+        case "name_desc":
+          return b.name.localeCompare(a.name);
 
-      case "team_asc":
-        return teamName(a.teamId).localeCompare(teamName(b.teamId)) || a.name.localeCompare(b.name);
-      case "team_desc":
-        return teamName(b.teamId).localeCompare(teamName(a.teamId)) || a.name.localeCompare(b.name);
+        case "team_asc":
+          return teamName(a.teamId).localeCompare(teamName(b.teamId)) || a.name.localeCompare(b.name);
+        case "team_desc":
+          return teamName(b.teamId).localeCompare(teamName(a.teamId)) || a.name.localeCompare(b.name);
 
-      case "pos_asc":
-        return a.position.localeCompare(b.position) || a.name.localeCompare(b.name);
+        case "pos_asc":
+          return a.position.localeCompare(b.position) || a.name.localeCompare(b.name);
 
-      case "value_desc":
-        return b.value - a.value || a.name.localeCompare(b.name);
-      case "value_asc":
-        return a.value - b.value || a.name.localeCompare(b.name);
+        case "value_desc":
+          return b.value - a.value || a.name.localeCompare(b.name);
+        case "value_asc":
+          return a.value - b.value || a.name.localeCompare(b.name);
 
-      case "id_desc":
-        return b.id - a.id;
-      case "id_asc":
-        return a.id - b.id;
+        case "id_desc":
+          return b.id - a.id;
+        case "id_asc":
+          return a.id - b.id;
 
-      default:
-        return 0;
-    }
-  });
+        default:
+          return 0;
+      }
+    });
 
-  return arr;
-}, [players, filterTeamId, filterPositions, playerSort, teamsById]);
+    return arr;
+  }, [players, filterTeamId, filterPositions, playerSort, teamsById]);
 
   // -------------------- AUTH RESTORE (cookie) --------------------
   useEffect(() => {
@@ -672,59 +672,30 @@ const filteredPlayers = useMemo(() => {
                       </div>
 
                       <div className="filter-row">
-                        <label>Pelipaikat:</label>
-                        <div className="position-buttons">
-                          {(["GK", "DEF", "MID", "FWD"] as const).map((pos) => (
-                            <button
-                              key={pos}
-                              className={`app-btn ${filterPositions.has(pos) ? "app-btn-active" : ""}`}
-                              onClick={() => togglePositionFilter(pos)}
-                              title={`${filterPositions.has(pos) ? "Hide" : "Show"} ${pos}`}
-                            >
-                              {pos}
-                            </button>
-                          ))}
+                        <div className="filter-row">
+                          <label>Lajittelu:</label>
+                          <select
+                            value={playerSort}
+                            onChange={(e) => setPlayerSort(e.target.value as PlayerSort)}
+                            className="app-btn"
+                          >
+                            <option value="value_desc">Arvo (korkein → alin)</option>
+                            <option value="value_asc">Arvo (alin → korkein)</option>
+
+                            <option value="name_asc">Nimi (A → Ö)</option>
+                            <option value="name_desc">Nimi (Ö → A)</option>
+
+                            <option value="team_asc">Joukkue (A → Ö)</option>
+                            <option value="team_desc">Joukkue (Ö → A)</option>
+
+                            <option value="pos_asc">Pelipaikka</option>
+
+                            <option value="id_desc">Uusimmat (ID ↓)</option>
+                            <option value="id_asc">Vanhimmat (ID ↑)</option>
+                          </select>
                         </div>
                       </div>
                     </div>
-                  </div>
-
-                  <div className="app-table-wrap">
-                    <table className="app-table">
-                      <thead>
-                        <tr>
-                          <th>Nimi</th>
-                          <th>Pelipaikka</th>
-                          <th>Joukkue</th>
-                          <th>Arvo (M)</th>
-                          <th></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <div className="filter-row">
-  <label>Lajittelu:</label>
-  <select
-    value={playerSort}
-    onChange={(e) => setPlayerSort(e.target.value as PlayerSort)}
-    className="app-btn"
-  >
-    <option value="value_desc">Arvo (korkein → alin)</option>
-    <option value="value_asc">Arvo (alin → korkein)</option>
-
-    <option value="name_asc">Nimi (A → Ö)</option>
-    <option value="name_desc">Nimi (Ö → A)</option>
-
-    <option value="team_asc">Joukkue (A → Ö)</option>
-    <option value="team_desc">Joukkue (Ö → A)</option>
-
-    <option value="pos_asc">Pelipaikka</option>
-
-    <option value="id_desc">Uusimmat (ID ↓)</option>
-    <option value="id_asc">Vanhimmat (ID ↑)</option>
-  </select>
-</div>
-                      </tbody>
-                    </table>
                   </div>
                 </>
               )}
