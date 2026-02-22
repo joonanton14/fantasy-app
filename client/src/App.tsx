@@ -58,7 +58,18 @@ export default function App() {
   );
 
   const [loadingSaved, setLoadingSaved] = useState(false);
+  type PlayerSort =
+    | "name_asc"
+    | "name_desc"
+    | "team_asc"
+    | "team_desc"
+    | "pos_asc"
+    | "value_desc"
+    | "value_asc"
+    | "id_desc"
+    | "id_asc";
 
+  const [playerSort, setPlayerSort] = useState<PlayerSort>("value_desc");
   // Lock/unlock Starting XI editing
   const [xiLocked, setXiLocked] = useState(true);
 
@@ -610,18 +621,25 @@ export default function App() {
                     <h2 className="app-h2">Suodattimet</h2>
                     <div className="filter-group">
                       <div className="filter-row">
-                        <label>Joukkue:</label>
+                        <label>Lajittelu:</label>
                         <select
-                          value={filterTeamId ?? ""}
-                          onChange={(e) => setFilterTeamId(e.target.value ? Number(e.target.value) : null)}
                           className="app-btn"
+                          value={playerSort}
+                          onChange={(e) => setPlayerSort(e.target.value as PlayerSort)}
                         >
-                          <option value="">Kaikki joukkueet</option>
-                          {teams.map((t) => (
-                            <option key={t.id} value={t.id}>
-                              {t.name}
-                            </option>
-                          ))}
+                          <option value="value_desc">Arvo (korkein → alin)</option>
+                          <option value="value_asc">Arvo (alin → korkein)</option>
+
+                          <option value="name_asc">Nimi (A → Ö)</option>
+                          <option value="name_desc">Nimi (Ö → A)</option>
+
+                          <option value="team_asc">Joukkue (A → Ö)</option>
+                          <option value="team_desc">Joukkue (Ö → A)</option>
+
+                          <option value="pos_asc">Pelipaikka</option>
+
+                          <option value="id_desc">Uusimmat (ID ↓)</option>
+                          <option value="id_asc">Vanhimmat (ID ↑)</option>
                         </select>
                       </div>
 
