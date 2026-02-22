@@ -106,7 +106,7 @@ export default function AdminPortal() {
   const [fixturesErr, setFixturesErr] = useState<string | null>(null);
 
   const [loadingBase, setLoadingBase] = useState(false);
-
+  
   // scoring state
   const [selectedGameId, setSelectedGameId] = useState<number | null>(null);
   const [selectedRound, setSelectedRound] = useState<number | "all">("all");

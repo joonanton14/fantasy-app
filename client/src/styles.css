@@ -1884,10 +1884,10 @@ select:focus {
 
 /* ===== Admin score inputs (bigger + clearer) ===== */
 .admin-score-input {
-  width: 100%;
+  width: 90%;
   min-width: 64px;
-  padding: 10px 12px;
-  font-size: 16px;
+  padding: 5px 10px;
+  font-size: 10px;
   font-weight: 800;
   line-height: 1.2;
   text-align: center;
@@ -1906,9 +1906,9 @@ select:focus {
 
 /* Make the minutes dropdown match size */
 .admin-score-select {
-  width: 100%;
-  padding: 10px 12px;
-  font-size: 14px;
+  width: 90%;
+  padding: 5px 10px;
+  font-size: 10px;
   font-weight: 800;
   border-radius: 12px;
 
