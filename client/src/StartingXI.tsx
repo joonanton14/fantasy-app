@@ -149,8 +149,8 @@ export const StartingXI: FC<Props> = ({
     setSlotAssignments(map);
     setBenchAssignments(bmap);
     setOpenSlot(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initial, initialBench]);
+
+  }, [initial, initialBench, formation]);
 
   useEffect(() => {
     function handlePointerDown(e: MouseEvent | TouchEvent) {
@@ -258,29 +258,61 @@ export const StartingXI: FC<Props> = ({
     if (readOnly) return;
 
     const nextSlots = buildSlots(next);
+    const nextReq = FORMATIONS[next];
 
-    const currentSelected = Object.values(slotAssignments).filter(Boolean) as Player[];
-    const byPos: Record<Player['position'], Player[]> = { GK: [], DEF: [], MID: [], FWD: [] };
-    currentSelected.forEach((p) => byPos[p.position].push(p));
+    // Pool = current XI + bench (prefer XI order first so starters stay starters)
+    const xiNow = Object.values(slotAssignments).filter(Boolean) as Player[];
+    const benchNow = Object.values(benchAssignments).filter(Boolean) as Player[];
+    const pool = [...xiNow, ...benchNow];
 
-    const map: Record<string, Player | null> = {};
-    nextSlots.forEach((s) => (map[s.id] = null));
+    // Split pool by position (preserves order!)
+    const poolByPos: Record<Player["position"], Player[]> = { GK: [], DEF: [], MID: [], FWD: [] };
+    for (const p of pool) poolByPos[p.position].push(p);
 
-    const remainingByPos: Record<Player['position'], Player[]> = {
-      GK: [...byPos.GK],
-      DEF: [...byPos.DEF],
-      MID: [...byPos.MID],
-      FWD: [...byPos.FWD],
+    // --- Build new XI assignments ---
+    const nextMap: Record<string, Player | null> = {};
+    nextSlots.forEach((s) => (nextMap[s.id] = null));
+
+    // GK (exactly 1)
+    const gkPick = poolByPos.GK.shift() ?? null;
+    if (gkPick) nextMap["gk-1"] = gkPick;
+
+    // Fill required DEF/MID/FWD
+    const fillPos = (pos: "DEF" | "MID" | "FWD", count: number) => {
+      const slotsForPos = nextSlots.filter((s) => s.position === pos);
+      for (let i = 0; i < count; i++) {
+        const p = poolByPos[pos].shift() ?? null;
+        if (p) nextMap[slotsForPos[i].id] = p;
+      }
     };
 
-    for (const s of nextSlots) {
-      const arr = remainingByPos[s.position];
-      if (arr.length > 0) map[s.id] = arr.shift()!;
-    }
+    fillPos("DEF", nextReq.DEF);
+    fillPos("MID", nextReq.MID);
+    fillPos("FWD", nextReq.FWD);
+
+    // --- Build new bench from leftovers ---
+    // Remaining poolByPos now contains leftover players not used in XI
+    const leftoverGK = poolByPos.GK.shift() ?? null;
+
+    // Bench field: take leftovers in a stable “nice” order (MID/DEF/FWD), still preserving each list order
+    const leftoverField: Player[] = [
+      ...poolByPos.MID,
+      ...poolByPos.DEF,
+      ...poolByPos.FWD,
+    ].filter((p) => p.position !== "GK");
+
+    const nextBenchMap: Record<string, Player | null> = {};
+    BENCH_SLOTS.forEach((s) => (nextBenchMap[s.id] = null));
+
+    nextBenchMap["bench-gk"] = leftoverGK;
+    nextBenchMap["bench-1"] = leftoverField[0] ?? null;
+    nextBenchMap["bench-2"] = leftoverField[1] ?? null;
+    nextBenchMap["bench-3"] = leftoverField[2] ?? null;
 
     setFormation(next);
     setSlots(nextSlots);
-    setSlotAssignments(map);
+    setSlotAssignments(nextMap);
+    setBenchAssignments(nextBenchMap);
     setOpenSlot(null);
   }
 
