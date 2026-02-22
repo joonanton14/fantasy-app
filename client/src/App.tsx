@@ -500,6 +500,15 @@ export default function App() {
               ) : teamViewTab === "startingXI" ? (
                 <div>
                   {/* show the read-only lineup as before */}
+                  <button
+                    className="app-btn app-btn-primary"
+                    onClick={() => {
+                      setTeamViewTab("transfers");
+                      setXiLocked(false); // optional
+                    }}
+                  >
+                    Muokkaa joukkuetta (Siirrot)
+                  </button>
                   <StartingXI
                     players={players}
                     teams={teams}
