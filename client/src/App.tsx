@@ -6,6 +6,7 @@ import StartingXI from "./StartingXI";
 import { apiCall } from "./api";
 import "./styles.css";
 import { loadSavedTeam, saveStartingXI } from "./userTeam";
+import TransfersPage from "./transferPage";
 
 interface Player {
   id: number;
@@ -51,7 +52,8 @@ export default function App() {
   const [fixturesErr, setFixturesErr] = useState<string | null>(null);
   const [loadingFixtures, setLoadingFixtures] = useState(false);
   const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
-  const [teamViewTab, setTeamViewTab] = useState<"startingXI" | "players" | "leaderboard" | "fixtures">("startingXI");
+  const [teamViewTab, setTeamViewTab] =
+    useState<"startingXI" | "players" | "leaderboard" | "fixtures" | "transfers">("startingXI");
   const [filterTeamId, setFilterTeamId] = useState<number | null>(null);
   const [filterPositions, setFilterPositions] = useState<Set<"GK" | "DEF" | "MID" | "FWD">>(
     new Set(["GK", "DEF", "MID", "FWD"])
@@ -478,18 +480,26 @@ export default function App() {
                 </div>
               </div>
 
-              {teamViewTab === "startingXI" ? (
+              {teamViewTab === "transfers" ? (
+                <TransfersPage
+                  players={players}
+                  teams={teams}
+                  startingXI={startingXI}
+                  bench={bench}
+                  budget={INITIAL_BUDGET}
+                  onCancel={() => {
+                    setTeamViewTab("startingXI");
+                    setXiLocked(true); // optional if you keep locking
+                  }}
+                  onSave={(payload) => {
+                    saveXI(payload);          // your existing saveXI already persists + locks
+                    setTeamViewTab("startingXI");
+                    setXiLocked(true);
+                  }}
+                />
+              ) : teamViewTab === "startingXI" ? (
                 <div>
-                  {loadingSaved && <div className="app-muted">Ladataan tallennettu joukkue…</div>}
-
-                  {startingXI.length === 11 && xiLocked && (
-                    <div className="app-actions" style={{ marginBottom: 12 }}>
-                      <button className="app-btn app-btn-primary" onClick={() => setXiLocked(false)}>
-                        Muokkaa avauskokoonpanoa
-                      </button>
-                    </div>
-                  )}
-
+                  {/* show the read-only lineup as before */}
                   <StartingXI
                     players={players}
                     teams={teams}
@@ -497,10 +507,9 @@ export default function App() {
                     initialBench={bench}
                     onSave={saveXI}
                     budget={INITIAL_BUDGET}
-                    readOnly={startingXI.length === 11 && xiLocked}
+                    readOnly={true} // always read-only on this tab
                   />
                 </div>
-
               ) : teamViewTab === "fixtures" ? (
                 <div>
                   <h2 className="app-h2">Ottelut</h2>
