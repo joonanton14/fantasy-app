@@ -335,7 +335,7 @@ export default function AdminPortal() {
     const pts = calcPoints(p.position, ev);
 
     return (
-      <div className="admin-row" style={{ display: "grid", gridTemplateColumns: "1.2fr 0.7fr 1.1fr 1fr", gap: 8, alignItems: "center", padding: "8px 0", borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
+      <div className="admin-row" style={{ display: "grid", gridTemplateColumns: "minmax(100px, 170px) 70px 180px 100px", gap: 8, alignItems: "center", padding: "8px 0", borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
         <div style={{ minWidth: 0 }}>
           <div style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {p.name}
