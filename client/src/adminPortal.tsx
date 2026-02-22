@@ -109,6 +109,7 @@ export default function AdminPortal() {
 
   // scoring state
   const [selectedGameId, setSelectedGameId] = useState<number | null>(null);
+  const [selectedRound, setSelectedRound] = useState<number | "all">("all");
   const [manualGameId, setManualGameId] = useState<string>("");
 
   const [events, setEvents] = useState<Record<string, PlayerEventInput>>({});
@@ -213,6 +214,19 @@ export default function AdminPortal() {
     if (Number.isInteger(n) && n > 0) return n;
     return null;
   }, [selectedGameId, manualGameId]);
+
+  const rounds = useMemo(() => {
+    const set = new Set<number>();
+    for (const f of fixtures) {
+      if (typeof f.round === "number") set.add(f.round);
+    }
+    return Array.from(set).sort((a, b) => a - b);
+  }, [fixtures]);
+
+  const fixturesForRound = useMemo(() => {
+    if (selectedRound === "all") return fixtures;
+    return fixtures.filter((f) => f.round === selectedRound);
+  }, [fixtures, selectedRound]);
 
   const homeTeamId = selectedFixture?.homeTeamId ?? null;
   const awayTeamId = selectedFixture?.awayTeamId ?? null;
@@ -597,31 +611,66 @@ export default function AdminPortal() {
 
           <div style={{ display: "grid", gap: 8, marginBottom: 12 }}>
             {fixtures.length > 0 && (
-              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <label style={{ minWidth: 70 }}>Peli</label>
-                <select
-                  className="app-btn"
-                  value={selectedGameId ?? ""}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    const id = v ? Number(v) : null;
-                    setSelectedGameId(id);
-                    setManualGameId("");
-                    setEvents({});
-                    setFinalizeResults([]);
-                  }}
-                  style={{ flex: 1 }}
-                >
-                  <option value="">Valitse…</option>
-                  {fixtures
-                    .slice()
-                    .sort((a, b) => a.id - b.id)
-                    .map((f) => (
-                      <option key={f.id} value={f.id}>
-                        {fmtFixture(f, teamsById)}
+              <div style={{ display: "grid", gap: 8 }}>
+                {/* Round selector */}
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <label style={{ minWidth: 70 }}>Kierros</label>
+                  <select
+                    className="app-btn"
+                    value={selectedRound}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      const nextRound = v === "all" ? "all" : Number(v);
+
+                      setSelectedRound(nextRound);
+                      setSelectedGameId(null);
+                      setManualGameId("");
+                      setEvents({});
+                      setFinalizeResults([]);
+                    }}
+                    style={{ flex: 1 }}
+                  >
+                    <option value="all">Kaikki</option>
+                    {rounds.map((r) => (
+                      <option key={r} value={r}>
+                        Kierros {r}
                       </option>
                     ))}
-                </select>
+                  </select>
+                </div>
+
+                {/* Game selector (filtered by round) */}
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <label style={{ minWidth: 70 }}>Peli</label>
+                  <select
+                    className="app-btn"
+                    value={selectedGameId ?? ""}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      const id = v ? Number(v) : null;
+
+                      setSelectedGameId(id);
+                      setManualGameId("");
+                      setEvents({});
+                      setFinalizeResults([]);
+                    }}
+                    style={{ flex: 1 }}
+                    disabled={fixturesForRound.length === 0}
+                  >
+                    <option value="">
+                      {fixturesForRound.length === 0 ? "Ei pelejä" : "Valitse…"}
+                    </option>
+
+                    {fixturesForRound
+                      .slice()
+                      .sort((a, b) => a.id - b.id)
+                      .map((f) => (
+                        <option key={f.id} value={f.id}>
+                          {fmtFixture(f, teamsById)}
+                        </option>
+                      ))}
+                  </select>
+                </div>
               </div>
             )}
             {loadEventsStatus && <div className="app-muted">{loadEventsStatus}</div>}
@@ -665,17 +714,6 @@ export default function AdminPortal() {
           {/* If fixture missing, allow scoring “any players” (fallback) */}
           {!selectedFixture && (
             <div style={{ border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: 10, marginBottom: 12 }}>
-              <div style={{ fontWeight: 800, marginBottom: 8 }}>Ei peliä valittuna</div>
-              <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-                <input
-                  className="app-btn"
-                  placeholder="Search player…"
-                  value={playerSearch}
-                  onChange={(e) => setPlayerSearch(e.target.value)}
-                  style={{ flex: 1 }}
-                />
-              </div>
-
               <div style={{ display: "grid", gap: 8 }}>
                 {filteredPlayers.slice(0, 40).map((p) => (
                   <EventRow key={p.id} p={p} />
