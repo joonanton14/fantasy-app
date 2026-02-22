@@ -1845,3 +1845,39 @@ select {
   background: rgba(0, 0, 0, 0.2);
   color: inherit;
 }
+
+/* ===== Fix select dropdown readability (options) ===== */
+
+/* Closed select */
+select.app-btn,
+.app-btn select,
+select {
+  color: rgba(255, 255, 255, 0.92);
+  background-color: rgba(3, 7, 18, 0.75);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+/* The opened dropdown list items (supported in most browsers) */
+select option {
+  background-color: #0b1220; /* solid dark */
+  color: #e5e7eb;           /* bright text */
+}
+
+/* Selected option */
+select option:checked {
+  background-color: #1f2a44;
+  color: #ffffff;
+}
+
+/* Hover (works in some browsers) */
+select option:hover {
+  background-color: #23304f;
+  color: #ffffff;
+}
+
+/* Focus ring for select */
+select:focus {
+  outline: none;
+  border-color: rgba(99, 102, 241, 0.70);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+}
