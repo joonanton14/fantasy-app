@@ -616,10 +616,11 @@ export default function App() {
                 </div>
               ) : (
                 <>
+                  {/* Selected players table (or empty message) */}
                   {selected.length === 0 ? (
                     <div className="app-muted">Et ole valinnut vielä yhtään pelaajaa.</div>
                   ) : (
-                    <div className="selected-players-list">
+                    <div className="selected-players-list" style={{ marginBottom: 16 }}>
                       <table className="app-table">
                         <thead>
                           <tr>
@@ -632,7 +633,7 @@ export default function App() {
                         </thead>
                         <tbody>
                           {selected.map((p) => {
-                            const teamName = teams.find((t) => t.id === p.teamId)?.name ?? "";
+                            const teamName = teamsById.get(p.teamId)?.name ?? "";
                             return (
                               <tr key={p.id}>
                                 <td>{p.name}</td>
@@ -652,8 +653,10 @@ export default function App() {
                     </div>
                   )}
 
-                  <div className="app-section">
+                  {/* Filters */}
+                  <div className="app-section" style={{ marginBottom: 12 }}>
                     <h2 className="app-h2">Suodattimet</h2>
+
                     <div className="filter-group">
                       <div className="filter-row">
                         <label>Joukkue:</label>
@@ -672,30 +675,81 @@ export default function App() {
                       </div>
 
                       <div className="filter-row">
-                        <div className="filter-row">
-                          <label>Lajittelu:</label>
-                          <select
-                            value={playerSort}
-                            onChange={(e) => setPlayerSort(e.target.value as PlayerSort)}
-                            className="app-btn"
-                          >
-                            <option value="value_desc">Arvo (korkein → alin)</option>
-                            <option value="value_asc">Arvo (alin → korkein)</option>
+                        <label>Lajittelu:</label>
+                        <select
+                          value={playerSort}
+                          onChange={(e) => setPlayerSort(e.target.value as PlayerSort)}
+                          className="app-btn"
+                        >
+                          <option value="value_desc">Arvo (korkein → alin)</option>
+                          <option value="value_asc">Arvo (alin → korkein)</option>
+                          <option value="name_asc">Nimi (A → Ö)</option>
+                          <option value="name_desc">Nimi (Ö → A)</option>
+                          <option value="team_asc">Joukkue (A → Ö)</option>
+                          <option value="team_desc">Joukkue (Ö → A)</option>
+                          <option value="pos_asc">Pelipaikka</option>
+                          <option value="id_desc">Uusimmat (ID ↓)</option>
+                          <option value="id_asc">Vanhimmat (ID ↑)</option>
+                        </select>
+                      </div>
 
-                            <option value="name_asc">Nimi (A → Ö)</option>
-                            <option value="name_desc">Nimi (Ö → A)</option>
-
-                            <option value="team_asc">Joukkue (A → Ö)</option>
-                            <option value="team_desc">Joukkue (Ö → A)</option>
-
-                            <option value="pos_asc">Pelipaikka</option>
-
-                            <option value="id_desc">Uusimmat (ID ↓)</option>
-                            <option value="id_asc">Vanhimmat (ID ↑)</option>
-                          </select>
+                      <div className="filter-row">
+                        <label>Pelipaikat:</label>
+                        <div className="position-buttons">
+                          {(["GK", "DEF", "MID", "FWD"] as const).map((pos) => (
+                            <button
+                              key={pos}
+                              className={`app-btn ${filterPositions.has(pos) ? "app-btn-active" : ""}`}
+                              onClick={() => togglePositionFilter(pos)}
+                              title={`${filterPositions.has(pos) ? "Hide" : "Show"} ${pos}`}
+                            >
+                              {pos}
+                            </button>
+                          ))}
                         </div>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Players list */}
+                  <div className="app-table-wrap">
+                    <table className="app-table">
+                      <thead>
+                        <tr>
+                          <th>Nimi</th>
+                          <th>Pelipaikka</th>
+                          <th>Joukkue</th>
+                          <th>Arvo (M)</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredPlayers.map((p) => {
+                          const isSelectedRow = selected.some((sel) => sel.id === p.id);
+                          const sameTeamCount = selected.filter((sel) => sel.teamId === p.teamId).length;
+                          const willExceedBudget = totalValue() + p.value > INITIAL_BUDGET;
+                          const teamName = teamsById.get(p.teamId)?.name ?? "";
+
+                          return (
+                            <tr key={p.id} className={isSelectedRow ? "app-row-selected" : undefined}>
+                              <td>{p.name}</td>
+                              <td>{p.position}</td>
+                              <td>{teamName}</td>
+                              <td>{p.value.toFixed(1)}</td>
+                              <td>
+                                <button
+                                  className="app-btn app-btn-primary"
+                                  disabled={isSelectedRow || selected.length >= 15 || sameTeamCount >= 3 || willExceedBudget}
+                                  onClick={() => addPlayer(p)}
+                                >
+                                  Lisää
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
                 </>
               )}
