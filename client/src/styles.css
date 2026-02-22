@@ -1881,3 +1881,44 @@ select:focus {
   border-color: rgba(99, 102, 241, 0.70);
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
 }
+
+/* ===== Admin score inputs (bigger + clearer) ===== */
+.admin-score-input {
+  width: 100%;
+  min-width: 64px;
+  padding: 10px 12px;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.28);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.admin-score-input:focus {
+  outline: none;
+  border-color: rgba(99, 102, 241, 0.75);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18);
+}
+
+/* Make the minutes dropdown match size */
+.admin-score-select {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 800;
+  border-radius: 12px;
+
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.28);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.admin-score-select:focus {
+  outline: none;
+  border-color: rgba(99, 102, 241, 0.75);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18);
+}

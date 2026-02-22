@@ -348,7 +348,7 @@ export default function AdminPortal() {
         <div>
           <label style={{ fontSize: 12, opacity: 0.75 }}>Minuutit</label>
           <select
-            className="app-btn"
+            className="admin-score-select"
             value={ev.minutes}
             onChange={(e) => setEv(p.id, { ...ev, minutes: e.target.value as MinutesBucket })}
             style={{ width: "100%" }}
@@ -363,7 +363,7 @@ export default function AdminPortal() {
           <div>
             <label style={{ fontSize: 12, opacity: 0.75 }}>G</label>
             <input
-              className="app-btn"
+              className="admin-score-input"
               value={String(ev.goals)}
               onChange={(e) => setEv(p.id, { ...ev, goals: toInt(e.target.value) })}
               style={{ width: "100%" }}
@@ -372,7 +372,7 @@ export default function AdminPortal() {
           <div>
             <label style={{ fontSize: 12, opacity: 0.75 }}>A</label>
             <input
-              className="app-btn"
+              className="admin-score-input"
               value={String(ev.assists)}
               onChange={(e) => setEv(p.id, { ...ev, assists: toInt(e.target.value) })}
               style={{ width: "100%" }}
@@ -381,7 +381,7 @@ export default function AdminPortal() {
           <div>
             <label style={{ fontSize: 12, opacity: 0.75 }}>KK</label>
             <input
-              className="app-btn"
+              className="admin-score-input"
               value={String(ev.yellow)}
               onChange={(e) => setEv(p.id, { ...ev, yellow: toInt(e.target.value) })}
               style={{ width: "100%" }}
@@ -390,7 +390,7 @@ export default function AdminPortal() {
           <div>
             <label style={{ fontSize: 12, opacity: 0.75 }}>PK</label>
             <input
-              className="app-btn"
+              className="admin-score-input"
               value={String(ev.red)}
               onChange={(e) => setEv(p.id, { ...ev, red: toInt(e.target.value) })}
               style={{ width: "100%" }}
@@ -411,7 +411,7 @@ export default function AdminPortal() {
           <div>
             <label style={{ fontSize: 12, opacity: 0.75 }}>OM</label>
             <input
-              className="app-btn"
+              className="admin-score-input"
               value={String(ev.ownGoals)}
               onChange={(e) => setEv(p.id, { ...ev, ownGoals: toInt(e.target.value) })}
               style={{ width: "100%" }}
@@ -420,7 +420,7 @@ export default function AdminPortal() {
           <div>
             <label style={{ fontSize: 12, opacity: 0.75 }}>ERP</label>
             <input
-              className="app-btn"
+              className="admin-score-input"
               value={String(ev.penMissed)}
               onChange={(e) => setEv(p.id, { ...ev, penMissed: toInt(e.target.value) })}
               style={{ width: "100%" }}
@@ -429,7 +429,7 @@ export default function AdminPortal() {
           <div>
             <label style={{ fontSize: 12, opacity: 0.75 }}>TRP</label>
             <input
-              className="app-btn"
+              className="admin-score-input"
               value={String(ev.penSaved)}
               onChange={(e) => setEv(p.id, { ...ev, penSaved: toInt(e.target.value) })}
               style={{ width: "100%" }}
