@@ -453,12 +453,14 @@ export default function App() {
                   >
                     Kokoonpano
                   </button>
+
                   <button
                     className={`app-btn ${teamViewTab === "players" ? "app-btn-active" : ""}`}
                     onClick={() => setTeamViewTab("players")}
                   >
                     Pelaajat
                   </button>
+
                   <button
                     className={`app-btn ${teamViewTab === "leaderboard" ? "app-btn-active" : ""}`}
                     onClick={() => {
@@ -468,6 +470,7 @@ export default function App() {
                   >
                     Tulostaulu
                   </button>
+
                   <button
                     className={`app-btn ${teamViewTab === "fixtures" ? "app-btn-active" : ""}`}
                     onClick={() => {
@@ -477,11 +480,12 @@ export default function App() {
                   >
                     Ottelut
                   </button>
+
                   <button
                     className="app-btn app-btn-primary"
                     onClick={() => {
                       setTeamViewTab("transfers");
-                      setXiLocked(false); // optional
+                      setXiLocked(false);
                     }}
                   >
                     Vaihdot
@@ -489,6 +493,7 @@ export default function App() {
                 </div>
               </div>
 
+              {/* ===== TAB CONTENT ===== */}
               {teamViewTab === "transfers" ? (
                 <TransfersPage
                   players={players}
@@ -501,249 +506,241 @@ export default function App() {
                     setXiLocked(true);
                   }}
                   onSave={async (payload) => {
-                    await saveXI(payload);            // <-- wait for state + persistence
-                    setTeamViewTab("startingXI");     // <-- navigate ONCE here
+                    await saveXI(payload);
+                    setTeamViewTab("startingXI");
                     setXiLocked(true);
                   }}
                 />
-              ) : (
-                <StartingXI
-                  players={players}
-                  teams={teams}
-                  initial={startingXI}
-                  initialBench={bench}
-                  onSave={saveXI}
-                  budget={INITIAL_BUDGET}
-                  readOnly={true}
-                />
-              )}
-              : teamViewTab === "startingXI" ? (
-              <div>
-                {/* show the read-only lineup as before */}
-                <StartingXI
-                  players={players}
-                  teams={teams}
-                  initial={startingXI}
-                  initialBench={bench}
-                  onSave={saveXI}
-                  budget={INITIAL_BUDGET}
-                  readOnly={true} // always read-only on this tab
-                />
-              </div>
+              ) : teamViewTab === "startingXI" ? (
+                <div>
+                  {loadingSaved && <div className="app-muted">Ladataan tallennettu joukkue…</div>}
+
+                  {/* show read-only lineup on this tab */}
+                  <StartingXI
+                    players={players}
+                    teams={teams}
+                    initial={startingXI}
+                    initialBench={bench}
+                    onSave={saveXI}
+                    budget={INITIAL_BUDGET}
+                    readOnly={true}
+                  />
+                </div>
               ) : teamViewTab === "fixtures" ? (
-              <div>
-                <h2 className="app-h2">Ottelut</h2>
+                <div>
+                  <h2 className="app-h2">Ottelut</h2>
 
-                {fixturesErr && <div className="app-alert">{fixturesErr}</div>}
+                  {fixturesErr && <div className="app-alert">{fixturesErr}</div>}
 
-                {loadingFixtures ? (
-                  <div className="app-muted">Ladataan…</div>
-                ) : fixtures.length === 0 ? (
-                  <div className="app-muted">Ei otteluita vielä.</div>
-                ) : (
-                  <div className="app-table-wrap">
-                    <table className="app-table">
-                      <tbody>
-                        {(() => {
-                          const sorted = fixtures
-                            .slice()
-                            .sort((a, b) => (a.round ?? 999) - (b.round ?? 999) || a.id - b.id);
+                  {loadingFixtures ? (
+                    <div className="app-muted">Ladataan…</div>
+                  ) : fixtures.length === 0 ? (
+                    <div className="app-muted">Ei otteluita vielä.</div>
+                  ) : (
+                    <div className="app-table-wrap">
+                      <table className="app-table">
+                        <tbody>
+                          {(() => {
+                            const sorted = fixtures
+                              .slice()
+                              .sort((a, b) => (a.round ?? 999) - (b.round ?? 999) || a.id - b.id);
 
-                          let lastRound: number | undefined;
+                            let lastRound: number | undefined;
 
-                          return sorted.flatMap((f) => {
-                            const out: JSX.Element[] = [];
+                            return sorted.flatMap((f) => {
+                              const out: JSX.Element[] = [];
 
-                            if (f.round !== undefined && f.round !== lastRound) {
-                              lastRound = f.round;
+                              if (f.round !== undefined && f.round !== lastRound) {
+                                lastRound = f.round;
+                                out.push(
+                                  <tr key={`round-${f.round}`}>
+                                    <td colSpan={4} style={{ fontWeight: 700 }}>
+                                      Kierros {f.round}
+                                    </td>
+                                  </tr>
+                                );
+                              }
+
                               out.push(
-                                <tr key={`round-${f.round}`}>
-                                  <td colSpan={4} style={{ fontWeight: 700 }}>
-                                    Kierros {f.round}
+                                <tr key={f.id}>
+                                  <td>{f.round ?? "-"}</td>
+                                  <td>{f.id}</td>
+                                  <td>
+                                    {teamsById.get(f.homeTeamId)?.name ?? f.homeTeamId} vs{" "}
+                                    {teamsById.get(f.awayTeamId)?.name ?? f.awayTeamId}
+                                  </td>
+                                  <td>
+                                    {new Date(f.date).toLocaleString("fi-FI", {
+                                      year: "numeric",
+                                      month: "2-digit",
+                                      day: "2-digit",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })}
                                   </td>
                                 </tr>
                               );
-                            }
 
-                            out.push(
-                              <tr key={f.id}>
-                                <td>{f.round ?? "-"}</td>
-                                <td>{f.id}</td>
-                                <td>
-                                  {teamsById.get(f.homeTeamId)?.name ?? f.homeTeamId} vs{" "}
-                                  {teamsById.get(f.awayTeamId)?.name ?? f.awayTeamId}
-                                </td>
-                                <td>
-                                  {new Date(f.date).toLocaleString("fi-FI", {
-                                    year: "numeric",
-                                    month: "2-digit",
-                                    day: "2-digit",
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  })}
-                                </td>
-                              </tr>
-                            );
+                              return out;
+                            });
+                          })()}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              ) : teamViewTab === "leaderboard" ? (
+                <div>
+                  <h2 className="app-h2">Tulostaulu</h2>
 
-                            return out;
-                          });
-                        })()}
+                  {loadingLb ? (
+                    <div className="app-muted">Ladataan…</div>
+                  ) : leaderboard.length === 0 ? (
+                    <div className="app-muted">Ei dataa vielä.</div>
+                  ) : (
+                    <table className="app-table">
+                      <thead>
+                        <tr>
+                          <th></th>
+                          <th>#</th>
+                          <th>Käyttäjä</th>
+                          <th style={{ textAlign: "right" }}>Viime kierros</th>
+                          <th style={{ textAlign: "right" }}>Yhteensä</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {leaderboard.map((r, idx) => {
+                          const rank = idx + 1;
+                          const trend = rankDiffSymbol(r.username, rank);
+
+                          const icon =
+                            trend === "up" ? "▲" : trend === "down" ? "▼" : trend === "same" ? "•" : "★";
+
+                          const title =
+                            trend === "up"
+                              ? "Noussut"
+                              : trend === "down"
+                                ? "Laskenut"
+                                : trend === "same"
+                                  ? "Ei muutosta"
+                                  : "Uusi";
+
+                          return (
+                            <tr key={r.username}>
+                              <td title={title} style={{ width: 28, textAlign: "center", opacity: 0.85 }}>
+                                {icon}
+                              </td>
+                              <td>{rank}</td>
+                              <td>{r.username}</td>
+                              <td style={{ textAlign: "right" }}>{r.last ?? 0}</td>
+                              <td style={{ textAlign: "right" }}>{r.total ?? 0}</td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
-                  </div>
-                )}
-              </div>
-              ) : teamViewTab === "leaderboard" ? (
-              <div>
-                <h2 className="app-h2">Tulostaulu</h2>
-
-                {loadingLb ? (
-                  <div className="app-muted">Ladataan…</div>
-                ) : leaderboard.length === 0 ? (
-                  <div className="app-muted">Ei dataa vielä.</div>
-                ) : (
-                  <table className="app-table">
-                    <thead>
-                      <tr>
-                        <th></th>
-                        <th>#</th>
-                        <th>Käyttäjä</th>
-                        <th style={{ textAlign: "right" }}>Viime kierros</th>
-                        <th style={{ textAlign: "right" }}>Yhteensä</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {leaderboard.map((r, idx) => {
-                        const rank = idx + 1;
-                        const trend = rankDiffSymbol(r.username, rank);
-
-                        const icon =
-                          trend === "up" ? "▲"
-                            : trend === "down" ? "▼"
-                              : trend === "same" ? "•"
-                                : "★"; // new
-
-                        const title =
-                          trend === "up" ? "Noussut"
-                            : trend === "down" ? "Laskenut"
-                              : trend === "same" ? "Ei muutosta"
-                                : "Uusi";
-
-                        return (
-                          <tr key={r.username}>
-                            <td title={title} style={{ width: 28, textAlign: "center", opacity: 0.85 }}>{icon}</td>
-                            <td>{rank}</td>
-                            <td>{r.username}</td>
-                            <td style={{ textAlign: "right" }}>{r.last ?? 0}</td>
-                            <td style={{ textAlign: "right" }}>{r.total ?? 0}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                )}
-              </div>
+                  )}
+                </div>
               ) : (
-              <>
-                {/* Filters */}
-                <div className="app-section" style={{ marginBottom: 12 }}>
-                  <h2 className="app-h2">Suodattimet</h2>
+                <>
+                  {/* PLAYERS TAB */}
+                  <div className="app-section" style={{ marginBottom: 12 }}>
+                    <h2 className="app-h2">Suodattimet</h2>
 
-                  <div className="filter-group">
-                    <div className="filter-row">
-                      <label>Joukkue:</label>
-                      <select
-                        value={filterTeamId ?? ""}
-                        onChange={(e) => setFilterTeamId(e.target.value ? Number(e.target.value) : null)}
-                        className="app-btn"
-                      >
-                        <option value="">Kaikki joukkueet</option>
-                        {teams.map((t) => (
-                          <option key={t.id} value={t.id}>
-                            {t.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    <div className="filter-group">
+                      <div className="filter-row">
+                        <label>Joukkue:</label>
+                        <select
+                          value={filterTeamId ?? ""}
+                          onChange={(e) => setFilterTeamId(e.target.value ? Number(e.target.value) : null)}
+                          className="app-btn"
+                        >
+                          <option value="">Kaikki joukkueet</option>
+                          {teams.map((t) => (
+                            <option key={t.id} value={t.id}>
+                              {t.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
 
-                    <div className="filter-row">
-                      <label>Lajittelu:</label>
-                      <select
-                        value={playerSort}
-                        onChange={(e) => setPlayerSort(e.target.value as PlayerSort)}
-                        className="app-btn"
-                      >
-                        <option value="value_desc">Arvo (korkein → alin)</option>
-                        <option value="value_asc">Arvo (alin → korkein)</option>
-                        <option value="name_asc">Nimi (A → Ö)</option>
-                        <option value="name_desc">Nimi (Ö → A)</option>
-                        <option value="team_asc">Joukkue (A → Ö)</option>
-                        <option value="team_desc">Joukkue (Ö → A)</option>
-                        <option value="pos_asc">Pelipaikka</option>
-                        <option value="id_desc">Uusimmat (ID ↓)</option>
-                        <option value="id_asc">Vanhimmat (ID ↑)</option>
-                      </select>
-                    </div>
+                      <div className="filter-row">
+                        <label>Lajittelu:</label>
+                        <select
+                          value={playerSort}
+                          onChange={(e) => setPlayerSort(e.target.value as PlayerSort)}
+                          className="app-btn"
+                        >
+                          <option value="value_desc">Arvo (korkein → alin)</option>
+                          <option value="value_asc">Arvo (alin → korkein)</option>
+                          <option value="name_asc">Nimi (A → Ö)</option>
+                          <option value="name_desc">Nimi (Ö → A)</option>
+                          <option value="team_asc">Joukkue (A → Ö)</option>
+                          <option value="team_desc">Joukkue (Ö → A)</option>
+                          <option value="pos_asc">Pelipaikka</option>
+                          <option value="id_desc">Uusimmat (ID ↓)</option>
+                          <option value="id_asc">Vanhimmat (ID ↑)</option>
+                        </select>
+                      </div>
 
-                    <div className="filter-row">
-                      <label>Pelipaikat:</label>
-                      <div className="position-buttons">
-                        {(["GK", "DEF", "MID", "FWD"] as const).map((pos) => (
-                          <button
-                            key={pos}
-                            className={`app-btn ${filterPositions.has(pos) ? "app-btn-active" : ""}`}
-                            onClick={() => togglePositionFilter(pos)}
-                            title={`${filterPositions.has(pos) ? "Hide" : "Show"} ${pos}`}
-                          >
-                            {pos}
-                          </button>
-                        ))}
+                      <div className="filter-row">
+                        <label>Pelipaikat:</label>
+                        <div className="position-buttons">
+                          {(["GK", "DEF", "MID", "FWD"] as const).map((pos) => (
+                            <button
+                              key={pos}
+                              className={`app-btn ${filterPositions.has(pos) ? "app-btn-active" : ""}`}
+                              onClick={() => togglePositionFilter(pos)}
+                            >
+                              {pos}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Players list */}
-                <div className="app-table-wrap">
-                  <table className="app-table">
-                    <thead>
-                      <tr>
-                        <th>Nimi</th>
-                        <th>Pelipaikka</th>
-                        <th>Joukkue</th>
-                        <th>Arvo (M)</th>
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredPlayers.map((p) => {
-                        const isSelectedRow = selected.some((sel) => sel.id === p.id);
-                        const sameTeamCount = selected.filter((sel) => sel.teamId === p.teamId).length;
-                        const willExceedBudget = totalValue() + p.value > INITIAL_BUDGET;
-                        const teamName = teamsById.get(p.teamId)?.name ?? "";
+                  <div className="app-table-wrap">
+                    <table className="app-table">
+                      <thead>
+                        <tr>
+                          <th>Nimi</th>
+                          <th>Pelipaikka</th>
+                          <th>Joukkue</th>
+                          <th>Arvo (M)</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredPlayers.map((p) => {
+                          const isSelectedRow = selected.some((sel) => sel.id === p.id);
+                          const sameTeamCount = selected.filter((sel) => sel.teamId === p.teamId).length;
+                          const willExceedBudget = totalValue() + p.value > INITIAL_BUDGET;
+                          const teamName = teamsById.get(p.teamId)?.name ?? "";
 
-                        return (
-                          <tr key={p.id} className={isSelectedRow ? "app-row-selected" : undefined}>
-                            <td>{p.name}</td>
-                            <td>{p.position}</td>
-                            <td>{teamName}</td>
-                            <td>{p.value.toFixed(1)}</td>
-                            <td>
-                              <button
-                                className="app-btn app-btn-primary"
-                                disabled={isSelectedRow || selected.length >= 15 || sameTeamCount >= 3 || willExceedBudget}
-                                onClick={() => addPlayer(p)}
-                              >
-                                Lisää
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </>
+                          return (
+                            <tr key={p.id} className={isSelectedRow ? "app-row-selected" : undefined}>
+                              <td>{p.name}</td>
+                              <td>{p.position}</td>
+                              <td>{teamName}</td>
+                              <td>{p.value.toFixed(1)}</td>
+                              <td>
+                                <button
+                                  className="app-btn app-btn-primary"
+                                  disabled={isSelectedRow || selected.length >= 15 || sameTeamCount >= 3 || willExceedBudget}
+                                  onClick={() => addPlayer(p)}
+                                >
+                                  Lisää
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </main>
