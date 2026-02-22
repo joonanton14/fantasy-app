@@ -616,43 +616,6 @@ export default function App() {
                 </div>
               ) : (
                 <>
-                  {/* Selected players table (or empty message) */}
-                  {selected.length === 0 ? (
-                    <div className="app-muted">Et ole valinnut vielä yhtään pelaajaa.</div>
-                  ) : (
-                    <div className="selected-players-list" style={{ marginBottom: 16 }}>
-                      <table className="app-table">
-                        <thead>
-                          <tr>
-                            <th>Nimi</th>
-                            <th>Pelipaikka</th>
-                            <th>Joukkue</th>
-                            <th>Arvo (M)</th>
-                            <th></th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {selected.map((p) => {
-                            const teamName = teamsById.get(p.teamId)?.name ?? "";
-                            return (
-                              <tr key={p.id}>
-                                <td>{p.name}</td>
-                                <td>{p.position}</td>
-                                <td>{teamName}</td>
-                                <td>{p.value.toFixed(1)}</td>
-                                <td>
-                                  <button className="app-btn app-btn-danger" onClick={() => removePlayer(p.id)}>
-                                    Poista
-                                  </button>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-
                   {/* Filters */}
                   <div className="app-section" style={{ marginBottom: 12 }}>
                     <h2 className="app-h2">Suodattimet</h2>
