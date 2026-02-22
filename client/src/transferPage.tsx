@@ -26,9 +26,6 @@ export default function TransfersPage(props: {
       <div className="app-section-header" style={{ marginBottom: 12 }}>
         <div style={{ display: "grid", gap: 4 }}>
           <h2 className="app-h2">Siirrot</h2>
-          <div className="app-muted" style={{ textAlign: "left" }}>
-            Paina pelaajaa → poista (×) → valitse uusi pelaaja.
-          </div>
         </div>
 
         <div className="app-actions">
