@@ -191,8 +191,8 @@ export function scoreTeamForGameWithAutosub(args: {
     // consume one DNP starter slot (prefer same position, otherwise any)
     const order =
       bp.position === "DEF" ? (["DEF", "MID", "FWD"] as const)
-      : bp.position === "MID" ? (["MID", "DEF", "FWD"] as const)
-      : (["FWD", "MID", "DEF"] as const);
+        : bp.position === "MID" ? (["MID", "DEF", "FWD"] as const)
+          : (["FWD", "MID", "DEF"] as const);
 
     let replaced: "DEF" | "MID" | "FWD" | null = null;
     for (const pos of order) {

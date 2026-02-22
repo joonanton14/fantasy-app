@@ -465,52 +465,52 @@ export default function AdminPortal() {
           ) : (
             <div className="app-table-wrap">
               <table className="app-table">
-<tbody>
-  {(() => {
-    const sorted = fixtures
-      .slice()
-      .sort((a, b) => (a.round ?? 999) - (b.round ?? 999) || a.id - b.id);
+                <tbody>
+                  {(() => {
+                    const sorted = fixtures
+                      .slice()
+                      .sort((a, b) => (a.round ?? 999) - (b.round ?? 999) || a.id - b.id);
 
-    let lastRound: number | undefined;
+                    let lastRound: number | undefined;
 
-    return sorted.flatMap((f) => {
-      const out: JSX.Element[] = [];
+                    return sorted.flatMap((f) => {
+                      const out: JSX.Element[] = [];
 
-      if (f.round !== undefined && f.round !== lastRound) {
-        lastRound = f.round;
-        out.push(
-          <tr key={`round-${f.round}`}>
-            <td colSpan={4} style={{ fontWeight: 700 }}>
-              Kierros {f.round}
-            </td>
-          </tr>
-        );
-      }
+                      if (f.round !== undefined && f.round !== lastRound) {
+                        lastRound = f.round;
+                        out.push(
+                          <tr key={`round-${f.round}`}>
+                            <td colSpan={4} style={{ fontWeight: 700 }}>
+                              Kierros {f.round}
+                            </td>
+                          </tr>
+                        );
+                      }
 
-      out.push(
-        <tr key={f.id}>
-          <td>{f.round ?? "-"}</td>
-          <td>{f.id}</td>
-          <td>
-            {teamsById.get(f.homeTeamId)?.name ?? f.homeTeamId} vs{" "}
-            {teamsById.get(f.awayTeamId)?.name ?? f.awayTeamId}
-          </td>
-          <td>
-            {new Date(f.date).toLocaleString("fi-FI", {
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit",
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </td>
-        </tr>
-      );
+                      out.push(
+                        <tr key={f.id}>
+                          <td>{f.round ?? "-"}</td>
+                          <td>{f.id}</td>
+                          <td>
+                            {teamsById.get(f.homeTeamId)?.name ?? f.homeTeamId} vs{" "}
+                            {teamsById.get(f.awayTeamId)?.name ?? f.awayTeamId}
+                          </td>
+                          <td>
+                            {new Date(f.date).toLocaleString("fi-FI", {
+                              year: "numeric",
+                              month: "2-digit",
+                              day: "2-digit",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </td>
+                        </tr>
+                      );
 
-      return out;
-    });
-  })()}
-</tbody>
+                      return out;
+                    });
+                  })()}
+                </tbody>
               </table>
             </div>
           )}
@@ -553,7 +553,7 @@ export default function AdminPortal() {
                 </select>
               </div>
             )}
-{/*
+            {/*
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
               <label style={{ minWidth: 70 }}>peliId</label>
               <input

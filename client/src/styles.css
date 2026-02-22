@@ -90,6 +90,7 @@ nav button.active {
   border-radius: 4px;
   cursor: pointer;
 }
+
 .tab-button.active {
   background: #004080;
   color: white;
@@ -105,6 +106,7 @@ nav button.active {
   list-style: none;
   padding: 0;
 }
+
 .selected-list li {
   padding: 8px;
   border: 1px solid #eee;
@@ -148,8 +150,8 @@ button {
   padding: 24px;
 
   background:
-    radial-gradient(1200px 600px at 20% 10%, rgba(99,102,241,0.22), transparent 60%),
-    radial-gradient(900px 500px at 80% 20%, rgba(16,185,129,0.14), transparent 55%),
+    radial-gradient(1200px 600px at 20% 10%, rgba(99, 102, 241, 0.22), transparent 60%),
+    radial-gradient(900px 500px at 80% 20%, rgba(16, 185, 129, 0.14), transparent 55%),
     linear-gradient(180deg, #0b1220 0%, #070a12 100%);
 
   color: #e5e7eb;
@@ -164,7 +166,8 @@ button {
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 16px 50px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(10px);
-  overflow: hidden; /* keeps rounded corners clean */
+  overflow: hidden;
+  /* keeps rounded corners clean */
 
   text-align: center;
 }
@@ -185,8 +188,8 @@ button {
   width: 46px;
   height: 46px;
   border-radius: 16px;
-  background: linear-gradient(135deg, rgba(99,102,241,1), rgba(16,185,129,1));
-  box-shadow: 0 10px 30px rgba(99,102,241,0.25);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 1), rgba(16, 185, 129, 1));
+  box-shadow: 0 10px 30px rgba(99, 102, 241, 0.25);
 }
 
 .brand-text h1 {
@@ -201,7 +204,7 @@ button {
 .subtitle {
   margin: 6px 0 0;
   font-size: 13px;
-  color: rgba(229,231,235,0.72);
+  color: rgba(229, 231, 235, 0.72);
 }
 
 .auth-tabs {
@@ -218,7 +221,7 @@ button {
   border: 0;
   border-radius: 999px;
   padding: 10px 12px;
-  color: rgba(229,231,235,0.9);
+  color: rgba(229, 231, 235, 0.9);
   background: transparent;
   cursor: pointer;
   font-weight: 700;
@@ -271,7 +274,7 @@ button {
   display: block;
   font-size: 13px;
   margin-bottom: 6px;
-  color: rgba(229,231,235,0.78);
+  color: rgba(229, 231, 235, 0.78);
   text-align: center;
 }
 
@@ -289,13 +292,13 @@ button {
 }
 
 .auth-form input::placeholder {
-  color: rgba(229,231,235,0.35);
+  color: rgba(229, 231, 235, 0.35);
   text-align: center;
 }
 
 .auth-form input:focus {
   border-color: rgba(99, 102, 241, 0.55);
-  box-shadow: 0 0 0 4px rgba(99,102,241,0.18);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18);
 }
 
 .input-wrap {
@@ -304,7 +307,8 @@ button {
 }
 
 .input-wrap input {
-  padding-right: 52px; /* space for the toggle */
+  padding-right: 52px;
+  /* space for the toggle */
 }
 
 .pw-toggle {
@@ -318,9 +322,9 @@ button {
   margin: 0;
   line-height: 1;
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.92);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.92);
   cursor: pointer;
   display: grid;
   place-items: center;
@@ -334,7 +338,7 @@ button {
 .hint {
   margin-top: 6px;
   font-size: 12px;
-  color: rgba(229,231,235,0.55);
+  color: rgba(229, 231, 235, 0.55);
   min-height: 16px;
   text-align: center;
 }
@@ -347,7 +351,7 @@ button {
   padding: 12px 14px;
   font-weight: 800;
   color: #061018;
-  background: linear-gradient(135deg, rgba(99,102,241,1), rgba(16,185,129,1));
+  background: linear-gradient(135deg, rgba(99, 102, 241, 1), rgba(16, 185, 129, 1));
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -387,14 +391,14 @@ button {
 .fineprint {
   margin: 8px 0 0;
   font-size: 12px;
-  color: rgba(229,231,235,0.52);
+  color: rgba(229, 231, 235, 0.52);
   text-align: center;
 }
 
 .auth-footer {
   margin-top: 16px;
   font-size: 12px;
-  color: rgba(229,231,235,0.42);
+  color: rgba(229, 231, 235, 0.42);
   text-align: center;
 }
 
@@ -409,8 +413,8 @@ button {
   padding: 24px;
 
   background:
-    radial-gradient(1200px 600px at 20% 10%, rgba(99,102,241,0.22), transparent 60%),
-    radial-gradient(900px 500px at 80% 20%, rgba(16,185,129,0.14), transparent 55%),
+    radial-gradient(1200px 600px at 20% 10%, rgba(99, 102, 241, 0.22), transparent 60%),
+    radial-gradient(900px 500px at 80% 20%, rgba(16, 185, 129, 0.14), transparent 55%),
     linear-gradient(180deg, #0b1220 0%, #070a12 100%);
 
   color: #e5e7eb;
@@ -421,9 +425,10 @@ button {
   max-width: 980px;
   border-radius: 22px;
   padding: 0;
-  
 
-  text-align: center; /* center everything in this card */
+
+  text-align: center;
+  /* center everything in this card */
 }
 
 /* Header */
@@ -456,7 +461,7 @@ button {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.08);
   font-size: 13px;
-  color: rgba(229,231,235,0.86);
+  color: rgba(229, 231, 235, 0.86);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -468,7 +473,7 @@ button {
 }
 
 .meta-sub {
-  color: rgba(229,231,235,0.55);
+  color: rgba(229, 231, 235, 0.55);
   margin-left: 6px;
   font-size: 12px;
 }
@@ -502,9 +507,9 @@ button {
 
   border-radius: 999px;
   padding: 8px 34px 8px 12px;
-  border: 1px solid rgba(255,255,255,0.10);
+  border: 1px solid rgba(255, 255, 255, 0.10);
   background: rgba(3, 7, 18, 0.55);
-  color: rgba(255,255,255,0.92);
+  color: rgba(255, 255, 255, 0.92);
   font-weight: 800;
   font-size: 12px;
   cursor: pointer;
@@ -516,7 +521,7 @@ button {
 
 .formation-select:focus {
   border-color: rgba(99, 102, 241, 0.55);
-  box-shadow: 0 0 0 4px rgba(99,102,241,0.18);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18);
 }
 
 /* small arrow */
@@ -527,7 +532,7 @@ button {
   top: 50%;
   transform: translateY(-50%);
   pointer-events: none;
-  color: rgba(229,231,235,0.60);
+  color: rgba(229, 231, 235, 0.60);
   font-size: 12px;
 }
 
@@ -537,10 +542,10 @@ button {
   border-radius: 18px;
   padding: 16px;
   background:
-    radial-gradient(800px 500px at 50% 20%, rgba(34,197,94,0.10), transparent 60%),
+    radial-gradient(800px 500px at 50% 20%, rgba(34, 197, 94, 0.10), transparent 60%),
     linear-gradient(180deg, rgba(2, 6, 23, 0.55), rgba(2, 6, 23, 0.28));
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
   margin: 16px 0;
 }
 
@@ -549,7 +554,7 @@ button {
   position: absolute;
   inset: 14px;
   border-radius: 14px;
-  border: 1px dashed rgba(255,255,255,0.10);
+  border: 1px dashed rgba(255, 255, 255, 0.10);
   pointer-events: none;
 }
 
@@ -562,13 +567,28 @@ button {
 }
 
 /* Dynamic row columns (set by TSX className pitch-cols-N) */
-.pitch-row.pitch-cols-1 { grid-template-columns: repeat(1, minmax(0, 160px)); }
-.pitch-row.pitch-cols-2 { grid-template-columns: repeat(2, minmax(0, 160px)); }
-.pitch-row.pitch-cols-3 { grid-template-columns: repeat(3, minmax(0, 160px)); }
-.pitch-row.pitch-cols-4 { grid-template-columns: repeat(4, minmax(0, 160px)); }
-.pitch-row.pitch-cols-5 { grid-template-columns: repeat(5, minmax(0, 160px)); }
+.pitch-row.pitch-cols-1 {
+  grid-template-columns: repeat(1, minmax(0, 160px));
+}
+
+.pitch-row.pitch-cols-2 {
+  grid-template-columns: repeat(2, minmax(0, 160px));
+}
+
+.pitch-row.pitch-cols-3 {
+  grid-template-columns: repeat(3, minmax(0, 160px));
+}
+
+.pitch-row.pitch-cols-4 {
+  grid-template-columns: repeat(4, minmax(0, 160px));
+}
+
+.pitch-row.pitch-cols-5 {
+  grid-template-columns: repeat(5, minmax(0, 160px));
+}
 
 @media (max-width: 920px) {
+
   .pitch-row.pitch-cols-4,
   .pitch-row.pitch-cols-5 {
     grid-template-columns: repeat(2, minmax(0, 160px));
@@ -576,6 +596,7 @@ button {
 }
 
 @media (max-width: 520px) {
+
   .pitch-row.pitch-cols-1,
   .pitch-row.pitch-cols-2,
   .pitch-row.pitch-cols-3,
@@ -594,7 +615,7 @@ button {
   cursor: pointer;
 
   background: rgba(3, 7, 18, 0.55);
-  border: 1px solid rgba(255,255,255,0.10);
+  border: 1px solid rgba(255, 255, 255, 0.10);
   transition: transform 0.06s ease, box-shadow 0.2s ease, border-color 0.2s ease;
   user-select: none;
   overflow: visible;
@@ -604,19 +625,19 @@ button {
   text-align: center;
 }
 
- slot:hover {
+slot:hover {
   border-color: rgba(99, 102, 241, 0.45);
-  box-shadow: 0 0 0 4px rgba(99,102,241,0.14);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.14);
 }
 
- slot:active {
+slot:active {
   transform: scale(0.99);
 }
 
- slot-empty {
+slot-empty {
   font-weight: 800;
   letter-spacing: 0.4px;
-  color: rgba(229,231,235,0.75);
+  color: rgba(229, 231, 235, 0.75);
 }
 
 /* Player chip */
@@ -638,7 +659,7 @@ button {
 
 .player-team {
   font-size: 12px;
-  color: rgba(229,231,235,0.65);
+  color: rgba(229, 231, 235, 0.65);
   word-break: break-word;
 }
 
@@ -649,16 +670,16 @@ button {
   width: 28px;
   height: 28px;
   border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.92);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.92);
   cursor: pointer;
   padding: 0;
   line-height: 1;
 }
 
 .remove-slot:hover {
-  background: rgba(255,255,255,0.10);
+  background: rgba(255, 255, 255, 0.10);
 }
 
 /* Popover */
@@ -673,22 +694,22 @@ button {
   border-radius: 16px;
   padding: 12px;
   background: rgba(17, 24, 39, 0.92);
-  border: 1px solid rgba(255,255,255,0.10);
-  box-shadow: 0 20px 60px rgba(0,0,0,0.55);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(10px);
 
   text-align: center;
 }
 
- slot-pop-title {
+slot-pop-title {
   font-size: 12px;
-  color: rgba(229,231,235,0.75);
+  color: rgba(229, 231, 235, 0.75);
   margin-bottom: 10px;
   font-weight: 700;
   text-align: center;
 }
 
- slot-pop-list {
+slot-pop-list {
   max-height: 260px;
   overflow: auto;
   padding-right: 2px;
@@ -697,28 +718,52 @@ button {
   justify-items: center;
 }
 
- slot-pop-btn { width: 100%; text-align: left;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.06);
+slot-pop-btn {
+  width: 100%;
+  text-align: left;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
   border-radius: 14px;
   padding: 10px 12px;
   cursor: pointer;
-  display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 8px; align-items: center;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  margin-bottom: 8px;
+  align-items: center;
 }
 
- slot-pop-btn:hover {
-  border-color: rgba(99,102,241,0.40);
-  box-shadow: 0 0 0 4px rgba(99,102,241,0.12);
+slot-pop-btn:hover {
+  border-color: rgba(99, 102, 241, 0.40);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
 }
 
- slot-pop-name { color: #fff; font-weight: 800; font-size: 13px; text-align: left;
+slot-pop-name {
+  color: #fff;
+  font-weight: 800;
+  font-size: 13px;
+  text-align: left;
 }
 
- slot-pop-team { color: rgba(229,231,235,0.65); font-size: 12px; text-align: left; grid-column: 1; } slot-pop-price { color: rgba(99,102,241,1); font-weight: 600; font-size: 13px; text-align: right; grid-column: 2; grid-row: 1 / 3; }
+slot-pop-team {
+  color: rgba(229, 231, 235, 0.65);
+  font-size: 12px;
+  text-align: left;
+  grid-column: 1;
+}
 
- slot-pop-empty {
+slot-pop-price {
+  color: rgba(99, 102, 241, 1);
+  font-weight: 600;
+  font-size: 13px;
+  text-align: right;
+  grid-column: 2;
+  grid-row: 1 / 3;
+}
+
+slot-pop-empty {
   text-align: center;
-  color: rgba(229,231,235,0.60);
+  color: rgba(229, 231, 235, 0.60);
   font-size: 13px;
   padding: 14px 0;
 }
@@ -738,7 +783,7 @@ button {
   padding: 12px 16px;
   font-weight: 900;
   color: #061018;
-  background: linear-gradient(135deg, rgba(99,102,241,1), rgba(16,185,129,1));
+  background: linear-gradient(135deg, rgba(99, 102, 241, 1), rgba(16, 185, 129, 1));
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -747,8 +792,13 @@ button {
   transition: transform 0.06s ease, filter 0.2s ease;
 }
 
-.xi-save:hover { filter: brightness(1.03); }
-.xi-save:active { transform: scale(0.99); }
+.xi-save:hover {
+  filter: brightness(1.03);
+}
+
+.xi-save:active {
+  transform: scale(0.99);
+}
 
 .xi-save:disabled {
   opacity: 0.55;
@@ -761,15 +811,15 @@ button {
   flex-wrap: wrap;
   justify-content: center;
   font-size: 12px;
-  color: rgba(229,231,235,0.60);
+  color: rgba(229, 231, 235, 0.60);
   text-align: center;
 }
 
 .xi-limits span {
   padding: 6px 10px;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 /* Add these to styles.css (app layout + buttons + cards) */
@@ -777,8 +827,8 @@ button {
 .app-shell {
   min-height: 100vh;
   background:
-    radial-gradient(1200px 600px at 20% 10%, rgba(99,102,241,0.10), transparent 60%),
-    radial-gradient(900px 500px at 80% 20%, rgba(16,185,129,0.08), transparent 55%),
+    radial-gradient(1200px 600px at 20% 10%, rgba(99, 102, 241, 0.10), transparent 60%),
+    radial-gradient(900px 500px at 80% 20%, rgba(16, 185, 129, 0.08), transparent 55%),
     linear-gradient(180deg, #0b1220 0%, #070a12 100%);
   color: #e5e7eb;
 }
@@ -789,7 +839,7 @@ button {
   align-items: center;
   padding: 12px 16px;
   background: rgba(17, 24, 39, 0.62);
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(10px);
 }
 
@@ -805,7 +855,7 @@ button {
 }
 
 .app-user-name {
-  color: rgba(229,231,235,0.85);
+  color: rgba(229, 231, 235, 0.85);
 }
 
 .app-main {
@@ -819,8 +869,8 @@ button {
   border-radius: 22px;
   padding: 18px;
   background: rgba(17, 24, 39, 0.62);
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 16px 50px rgba(0,0,0,0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(10px);
 }
 
@@ -873,20 +923,20 @@ button {
 
 .app-muted {
   text-align: center;
-  color: rgba(229,231,235,0.60);
+  color: rgba(229, 231, 235, 0.60);
 }
 
 .app-divider {
   height: 1px;
   width: 100%;
-  background: rgba(255,255,255,0.08);
+  background: rgba(255, 255, 255, 0.08);
   margin: 8px 0;
 }
 
 .app-btn {
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.92);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.92);
   border-radius: 14px;
   padding: 10px 12px;
   cursor: pointer;
@@ -896,7 +946,7 @@ button {
 
 .app-btn:hover {
   border-color: rgba(99, 102, 241, 0.40);
-  box-shadow: 0 0 0 4px rgba(99,102,241,0.12);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
 }
 
 .app-btn:active {
@@ -912,7 +962,7 @@ button {
 .app-btn-primary {
   border: 0;
   color: #061018;
-  background: linear-gradient(135deg, rgba(99,102,241,1), rgba(16,185,129,1));
+  background: linear-gradient(135deg, rgba(99, 102, 241, 1), rgba(16, 185, 129, 1));
 }
 
 .app-btn-danger {
@@ -926,7 +976,7 @@ button {
 }
 
 .app-btn-active {
-  background: rgba(255,255,255,0.14);
+  background: rgba(255, 255, 255, 0.14);
 }
 
 /* Lists */
@@ -945,7 +995,7 @@ button {
   justify-content: space-between;
   padding: 12px;
   border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(3, 7, 18, 0.35);
 }
 
@@ -961,7 +1011,7 @@ button {
 
 .app-list-sub {
   font-size: 12px;
-  color: rgba(229,231,235,0.65);
+  color: rgba(229, 231, 235, 0.65);
 }
 
 /* Table */
@@ -969,7 +1019,7 @@ button {
   width: 100%;
   overflow: auto;
   border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .app-table {
@@ -982,20 +1032,20 @@ button {
 .app-table th,
 .app-table td {
   padding: 12px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   text-align: left;
-  color: rgba(229,231,235,0.88);
+  color: rgba(229, 231, 235, 0.88);
 }
 
 .app-table th {
-  color: rgba(229,231,235,0.72);
+  color: rgba(229, 231, 235, 0.72);
   font-size: 12px;
   letter-spacing: 0.3px;
   text-transform: uppercase;
 }
 
 .app-row-selected {
-  background: rgba(99,102,241,0.10);
+  background: rgba(99, 102, 241, 0.10);
 }
 
 /* ===== MODAL & STARTING XI ===== */
@@ -1004,7 +1054,7 @@ button {
 .app-modal {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.7);
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1108,11 +1158,25 @@ button {
   gap: 12px;
 }
 
-.pitch-cols-1 { grid-template-columns: 1fr; }
-.pitch-cols-2 { grid-template-columns: repeat(2, 1fr); }
-.pitch-cols-3 { grid-template-columns: repeat(3, 1fr); }
-.pitch-cols-4 { grid-template-columns: repeat(4, 1fr); }
-.pitch-cols-5 { grid-template-columns: repeat(5, 1fr); }
+.pitch-cols-1 {
+  grid-template-columns: 1fr;
+}
+
+.pitch-cols-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.pitch-cols-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.pitch-cols-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.pitch-cols-5 {
+  grid-template-columns: repeat(5, 1fr);
+}
 
 .slot {
   position: relative;
@@ -1211,13 +1275,13 @@ button {
   padding: 12px;
   background: rgba(17, 24, 39, 0.95);
   border: 1px solid rgba(99, 102, 241, 0.30);
-  box-shadow: 0 20px 60px rgba(0,0,0,0.55);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(10px);
 }
 
 .slot-pop-title {
   font-size: 12px;
-  color: rgba(229,231,235,0.75);
+  color: rgba(229, 231, 235, 0.75);
   margin-bottom: 12px;
   font-weight: 700;
   text-align: center;
@@ -1233,8 +1297,8 @@ button {
 
 .slot-pop-btn {
   width: 100%;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
   border-radius: 10px;
   padding: 10px 12px;
   cursor: pointer;
@@ -1247,9 +1311,9 @@ button {
 }
 
 .slot-pop-btn:hover {
-  border-color: rgba(99,102,241,0.50);
-  background: rgba(99,102,241,0.12);
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.10);
+  border-color: rgba(99, 102, 241, 0.50);
+  background: rgba(99, 102, 241, 0.12);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.10);
 }
 
 .slot-pop-name {
@@ -1261,13 +1325,13 @@ button {
 
 .slot-pop-team {
   font-size: 11px;
-  color: rgba(229,231,235,0.65);
+  color: rgba(229, 231, 235, 0.65);
   grid-column: 1;
 }
 
 .slot-pop-price {
   font-weight: 700;
-  color: rgba(99,102,241,1);
+  color: rgba(99, 102, 241, 1);
   font-size: 12px;
   grid-column: 2;
   grid-row: 1 / 3;
@@ -1276,7 +1340,7 @@ button {
 
 .slot-pop-empty {
   text-align: center;
-  color: rgba(229,231,235,0.60);
+  color: rgba(229, 231, 235, 0.60);
   font-size: 12px;
   padding: 16px 8px;
 }
@@ -1296,7 +1360,7 @@ button {
   font-weight: 800;
   font-size: 14px;
   color: white;
-  background: linear-gradient(135deg, rgba(99,102,241,0.90), rgba(16,185,129,0.90));
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.90), rgba(16, 185, 129, 0.90));
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -1307,7 +1371,7 @@ button {
 }
 
 .xi-save:hover:not(:disabled) {
-  box-shadow: 0 8px 16px rgba(99,102,241,0.40);
+  box-shadow: 0 8px 16px rgba(99, 102, 241, 0.40);
   transform: translateY(-2px);
 }
 
@@ -1326,15 +1390,15 @@ button {
   flex-wrap: wrap;
   justify-content: center;
   font-size: 12px;
-  color: rgba(229,231,235,0.75);
+  color: rgba(229, 231, 235, 0.75);
 }
 
 .starting-xi-warning {
-  background: rgba(239,68,68,0.15);
-  border: 1px solid rgba(239,68,68,0.40);
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.40);
   border-radius: 10px;
   padding: 12px;
-  color: rgba(239,68,68,0.95);
+  color: rgba(239, 68, 68, 0.95);
   font-size: 13px;
   font-weight: 600;
   margin-top: 12px;
@@ -1342,8 +1406,8 @@ button {
 }
 
 .formation-select {
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(99,102,241,0.20);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(99, 102, 241, 0.20);
   color: #fff;
   border-radius: 8px;
   padding: 6px 10px;
@@ -1354,8 +1418,8 @@ button {
 }
 
 .formation-select:hover {
-  border-color: rgba(99,102,241,0.50);
-  background: rgba(99,102,241,0.25);
+  border-color: rgba(99, 102, 241, 0.50);
+  background: rgba(99, 102, 241, 0.25);
 }
 
 /* ============================================================= */
@@ -1368,7 +1432,7 @@ button {
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 16px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .app-modal-title {
@@ -1385,7 +1449,7 @@ button {
 .starting-xi-display {
   margin-top: 24px;
   padding-top: 24px;
-  border-top: 1px solid rgba(255,255,255,0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .starting-xi-grid {
@@ -1460,8 +1524,8 @@ button {
 }
 
 .filter-row select {
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(99,102,241,0.20);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(99, 102, 241, 0.20);
   color: #fff;
   border-radius: 10px;
   padding: 10px 12px;
@@ -1472,14 +1536,14 @@ button {
 }
 
 .filter-row select:hover {
-  border-color: rgba(99,102,241,0.50);
-  background: rgba(99,102,241,0.25);
+  border-color: rgba(99, 102, 241, 0.50);
+  background: rgba(99, 102, 241, 0.25);
 }
 
 .filter-row select:focus {
   outline: none;
-  border-color: rgba(99,102,241,0.70);
-  box-shadow: 0 0 0 4px rgba(99,102,241,0.15);
+  border-color: rgba(99, 102, 241, 0.70);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
 }
 
 .position-buttons {
@@ -1503,8 +1567,8 @@ button {
 .admin-wrap {
   min-height: 100vh;
   background:
-    radial-gradient(1200px 600px at 20% 10%, rgba(99,102,241,0.10), transparent 60%),
-    radial-gradient(900px 500px at 80% 20%, rgba(16,185,129,0.08), transparent 55%),
+    radial-gradient(1200px 600px at 20% 10%, rgba(99, 102, 241, 0.10), transparent 60%),
+    radial-gradient(900px 500px at 80% 20%, rgba(16, 185, 129, 0.08), transparent 55%),
     linear-gradient(180deg, #0b1220 0%, #070a12 100%);
   color: #e5e7eb;
 }
@@ -1526,7 +1590,7 @@ button {
   display: grid;
   gap: 12px;
   background: rgba(3, 7, 18, 0.35);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 14px;
   padding: 16px;
 }
@@ -1545,7 +1609,7 @@ button {
 
 .admin-form-row input,
 .admin-form-row select {
-  border: 1px solid rgba(255,255,255,0.10);
+  border: 1px solid rgba(255, 255, 255, 0.10);
   background: rgba(3, 7, 18, 0.55);
   color: #fff;
   border-radius: 10px;
@@ -1561,8 +1625,8 @@ button {
 .admin-form-row input:focus,
 .admin-form-row select:focus {
   outline: none;
-  border-color: rgba(99,102,241,0.70);
-  box-shadow: 0 0 0 4px rgba(99,102,241,0.15);
+  border-color: rgba(99, 102, 241, 0.70);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
 }
 
 .admin-form-actions {
@@ -1603,7 +1667,7 @@ button {
   padding: 10px 12px;
   border-radius: 10px;
   background: rgba(3, 7, 18, 0.35);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   color: rgba(229, 231, 235, 0.88);
   font-size: 13px;
 }
@@ -1612,7 +1676,7 @@ button {
   width: 100%;
   overflow: auto;
   border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .admin-table {
@@ -1625,7 +1689,7 @@ button {
 .admin-table th,
 .admin-table td {
   padding: 12px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   text-align: left;
   color: rgba(229, 231, 235, 0.88);
   font-size: 13px;
@@ -1745,7 +1809,7 @@ button {
 .bench {
   margin-top: 14px;
   padding-top: 12px;
-  border-top: 1px solid rgba(255,255,255,0.12);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .bench-header {
@@ -1772,11 +1836,12 @@ button {
   gap: 10px;
 }
 
-input[type="text"], input[type="number"], select {
+input[type="text"],
+input[type="number"],
+select {
   padding: 8px 10px;
   border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.15);
-  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.2);
   color: inherit;
 }
-

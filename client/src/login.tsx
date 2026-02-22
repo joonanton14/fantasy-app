@@ -34,9 +34,9 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         throw new Error((data as any).error || 'Login failed');
       }
 
-    const user = await res.json();
+      const user = await res.json();
 
-    onLoginSuccess(user.id, user.name, user.isAdmin || false);
+      onLoginSuccess(user.id, user.name, user.isAdmin || false);
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');

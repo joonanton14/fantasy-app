@@ -49,7 +49,7 @@ function coerceTeamFromHash(obj: any): TeamData | null {
       try {
         const parsed = JSON.parse(v);
         if (Array.isArray(parsed)) return parsed.map((x) => Number(x)).filter((n) => Number.isFinite(n));
-      } catch {}
+      } catch { }
       // might be comma-separated
       return v
         .split(",")

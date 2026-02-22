@@ -1,5 +1,5 @@
 // client/src/App.tsx
-import { useEffect, useState, useMemo, JSX} from "react";
+import { useEffect, useState, useMemo, JSX } from "react";
 import Login from "./login";
 import AdminPortal from "./adminPortal";
 import StartingXI from "./StartingXI";
@@ -473,12 +473,12 @@ export default function App() {
                             const sorted = fixtures
                               .slice()
                               .sort((a, b) => (a.round ?? 999) - (b.round ?? 999) || a.id - b.id);
-                        
+
                             let lastRound: number | undefined;
-                        
+
                             return sorted.flatMap((f) => {
                               const out: JSX.Element[] = [];
-                        
+
                               if (f.round !== undefined && f.round !== lastRound) {
                                 lastRound = f.round;
                                 out.push(
@@ -489,7 +489,7 @@ export default function App() {
                                   </tr>
                                 );
                               }
-                        
+
                               out.push(
                                 <tr key={f.id}>
                                   <td>{f.round ?? "-"}</td>
@@ -509,7 +509,7 @@ export default function App() {
                                   </td>
                                 </tr>
                               );
-                        
+
                               return out;
                             });
                           })()}

@@ -25,7 +25,7 @@ if (!url || !token) {
 if (!url.startsWith("https://")) {
   throw new Error(
     `Upstash Redis client was passed an invalid URL. Must start with https://. ` +
-      `Received cleaned="${url}" raw="${rawUrl}"`
+    `Received cleaned="${url}" raw="${rawUrl}"`
   );
 }
 
