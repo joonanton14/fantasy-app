@@ -121,7 +121,33 @@ export default function AdminPortal() {
 
   // player search
   const [playerSearch, setPlayerSearch] = useState("");
+  type SortKey = "name_asc" | "name_desc" | "value_desc" | "value_asc" | "newest" | "oldest";
 
+  const [sortKey, setSortKey] = useState<SortKey>("name_asc");
+  const [filterTeam, setFilterTeam] = useState<number | "all">("all");
+
+  function comparePlayers(a: Player, b: Player, key: SortKey) {
+    switch (key) {
+      case "name_asc":
+        return a.name.localeCompare(b.name);
+      case "name_desc":
+        return b.name.localeCompare(a.name);
+
+      case "value_desc":
+        return (b.value ?? 0) - (a.value ?? 0);
+      case "value_asc":
+        return (a.value ?? 0) - (b.value ?? 0);
+
+      // “newest/oldest” uses id as creation order (since you load players with incremental ids)
+      case "newest":
+        return (b.id ?? 0) - (a.id ?? 0);
+      case "oldest":
+        return (a.id ?? 0) - (b.id ?? 0);
+
+      default:
+        return 0;
+    }
+  }
   // load players + teams
   useEffect(() => {
     let cancelled = false;
@@ -203,9 +229,22 @@ export default function AdminPortal() {
 
   const filteredPlayers = useMemo(() => {
     const q = playerSearch.trim().toLowerCase();
-    if (!q) return players;
-    return players.filter((p) => p.name.toLowerCase().includes(q));
-  }, [players, playerSearch]);
+
+    let list = players;
+
+    // filter by club
+    if (filterTeam !== "all") {
+      list = list.filter((p) => p.teamId === filterTeam);
+    }
+
+    // search by name
+    if (q) {
+      list = list.filter((p) => p.name.toLowerCase().includes(q));
+    }
+
+    // sort
+    return list.slice().sort((a, b) => comparePlayers(a, b, sortKey));
+  }, [players, playerSearch, filterTeam, sortKey]);
 
   async function loadGameEvents(gameId: number) {
     setLoadEventsStatus(null);
@@ -410,15 +449,47 @@ export default function AdminPortal() {
       {tab === "players" && (
         <div className="app-card" style={{ padding: 12 }}>
           <h2 className="app-h2">Pelaajat</h2>
-
-          <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+          <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
             <input
               className="app-btn"
               placeholder="Hae pelaajia…"
               value={playerSearch}
               onChange={(e) => setPlayerSearch(e.target.value)}
-              style={{ flex: 1 }}
+              style={{ flex: 1, minWidth: 220 }}
             />
+
+            <select
+              className="app-btn"
+              value={filterTeam}
+              onChange={(e) => {
+                const v = e.target.value;
+                setFilterTeam(v === "all" ? "all" : Number(v));
+              }}
+              style={{ minWidth: 180 }}
+              title="Suodata joukkueella"
+            >
+              <option value="all">Kaikki joukkueet</option>
+              {teams.slice().sort((a, b) => a.name.localeCompare(b.name)).map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              className="app-btn"
+              value={sortKey}
+              onChange={(e) => setSortKey(e.target.value as SortKey)}
+              style={{ minWidth: 190 }}
+              title="Järjestä"
+            >
+              <option value="name_asc">Nimi A → Ö</option>
+              <option value="name_desc">Nimi Ö → A</option>
+              <option value="value_desc">Arvo (korkein → matalin)</option>
+              <option value="value_asc">Arvo (matalin → korkein)</option>
+              <option value="newest">Uusimmat ensin</option>
+              <option value="oldest">Vanhimmat ensin</option>
+            </select>
           </div>
 
           <div className="app-table-wrap">
@@ -553,43 +624,6 @@ export default function AdminPortal() {
                 </select>
               </div>
             )}
-            {/*
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <label style={{ minWidth: 70 }}>peliId</label>
-              <input
-                className="app-btn"
-                placeholder="Type gameId"
-                value={manualGameId}
-                onChange={(e) => {
-                  setManualGameId(e.target.value);
-                  setSelectedGameId(null);
-                  setEvents({});
-                  setFinalizeResults([]);
-                }}
-                style={{ flex: 1 }}
-              />
-              <button
-                className="app-btn app-btn-primary"
-                disabled={!effectiveGameId}
-                onClick={() => effectiveGameId && loadGameEvents(effectiveGameId)}
-              >
-                Lataa
-              </button>
-              <button
-                className="app-btn"
-                disabled={!effectiveGameId}
-                onClick={() => {
-                  setEvents({});
-                  setFinalizeResults([]);
-                  setLoadEventsStatus(null);
-                  setSaveStatus(null);
-                  setFinalizeStatus(null);
-                }}
-              >
-                Tyhjennä
-              </button>
-            </div>
-*/}
             {loadEventsStatus && <div className="app-muted">{loadEventsStatus}</div>}
           </div>
 
