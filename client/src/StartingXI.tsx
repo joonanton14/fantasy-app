@@ -52,6 +52,7 @@ function inferFormationFromXI(xi: Player[]): FormationKey | null {
     const f = FORMATIONS[k];
     return f.DEF === def && f.MID === mid && f.FWD === fwd;
   });
+
   return hit ?? null;
 }
 
@@ -76,9 +77,12 @@ export interface StartingXIProps {
   readOnly?: boolean;
 
   mode?: "builder" | "transfers";
-  hideBench?: boolean;      // true hides, false shows, undefined -> default
-  hideFormation?: boolean;  // true hides, false shows, undefined -> default
+  hideBench?: boolean; // true hides, false shows, undefined -> default
+  hideFormation?: boolean; // true hides, false shows, undefined -> default
   fixedFormation?: FormationKey;
+
+  // ✅ NEW:
+  layout?: "standard" | "all15"; // all15 = show 4 bench slots on pitch, no bench section
 }
 
 export function StartingXI({
@@ -94,13 +98,18 @@ export function StartingXI({
   hideBench,
   hideFormation,
   fixedFormation,
+
+  layout = "standard",
 }: StartingXIProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const isTransfers = mode === "transfers";
 
-  // ✅ override semantics (THIS WAS YOUR BUG EARLIER)
+  // Optional overrides
   const showBench = hideBench === undefined ? !isTransfers : !hideBench;
   const showFormation = hideFormation === undefined ? !isTransfers : !hideFormation;
+
+  const benchOnPitch = layout === "all15";
+  const showBenchSection = showBench && !benchOnPitch; // ✅ hide bench section in all15
 
   const inferred = inferFormationFromXI(initial);
 
@@ -130,6 +139,8 @@ export function StartingXI({
   const [benchAssignments, setBenchAssignments] = useState<Record<string, Player | null>>(() => {
     const map: Record<string, Player | null> = {};
     BENCH_SLOTS.forEach((s) => (map[s.id] = null));
+
+    // even if bench section is hidden, we still maintain bench assignments
     if (!showBench) return map;
 
     const gk = initialBench.find((p) => p.position === "GK") ?? null;
@@ -139,6 +150,7 @@ export function StartingXI({
     map["bench-1"] = field[0] ?? null;
     map["bench-2"] = field[1] ?? null;
     map["bench-3"] = field[2] ?? null;
+
     return map;
   });
 
@@ -147,6 +159,7 @@ export function StartingXI({
   // Sync when parent updates
   useEffect(() => {
     const inferredNow = inferFormationFromXI(initial);
+
     const effectiveFormation: FormationKey = isTransfers
       ? (fixedFormation ?? inferredNow ?? "4-4-2")
       : (inferredNow ?? formation);
@@ -206,7 +219,6 @@ export function StartingXI({
     xiPlayers,
     benchPlayers,
   ]);
-
   const remainingBudget = useMemo(() => budget - totalValue, [budget, totalValue]);
 
   const f = FORMATIONS[formation];
@@ -324,9 +336,9 @@ export function StartingXI({
     fillPos("MID", nextReq.MID);
     fillPos("FWD", nextReq.FWD);
 
+    // keep bench map as-is (rebuild from leftovers)
     const nextBenchMap: Record<string, Player | null> = {};
     BENCH_SLOTS.forEach((s) => (nextBenchMap[s.id] = null));
-
     if (showBench) {
       const leftoverGK = poolByPos.GK.shift() ?? null;
       const leftoverField: Player[] = [...poolByPos.MID, ...poolByPos.DEF, ...poolByPos.FWD].filter(
@@ -420,8 +432,87 @@ export function StartingXI({
     );
   };
 
-  const Bench = () => {
-    if (!showBench) return null;
+  // ✅ NEW: bench slots rendered as an extra pitch row (4 columns) for Transfers
+  const BenchOnPitchRow = () => {
+    if (!benchOnPitch || !showBench) return null;
+
+    return (
+      <div className="pitch-row pitch-cols-4">
+        {BENCH_SLOTS.map((s) => {
+          const assigned = benchAssignments[s.id];
+          const isOpen = openSlot === s.id;
+
+          const available = players
+            .filter((p) => canAssignToBench(s.kind, p))
+            .map((p) => ({
+              ...p,
+              teamName: teams.find((t) => t.id === p.teamId)?.name ?? "",
+            }))
+            .sort((a, b) => a.name.localeCompare(b.name));
+
+          return (
+            <div
+              key={s.id}
+              className={`slot ${assigned ? "slot-filled" : ""} ${isOpen ? "slot-open" : ""}`}
+              onClick={() => {
+                if (readOnly) return;
+                setOpenSlot(isOpen ? null : s.id);
+              }}
+              role="button"
+              tabIndex={0}
+            >
+              {assigned ? (
+                <div className="player-chip">
+                  <div className="player-name">{assigned.name}</div>
+                  <div className="player-team">{teams.find((t) => t.id === assigned.teamId)?.name}</div>
+                  {!readOnly && (
+                    <button
+                      type="button"
+                      className="remove-slot"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeFromBenchSlot(s.id);
+                      }}
+                      aria-label="Remove player"
+                      title="Remove"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="slot-empty">{s.label}</div>
+              )}
+
+              {isOpen && !readOnly && (
+                <div className="slot-pop" onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
+                  <div className="slot-pop-title">Valitse pelaaja</div>
+                  <div className="slot-pop-list">
+                    {available.map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        className="slot-pop-btn"
+                        onClick={() => assignToBenchSlot(s.id, s.kind, p)}
+                      >
+                        <span className="slot-pop-name">{p.name}</span>
+                        <span className="slot-pop-team">{p.teamName}</span>
+                        <span className="slot-pop-price">{p.value.toFixed(1)} M</span>
+                      </button>
+                    ))}
+                    {available.length === 0 && <div className="slot-pop-empty">Ei saatavilla olevia pelaajia</div>}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const BenchSection = () => {
+    if (!showBenchSection) return null;
 
     return (
       <div className="bench">
@@ -539,7 +630,11 @@ export function StartingXI({
             )}
           </div>
 
-          {!isValidXI() && <div className="starting-xi-warning" role="alert">Avaus ei ole kelvollinen.</div>}
+          {!isValidXI() && (
+            <div className="starting-xi-warning" role="alert">
+              Avaus ei ole kelvollinen.
+            </div>
+          )}
         </header>
 
         <div className="pitch">
@@ -547,18 +642,17 @@ export function StartingXI({
           <Row position="DEF" label="P" />
           <Row position="MID" label="KK" />
           <Row position="FWD" label="H" />
+
+          {/* ✅ Transfers layout: show 4 “bench” slots on the pitch */}
+          <BenchOnPitchRow />
         </div>
 
-        <Bench />
+        {/* ✅ Standard layout: show actual bench section below */}
+        <BenchSection />
 
         <div className="starting-xi-controls">
           {!readOnly && (
-            <button
-              type="button"
-              className="xi-save"
-              onClick={() => onSave({ startingXI: xiPlayers, bench: benchPlayers })}
-              disabled={saveDisabled}
-            >
+            <button type="button" className="xi-save" onClick={() => onSave({ startingXI: xiPlayers, bench: benchPlayers })} disabled={saveDisabled}>
               Tallenna
             </button>
           )}

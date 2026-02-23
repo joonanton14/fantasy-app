@@ -1,18 +1,6 @@
 // client/src/TransfersPage.tsx
 import React, { useMemo } from "react";
-import { StartingXI } from "./StartingXI";
-
-type Player = {
-  id: number;
-  name: string;
-  position: "GK" | "DEF" | "MID" | "FWD";
-  teamId: number;
-  value: number;
-};
-
-type Team = { id: number; name: string };
-
-type FormationKey = "3-5-2" | "3-4-3" | "4-4-2" | "4-3-3" | "4-5-1" | "5-3-2" | "5-4-1";
+import { StartingXI, FormationKey, Player, Team } from "./StartingXI";
 
 const FORMATIONS: Record<FormationKey, { DEF: number; MID: number; FWD: number }> = {
   "3-5-2": { DEF: 3, MID: 5, FWD: 2 },
@@ -29,7 +17,6 @@ function inferFormationFromXI(xi: Player[]): FormationKey | null {
   const def = xi.filter((p) => p.position === "DEF").length;
   const mid = xi.filter((p) => p.position === "MID").length;
   const fwd = xi.filter((p) => p.position === "FWD").length;
-
   if (gk !== 1) return null;
 
   const hit = (Object.keys(FORMATIONS) as FormationKey[]).find((k) => {
@@ -49,7 +36,10 @@ export default function TransfersPage(props: {
   onCancel: () => void;
   onSave: (payload: { startingXI: Player[]; bench: Player[] }) => void;
 }) {
-  const fixedFormation = useMemo<FormationKey>(() => inferFormationFromXI(props.startingXI) ?? "4-4-2", [props.startingXI]);
+  const fixedFormation = useMemo<FormationKey>(
+    () => inferFormationFromXI(props.startingXI) ?? "4-4-2",
+    [props.startingXI]
+  );
 
   return (
     <div className="app-card">
@@ -69,7 +59,10 @@ export default function TransfersPage(props: {
         mode="transfers"
         fixedFormation={fixedFormation}
         hideFormation={true}
-        hideBench={false}   // ✅ show 15 slots
+        // showBench must be true internally so we have 4 extra slots to pick,
+        // but bench section is hidden by layout="all15"
+        hideBench={false}
+        layout="all15" // ✅ key change: 4 bench slots go on pitch, no bench section
       />
     </div>
   );
