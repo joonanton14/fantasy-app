@@ -321,7 +321,7 @@ export default function App() {
   async function handleLogout() {
     try {
       await apiCall("/auth/logout", { method: "POST" });
-    } catch {}
+    } catch { }
 
     setIsLoggedIn(false);
     setUserId(null);
@@ -508,7 +508,8 @@ export default function App() {
                     initialBench={bench}
                     onSave={saveXI}
                     budget={INITIAL_BUDGET}
-                    readOnly={true}
+                    readOnly={false}   // ✅ allow editing here
+                    layout="standard"
                   />
                 </div>
               ) : teamViewTab === "fixtures" ? (
@@ -605,10 +606,10 @@ export default function App() {
                             trend === "up"
                               ? "Noussut"
                               : trend === "down"
-                              ? "Laskenut"
-                              : trend === "same"
-                              ? "Ei muutosta"
-                              : "Uusi";
+                                ? "Laskenut"
+                                : trend === "same"
+                                  ? "Ei muutosta"
+                                  : "Uusi";
 
                           return (
                             <tr key={r.username}>

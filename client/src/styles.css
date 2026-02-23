@@ -1922,3 +1922,27 @@ select:focus {
   border-color: rgba(99, 102, 241, 0.75);
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18);
 }
+
+.player-chip {
+  position: relative;
+}
+
+.remove-slot,
+.move-slot {
+  position: absolute;
+  top: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  line-height: 22px;
+}
+
+.remove-slot {
+  right: 6px;
+}
+
+.move-slot {
+  right: 34px;
+}
