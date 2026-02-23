@@ -79,12 +79,14 @@ export const StartingXI: FC<Props> = ({
   hideBench,
   hideFormation,
   fixedFormation = "4-4-2",
-}) => {
+  }) => {
   const rootRef = useRef<HTMLDivElement | null>(null);
 
   const isTransfers = mode === "transfers";
-  const showBench = hideBench ?? !isTransfers;
-  const showFormation = hideFormation ?? !isTransfers;
+
+  // hideBench/hideFormation mean "hide", not "show"
+  const showBench = hideBench ? false : !isTransfers;
+  const showFormation = hideFormation ? false : !isTransfers;
 
   const initialFormation: FormationKey = isTransfers ? fixedFormation : "4-4-2";
 
@@ -525,7 +527,7 @@ export const StartingXI: FC<Props> = ({
               </div>
             )}
           </div>
-          
+
           {!isValidXI() && (
             <div className="starting-xi-warning" role="alert">
               Avaus ei ole kelvollinen.
