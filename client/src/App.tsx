@@ -21,8 +21,6 @@ interface Team {
   name: string;
 }
 
-type LeaderboardRow = { username: string; total: number };
-
 const INITIAL_BUDGET = 100;
 
 export default function App() {

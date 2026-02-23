@@ -1,4 +1,3 @@
-// client/src/StartingXI.tsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { FC } from "react";
 
@@ -504,10 +503,6 @@ export const StartingXI: FC<Props> = ({
           <h2>Avauskokoonpano</h2>
 
           <div className="starting-xi-meta">
-            <div className="meta-pill">
-              Käytetty: <b>{totalValue.toFixed(1)}</b> / {budget} M
-            </div>
-
             {showFormation && (
               <div className="meta-pill meta-formation">
                 <span>
@@ -529,18 +524,8 @@ export const StartingXI: FC<Props> = ({
                 </select>
               </div>
             )}
-
-            <div className="meta-pill">
-              Jäljellä: <b>{remainingBudget.toFixed(1)}</b> M
-            </div>
           </div>
-
-          {remainingBudget < 0 && (
-            <div className="starting-xi-warning" role="alert">
-              Budjetti ylittyy. Poista tai vaihda pelaajia.
-            </div>
-          )}
-
+          
           {!isValidXI() && (
             <div className="starting-xi-warning" role="alert">
               Avaus ei ole kelvollinen.
