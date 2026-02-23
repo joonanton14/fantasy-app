@@ -1,3 +1,4 @@
+// client/src/adminPortal.tsx
 import React, { JSX, useEffect, useMemo, useState } from "react";
 import { apiCall } from "./api";
 
@@ -101,12 +102,13 @@ export default function AdminPortal() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
+  const playerNameById = useMemo(() => new Map(players.map((p) => [p.id, p.name])), [players]);
 
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
   const [fixturesErr, setFixturesErr] = useState<string | null>(null);
 
   const [loadingBase, setLoadingBase] = useState(false);
-  
+
   // scoring state
   const [selectedGameId, setSelectedGameId] = useState<number | null>(null);
   const [selectedRound, setSelectedRound] = useState<number | "all">("all");
@@ -116,14 +118,17 @@ export default function AdminPortal() {
   const [loadEventsStatus, setLoadEventsStatus] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
   const [finalizeStatus, setFinalizeStatus] = useState<string | null>(null);
-  const [finalizeResults, setFinalizeResults] = useState<
-    Array<{ username: string; points: number; subsUsed: number[] }>
-  >([]);
+  const [finalizeResults, setFinalizeResults] = useState<Array<{ username: string; points: number; subsUsed: number[] }>>(
+    []
+  );
+
+  // ✅ NEW: finalize whole round status/results (computed client-side by calling finalize-game per fixture)
+  const [finalizeRoundStatus, setFinalizeRoundStatus] = useState<string | null>(null);
+  const [finalizeRoundResults, setFinalizeRoundResults] = useState<Array<{ username: string; gwPoints: number }>>([]);
 
   // player search
   const [playerSearch, setPlayerSearch] = useState("");
   type SortKey = "name_asc" | "name_desc" | "value_desc" | "value_asc" | "newest" | "oldest";
-
   const [sortKey, setSortKey] = useState<SortKey>("name_asc");
   const [filterTeam, setFilterTeam] = useState<number | "all">("all");
 
@@ -133,22 +138,19 @@ export default function AdminPortal() {
         return a.name.localeCompare(b.name);
       case "name_desc":
         return b.name.localeCompare(a.name);
-
       case "value_desc":
         return (b.value ?? 0) - (a.value ?? 0);
       case "value_asc":
         return (a.value ?? 0) - (b.value ?? 0);
-
-      // “newest/oldest” uses id as creation order (since you load players with incremental ids)
       case "newest":
         return (b.id ?? 0) - (a.id ?? 0);
       case "oldest":
         return (a.id ?? 0) - (b.id ?? 0);
-
       default:
         return 0;
     }
   }
+
   // load players + teams
   useEffect(() => {
     let cancelled = false;
@@ -177,7 +179,7 @@ export default function AdminPortal() {
     };
   }, []);
 
-  // load fixtures (optional)
+  // load fixtures
   useEffect(() => {
     let cancelled = false;
 
@@ -185,10 +187,7 @@ export default function AdminPortal() {
       setFixturesErr(null);
       try {
         const res = await apiCall("/admin/fixtures", { method: "GET" });
-        if (!res.ok) {
-          // not fatal, user can type gameId manually
-          throw new Error("Failed to load fixtures (admin)");
-        }
+        if (!res.ok) throw new Error("Failed to load fixtures (admin)");
         const json = await res.json();
         const fx = (json.fixtures ?? []) as Fixture[];
         if (!cancelled) setFixtures(fx);
@@ -228,6 +227,11 @@ export default function AdminPortal() {
     return fixtures.filter((f) => f.round === selectedRound);
   }, [fixtures, selectedRound]);
 
+  const fixturesForSelectedRoundOnly = useMemo(() => {
+    if (selectedRound === "all") return [];
+    return fixtures.filter((f) => f.round === selectedRound).slice().sort((a, b) => a.id - b.id);
+  }, [fixtures, selectedRound]);
+
   const homeTeamId = selectedFixture?.homeTeamId ?? null;
   const awayTeamId = selectedFixture?.awayTeamId ?? null;
 
@@ -243,20 +247,11 @@ export default function AdminPortal() {
 
   const filteredPlayers = useMemo(() => {
     const q = playerSearch.trim().toLowerCase();
-
     let list = players;
 
-    // filter by club
-    if (filterTeam !== "all") {
-      list = list.filter((p) => p.teamId === filterTeam);
-    }
+    if (filterTeam !== "all") list = list.filter((p) => p.teamId === filterTeam);
+    if (q) list = list.filter((p) => p.name.toLowerCase().includes(q));
 
-    // search by name
-    if (q) {
-      list = list.filter((p) => p.name.toLowerCase().includes(q));
-    }
-
-    // sort
     return list.slice().sort((a, b) => comparePlayers(a, b, sortKey));
   }, [players, playerSearch, filterTeam, sortKey]);
 
@@ -265,6 +260,8 @@ export default function AdminPortal() {
     setSaveStatus(null);
     setFinalizeStatus(null);
     setFinalizeResults([]);
+    setFinalizeRoundStatus(null);
+    setFinalizeRoundResults([]);
 
     try {
       setLoadEventsStatus("Loading saved events…");
@@ -322,6 +319,61 @@ export default function AdminPortal() {
     }
   }
 
+  // ✅ NEW: finalize whole round by calling existing /admin/finalize-game for every game in round
+  async function finalizeSelectedRound() {
+    if (selectedRound === "all") return;
+    const round = selectedRound;
+
+    setFinalizeRoundStatus(null);
+    setFinalizeRoundResults([]);
+    setFinalizeStatus(null);
+    setFinalizeResults([]);
+
+    const games = fixturesForSelectedRoundOnly;
+    if (games.length === 0) {
+      setFinalizeRoundStatus(`No games found for round ${round}.`);
+      return;
+    }
+
+    try {
+      setFinalizeRoundStatus(`Finalizing round ${round}… (${games.length} games)`);
+      const totals = new Map<string, number>();
+
+      for (let i = 0; i < games.length; i++) {
+        const gameId = games[i].id;
+
+        setFinalizeRoundStatus(`Finalizing round ${round}: game ${i + 1}/${games.length} (id ${gameId})…`);
+
+        const res = await apiCall("/admin/finalize-game", {
+          method: "POST",
+          body: JSON.stringify({ gameId }),
+        });
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error((data as any).error || `Failed to finalize game ${gameId}`);
+        }
+
+        const data = await res.json();
+        const rows = (data.results ?? []) as Array<{ username: string; points: number }>;
+
+        for (const r of rows) {
+          totals.set(r.username, (totals.get(r.username) ?? 0) + (r.points ?? 0));
+        }
+      }
+
+      const out = Array.from(totals.entries())
+        .map(([username, gwPoints]) => ({ username, gwPoints }))
+        .sort((a, b) => b.gwPoints - a.gwPoints || a.username.localeCompare(b.username));
+
+      setFinalizeRoundResults(out);
+      setFinalizeRoundStatus(`Round ${round} finalized ✅`);
+      setTimeout(() => setFinalizeRoundStatus(null), 2000);
+    } catch (e) {
+      setFinalizeRoundStatus(e instanceof Error ? e.message : "Failed to finalize round");
+    }
+  }
+
   function getEv(pid: number): PlayerEventInput {
     return events[String(pid)] ?? DEFAULT_EVENT;
   }
@@ -335,7 +387,17 @@ export default function AdminPortal() {
     const pts = calcPoints(p.position, ev);
 
     return (
-      <div className="admin-row" style={{ display: "grid", gridTemplateColumns: "minmax(100px, 170px) 70px 180px 100px", gap: 8, alignItems: "center", padding: "8px 0", borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
+      <div
+        className="admin-row"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(100px, 170px) 70px 180px 100px",
+          gap: 8,
+          alignItems: "center",
+          padding: "8px 0",
+          borderBottom: "1px solid rgba(0,0,0,0.08)",
+        }}
+      >
         <div style={{ minWidth: 0 }}>
           <div style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {p.name}
@@ -463,6 +525,7 @@ export default function AdminPortal() {
       {tab === "players" && (
         <div className="app-card" style={{ padding: 12 }}>
           <h2 className="app-h2">Pelaajat</h2>
+
           <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
             <input
               className="app-btn"
@@ -483,11 +546,14 @@ export default function AdminPortal() {
               title="Suodata joukkueella"
             >
               <option value="all">Kaikki joukkueet</option>
-              {teams.slice().sort((a, b) => a.name.localeCompare(b.name)).map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
+              {teams
+                .slice()
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
             </select>
 
             <select
@@ -544,8 +610,7 @@ export default function AdminPortal() {
 
           {fixtures.length === 0 ? (
             <div className="app-muted">
-              No fixtures loaded. If you don’t have <code>/api/admin/fixtures</code> yet, you can still use “Game scoring”
-              tab and type a gameId manually.
+              No fixtures loaded. You can still use the scoring tab and type a gameId manually.
             </div>
           ) : (
             <div className="app-table-wrap">
@@ -606,7 +671,7 @@ export default function AdminPortal() {
         <div className="app-card" style={{ padding: 12 }}>
           <h2 className="app-h2">Pisteet</h2>
           <div className="app-muted" style={{ marginBottom: 10 }}>
-            Tallenna tulokset ja päätä kierros niin näet taulukon.
+            Tallenna ottelun tapahtumat ja päätä peli. Voit myös päättää koko kierroksen (kutsuu finalize-game jokaiselle ottelulle).
           </div>
 
           <div style={{ display: "grid", gap: 8, marginBottom: 12 }}>
@@ -627,6 +692,8 @@ export default function AdminPortal() {
                       setManualGameId("");
                       setEvents({});
                       setFinalizeResults([]);
+                      setFinalizeRoundResults([]);
+                      setFinalizeRoundStatus(null);
                     }}
                     style={{ flex: 1 }}
                   >
@@ -637,6 +704,16 @@ export default function AdminPortal() {
                       </option>
                     ))}
                   </select>
+
+                  {/* ✅ NEW button: finalize round */}
+                  <button
+                    className="app-btn app-btn-primary"
+                    disabled={selectedRound === "all" || fixturesForSelectedRoundOnly.length === 0}
+                    onClick={finalizeSelectedRound}
+                    title="Finalizes every game in this round by calling /admin/finalize-game for each fixture."
+                  >
+                    Päätä kierros
+                  </button>
                 </div>
 
                 {/* Game selector (filtered by round) */}
@@ -657,10 +734,7 @@ export default function AdminPortal() {
                     style={{ flex: 1 }}
                     disabled={fixturesForRound.length === 0}
                   >
-                    <option value="">
-                      {fixturesForRound.length === 0 ? "Ei pelejä" : "Valitse…"}
-                    </option>
-
+                    <option value="">{fixturesForRound.length === 0 ? "Ei pelejä" : "Valitse…"}</option>
                     {fixturesForRound
                       .slice()
                       .sort((a, b) => a.id - b.id)
@@ -670,10 +744,42 @@ export default function AdminPortal() {
                         </option>
                       ))}
                   </select>
+
+                  <button
+                    className="app-btn"
+                    disabled={!selectedGameId}
+                    onClick={() => selectedGameId && loadGameEvents(selectedGameId)}
+                    title="Loads saved events for this gameId"
+                  >
+                    Lataa
+                  </button>
                 </div>
               </div>
             )}
+
+            {/* Manual fallback if fixtures missing */}
+            {fixtures.length === 0 && (
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <label style={{ minWidth: 70 }}>PeliId</label>
+                <input
+                  className="app-btn"
+                  value={manualGameId}
+                  onChange={(e) => setManualGameId(e.target.value)}
+                  placeholder="esim. 123"
+                  style={{ flex: 1 }}
+                />
+                <button
+                  className="app-btn"
+                  disabled={!effectiveGameId}
+                  onClick={() => effectiveGameId && loadGameEvents(effectiveGameId)}
+                >
+                  Lataa
+                </button>
+              </div>
+            )}
+
             {loadEventsStatus && <div className="app-muted">{loadEventsStatus}</div>}
+            {finalizeRoundStatus && <div className="app-muted">{finalizeRoundStatus}</div>}
           </div>
 
           {/* If we have a fixture, show split home/away input */}
@@ -743,7 +849,7 @@ export default function AdminPortal() {
               onClick={() => effectiveGameId && finalizeGame(effectiveGameId)}
               title="Computes official per-user points with autosubs + formation constraints and stores it in Redis."
             >
-              Päätä pelit
+              Päätä peli
             </button>
 
             {saveStatus && <span className="app-muted">{saveStatus}</span>}
@@ -752,7 +858,7 @@ export default function AdminPortal() {
 
           {finalizeResults.length > 0 && (
             <div style={{ marginTop: 12 }}>
-              <h3 className="app-h2">Päätetyt tulokset</h3>
+              <h3 className="app-h2">Päätetyt tulokset (peli)</h3>
               <div className="app-table-wrap">
                 <table className="app-table">
                   <thead>
@@ -767,7 +873,11 @@ export default function AdminPortal() {
                       <tr key={r.username}>
                         <td>{r.username}</td>
                         <td style={{ fontWeight: 800 }}>{r.points}</td>
-                        <td>{r.subsUsed?.length ? r.subsUsed.join(", ") : "-"}</td>
+                        <td>
+                          {r.subsUsed?.length
+                            ? r.subsUsed.map((id) => playerNameById.get(id) ?? `#${id}`).join(", ")
+                            : "-"}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -775,6 +885,33 @@ export default function AdminPortal() {
               </div>
               <div className="app-muted" style={{ marginTop: 6 }}>
                 Nämä pisteet on nyt tallennettu käyttäjäkohtaisesti tälle peliId:lle.
+              </div>
+            </div>
+          )}
+
+          {finalizeRoundResults.length > 0 && (
+            <div style={{ marginTop: 12 }}>
+              <h3 className="app-h2">Kierroksen pisteet (yhteensä)</h3>
+              <div className="app-table-wrap">
+                <table className="app-table">
+                  <thead>
+                    <tr>
+                      <th>Käyttäjä</th>
+                      <th>Kierrospisteet</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {finalizeRoundResults.map((r) => (
+                      <tr key={r.username}>
+                        <td>{r.username}</td>
+                        <td style={{ fontWeight: 800 }}>{r.gwPoints}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="app-muted" style={{ marginTop: 6 }}>
+                Tämä lista lasketaan clientissä kutsumalla finalize-game jokaiselle kierroksen ottelulle. (Pisteet on silti tallennettu Redisissä peliId-kohtaisesti finalize-game:n toimesta.)
               </div>
             </div>
           )}
