@@ -15,21 +15,22 @@ export default function TransfersPage(props: {
     <div className="app-card">
       <div className="app-section-header" style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
         <h2 className="app-h2" style={{ margin: 0 }}>Vaihdot</h2>
-        <button className="app-btn" onClick={props.onCancel}>Peruuta</button>
+        <button className="app-btn" onClick={props.onCancel}>
+          Peruuta
+        </button>
       </div>
 
+      {/* ✅ Transfers: show 15 fixed slots by position. No bench UI. No formation UI. */}
       <StartingXI
         players={props.players}
         teams={props.teams}
-        // seed squad from saved XI + saved bench
         initial={props.startingXI}
         initialBench={props.bench}
         budget={props.budget}
         readOnly={false}
         onSave={props.onSave}
-        mode="transfers"
+        layout="squad15"
         hideFormation={true}
-        layout="squad15"  // ✅ key: 2 GK / 5 DEF / 5 MID / 3 FWD
       />
     </div>
   );
