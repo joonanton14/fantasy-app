@@ -103,12 +103,6 @@ function canReachMins(c: Counts, remainingSlots: number) {
   return needDEF + needMID + needFWD <= remainingSlots;
 }
 
-/**
- * Bench order + formation constraints autosub.
- * - Replace DNP starters with bench players that played
- * - Only accept a bench player if it doesn't violate max
- *   AND still allows reaching mins with remaining subs.
- */
 export function scoreTeamForGameWithAutosub(args: {
   team: TeamData;
   playersById: Map<number, PlayerLite>;
@@ -117,103 +111,154 @@ export function scoreTeamForGameWithAutosub(args: {
   const { team, playersById, eventsById } = args;
 
   const starters = team.startingXIIds ?? [];
-  const bench = team.benchIds ?? [];
+  const bench = team.benchIds ?? []; // [GK, out1, out2, out3] order matters
 
-  const counts = emptyCounts();
-  const usedSubs = new Set<number>();
+  const usedSubs = new Set<number>();     // bench players promoted in
+  const subsOut = new Set<number>();      // starters replaced (DNP)
   let total = 0;
 
-  // DNP outfield starters by pos
-  const dnpOutfield: Record<"DEF" | "MID" | "FWD", number[]> = { DEF: [], MID: [], FWD: [] };
+  // We'll build these explicitly
+  const finalXI: number[] = [];
+  const finalBench: number[] = [...bench]; // start as original bench, then update when subs happen
 
-  // --- starters (outfield first) ---
-  for (const sid of starters) {
-    const sp = playersById.get(sid);
-    if (!sp) continue;
+  const counts = emptyCounts();
 
-    const ev = eventsById[String(sid)];
+  const getEv = (id: number) => eventsById[String(id)];
+  const getPos = (id: number) => playersById.get(id)?.position ?? null;
 
-    if (sp.position === "GK") continue;
+  // Identify starter GK (should be exactly one in valid teams)
+  const starterGK = starters.find((id) => getPos(id) === "GK") ?? null;
 
-    if (played(ev)) {
-      addCount(counts, sp.position, 1);
-      total += calcPoints(sp.position, ev);
-    } else {
-      dnpOutfield[sp.position].push(sid);
-    }
-  }
+  // Bench GK is the GK in bench (if any)
+  const benchGK = bench.find((id) => getPos(id) === "GK") ?? null;
 
-  // --- GK slot ---
-  const starterGK = starters.find((id) => playersById.get(id)?.position === "GK") ?? null;
-  const benchGK = bench.find((id) => playersById.get(id)?.position === "GK") ?? null;
-
+  // --- 1) Handle GK slot ---
   if (starterGK) {
-    const ev = eventsById[String(starterGK)];
+    const ev = getEv(starterGK);
     if (played(ev)) {
+      finalXI.push(starterGK);
       addCount(counts, "GK", 1);
       total += calcPoints("GK", ev);
-    } else if (benchGK) {
-      const bev = eventsById[String(benchGK)];
-      if (played(bev)) {
-        usedSubs.add(benchGK);
-        addCount(counts, "GK", 1);
-        total += calcPoints("GK", bev);
+    } else {
+      // starter GK did not play -> try bench GK
+      if (benchGK) {
+        const bev = getEv(benchGK);
+        if (played(bev)) {
+          // sub in bench GK
+          usedSubs.add(benchGK);
+          subsOut.add(starterGK);
+
+          finalXI.push(benchGK);
+          addCount(counts, "GK", 1);
+          total += calcPoints("GK", bev);
+
+          // move starter GK "to bench" (conceptually) -> put them into the GK bench slot
+          // and remove benchGK from bench
+          for (let i = 0; i < finalBench.length; i++) {
+            if (finalBench[i] === benchGK) finalBench[i] = starterGK;
+          }
+        } else {
+          // no GK played -> no GK points
+        }
       }
     }
   }
 
-  // --- bench outfield in order ---
-  const benchOutfield = bench.filter((id) => playersById.get(id)?.position !== "GK");
+  // --- 2) Process outfield starters: keep those who played, track DNP by position ---
+  const dnpOutfield: Record<"DEF" | "MID" | "FWD", number[]> = { DEF: [], MID: [], FWD: [] };
+
+  for (const sid of starters) {
+    const pos = getPos(sid);
+    if (!pos || pos === "GK") continue;
+
+    const ev = getEv(sid);
+    if (played(ev)) {
+      finalXI.push(sid);
+      addCount(counts, pos, 1);
+      total += calcPoints(pos, ev);
+    } else {
+      dnpOutfield[pos].push(sid);
+    }
+  }
+
+  // --- 3) Sub in bench outfield in bench order, respecting formation max and min reachability ---
+  const benchOutfield = bench.filter((id) => getPos(id) !== "GK");
 
   for (const bid of benchOutfield) {
     if (usedSubs.has(bid)) continue;
 
-    const bp = playersById.get(bid);
-    if (!bp || bp.position === "GK") continue;
+    const pos = getPos(bid);
+    if (!pos || pos === "GK") continue;
 
-    const bev = eventsById[String(bid)];
-    if (!played(bev)) continue;
+    const ev = getEv(bid);
+    if (!played(ev)) continue;
 
     const missingNow = dnpOutfield.DEF.length + dnpOutfield.MID.length + dnpOutfield.FWD.length;
     if (missingNow <= 0) break;
 
-    // try add this bench player
+    // try add this bench player to XI
     const next: Counts = { ...counts };
-    addCount(next, bp.position, 1);
+    addCount(next, pos, 1);
 
-    // max rule
+    // must not violate max limits
     if (!withinMax(next)) continue;
 
-    // must still be possible to satisfy mins with remaining subs
+    // must still be possible to reach minimums with remaining subs
     const remainingSlots = missingNow - 1;
     if (!canReachMins(next, remainingSlots)) continue;
 
-    // consume one DNP starter slot (prefer same position, otherwise any)
+    // choose which DNP starter slot gets replaced:
+    // prefer same position; otherwise fallback order
     const order =
-      bp.position === "DEF" ? (["DEF", "MID", "FWD"] as const)
-        : bp.position === "MID" ? (["MID", "DEF", "FWD"] as const)
+      pos === "DEF"
+        ? (["DEF", "MID", "FWD"] as const)
+        : pos === "MID"
+          ? (["MID", "DEF", "FWD"] as const)
           : (["FWD", "MID", "DEF"] as const);
 
-    let replaced: "DEF" | "MID" | "FWD" | null = null;
-    for (const pos of order) {
-      if (dnpOutfield[pos].length > 0) {
-        replaced = pos;
+    let replacedPos: "DEF" | "MID" | "FWD" | null = null;
+    for (const p of order) {
+      if (dnpOutfield[p].length > 0) {
+        replacedPos = p;
         break;
       }
     }
-    if (!replaced) {
-      // no missing starter? (shouldn't happen)
-      continue;
-    }
+    if (!replacedPos) continue;
 
-    dnpOutfield[replaced].shift();
+    const outId = dnpOutfield[replacedPos].shift()!;
+    subsOut.add(outId);
+
+    // Commit the sub:
+    usedSubs.add(bid);
+    finalXI.push(bid);
+
     counts.DEF = next.DEF;
     counts.MID = next.MID;
     counts.FWD = next.FWD;
 
-    usedSubs.add(bid);
-    total += calcPoints(bp.position, bev);
+    total += calcPoints(pos, ev);
+
+    // Conceptual "move outId to bench" and remove bid from bench:
+    // replace the bench slot containing bid with outId
+    for (let i = 0; i < finalBench.length; i++) {
+      if (finalBench[i] === bid) {
+        finalBench[i] = outId;
+        break;
+      }
+    }
   }
 
-  return { total, subsUsed: Array.from(usedSubs), counts };
+  // final XI should be <= 11 depending on whether user saved correctly.
+  // If you want strict behavior: only count first 11 (and ignore extras). But ideally it’s always 11.
+  const finalStartingXIIds = finalXI.slice(0, 11);
+  const finalBenchIds = finalBench;
+
+  return {
+    total,
+    subsUsed: Array.from(usedSubs),    // bench player IDs promoted in
+    subsOut: Array.from(subsOut),      // starter IDs replaced (DNP)
+    finalStartingXIIds,
+    finalBenchIds,
+    counts,
+  };
 }
