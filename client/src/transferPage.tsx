@@ -1,6 +1,6 @@
 // client/src/TransfersPage.tsx
 import React, { useMemo } from "react";
-import StartingXI from "./StartingXI";
+import { StartingXI } from "./StartingXI";
 
 type Player = {
   id: number;
@@ -49,18 +49,13 @@ export default function TransfersPage(props: {
   onCancel: () => void;
   onSave: (payload: { startingXI: Player[]; bench: Player[] }) => void;
 }) {
-  const fixedFormation = useMemo<FormationKey>(() => {
-    return inferFormationFromXI(props.startingXI) ?? "4-4-2";
-  }, [props.startingXI]);
+  const fixedFormation = useMemo<FormationKey>(() => inferFormationFromXI(props.startingXI) ?? "4-4-2", [props.startingXI]);
 
   return (
     <div className="app-card">
       <div className="app-section-header" style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
         <h2 className="app-h2" style={{ margin: 0 }}>Vaihdot</h2>
-
-        <button className="app-btn" onClick={props.onCancel}>
-          Peruuta
-        </button>
+        <button className="app-btn" onClick={props.onCancel}>Peruuta</button>
       </div>
 
       <StartingXI
@@ -73,8 +68,8 @@ export default function TransfersPage(props: {
         onSave={props.onSave}
         mode="transfers"
         fixedFormation={fixedFormation}
-        hideFormation={true}  // ✅ no need to choose formation
-        hideBench={false}     // ✅ show 15 slots total (11 + 4) as empty places if needed
+        hideFormation={true}
+        hideBench={false}   // ✅ show 15 slots
       />
     </div>
   );

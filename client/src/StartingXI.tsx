@@ -1,7 +1,7 @@
+// client/src/StartingXI.tsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import type { FC } from "react";
 
-interface Player {
+export interface Player {
   id: number;
   name: string;
   position: "GK" | "DEF" | "MID" | "FWD";
@@ -9,12 +9,12 @@ interface Player {
   value: number;
 }
 
-interface Team {
+export interface Team {
   id: number;
   name: string;
 }
 
-type FormationKey = "3-5-2" | "3-4-3" | "4-4-2" | "4-3-3" | "4-5-1" | "5-3-2" | "5-4-1";
+export type FormationKey = "3-5-2" | "3-4-3" | "4-4-2" | "4-3-3" | "4-5-1" | "5-3-2" | "5-4-1";
 
 const FORMATIONS: Record<FormationKey, { DEF: number; MID: number; FWD: number }> = {
   "3-5-2": { DEF: 3, MID: 5, FWD: 2 },
@@ -41,6 +41,20 @@ function countByPos(list: Player[], pos: Player["position"]) {
   return list.filter((p) => p.position === pos).length;
 }
 
+function inferFormationFromXI(xi: Player[]): FormationKey | null {
+  const gk = countByPos(xi, "GK");
+  const def = countByPos(xi, "DEF");
+  const mid = countByPos(xi, "MID");
+  const fwd = countByPos(xi, "FWD");
+  if (gk !== 1) return null;
+
+  const hit = (Object.keys(FORMATIONS) as FormationKey[]).find((k) => {
+    const f = FORMATIONS[k];
+    return f.DEF === def && f.MID === mid && f.FWD === fwd;
+  });
+  return hit ?? null;
+}
+
 type BenchSlot = { id: string; label: string; kind: "GK" | "FIELD" };
 
 const BENCH_SLOTS: BenchSlot[] = [
@@ -50,23 +64,24 @@ const BENCH_SLOTS: BenchSlot[] = [
   { id: "bench-3", label: "PENKKI", kind: "FIELD" },
 ];
 
-interface Props {
+export type SavePayload = { startingXI: Player[]; bench: Player[] };
+
+export interface StartingXIProps {
   players: Player[];
   teams: Team[];
   initial?: Player[];
   initialBench?: Player[];
-  onSave: (payload: { startingXI: Player[]; bench: Player[] }) => void;
+  onSave: (payload: SavePayload) => void;
   budget?: number;
   readOnly?: boolean;
 
-  // NEW:
-  mode?: "builder" | "transfers"; // transfers = pitch-only, fixed formation, no bench
-  hideBench?: boolean;
-  hideFormation?: boolean;
+  mode?: "builder" | "transfers";
+  hideBench?: boolean;      // true hides, false shows, undefined -> default
+  hideFormation?: boolean;  // true hides, false shows, undefined -> default
   fixedFormation?: FormationKey;
 }
 
-export const StartingXI: FC<Props> = ({
+export function StartingXI({
   players,
   teams,
   initial = [],
@@ -78,17 +93,20 @@ export const StartingXI: FC<Props> = ({
   mode = "builder",
   hideBench,
   hideFormation,
-  fixedFormation = "4-4-2",
-  }) => {
+  fixedFormation,
+}: StartingXIProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
-
   const isTransfers = mode === "transfers";
 
-  // hideBench/hideFormation mean "hide", not "show"
-  const showBench = hideBench ? false : !isTransfers;
-  const showFormation = hideFormation ? false : !isTransfers;
+  // ✅ override semantics (THIS WAS YOUR BUG EARLIER)
+  const showBench = hideBench === undefined ? !isTransfers : !hideBench;
+  const showFormation = hideFormation === undefined ? !isTransfers : !hideFormation;
 
-  const initialFormation: FormationKey = isTransfers ? fixedFormation : "4-4-2";
+  const inferred = inferFormationFromXI(initial);
+
+  const initialFormation: FormationKey = isTransfers
+    ? (fixedFormation ?? inferred ?? "4-4-2")
+    : (inferred ?? "4-4-2");
 
   const [formation, setFormation] = useState<FormationKey>(initialFormation);
   const [slots, setSlots] = useState<Slot[]>(() => buildSlots(initialFormation));
@@ -112,7 +130,6 @@ export const StartingXI: FC<Props> = ({
   const [benchAssignments, setBenchAssignments] = useState<Record<string, Player | null>>(() => {
     const map: Record<string, Player | null> = {};
     BENCH_SLOTS.forEach((s) => (map[s.id] = null));
-
     if (!showBench) return map;
 
     const gk = initialBench.find((p) => p.position === "GK") ?? null;
@@ -122,15 +139,17 @@ export const StartingXI: FC<Props> = ({
     map["bench-1"] = field[0] ?? null;
     map["bench-2"] = field[1] ?? null;
     map["bench-3"] = field[2] ?? null;
-
     return map;
   });
 
   const [openSlot, setOpenSlot] = useState<string | null>(null);
 
-  // Sync when parent passes new initial values (e.g. loaded from Redis)
+  // Sync when parent updates
   useEffect(() => {
-    const effectiveFormation: FormationKey = isTransfers ? fixedFormation : formation;
+    const inferredNow = inferFormationFromXI(initial);
+    const effectiveFormation: FormationKey = isTransfers
+      ? (fixedFormation ?? inferredNow ?? "4-4-2")
+      : (inferredNow ?? formation);
 
     const baseSlots = buildSlots(effectiveFormation);
     const map: Record<string, Player | null> = {};
@@ -147,7 +166,6 @@ export const StartingXI: FC<Props> = ({
 
     const bmap: Record<string, Player | null> = {};
     BENCH_SLOTS.forEach((s) => (bmap[s.id] = null));
-
     if (showBench) {
       const gk = initialBench.find((p) => p.position === "GK") ?? null;
       const field = initialBench.filter((p) => p.position !== "GK").slice(0, 3);
@@ -157,12 +175,10 @@ export const StartingXI: FC<Props> = ({
       bmap["bench-3"] = field[2] ?? null;
     }
 
+    setFormation(effectiveFormation);
     setSlots(baseSlots);
     setSlotAssignments(map);
     setBenchAssignments(bmap);
-
-    if (isTransfers) setFormation(fixedFormation);
-
     setOpenSlot(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initial, initialBench, showBench, isTransfers, fixedFormation]);
@@ -182,13 +198,14 @@ export const StartingXI: FC<Props> = ({
 
   const xiPlayers = useMemo(() => Object.values(slotAssignments).filter(Boolean) as Player[], [slotAssignments]);
   const benchPlayers = useMemo(
-    () => (showBench ? ((Object.values(benchAssignments).filter(Boolean) as Player[]) ?? []) : []),
+    () => (showBench ? (Object.values(benchAssignments).filter(Boolean) as Player[]) : []),
     [benchAssignments, showBench]
   );
 
-  const totalValue = useMemo(() => {
-    return [...xiPlayers, ...benchPlayers].reduce((sum, p) => sum + p.value, 0);
-  }, [xiPlayers, benchPlayers]);
+  const totalValue = useMemo(() => [...xiPlayers, ...benchPlayers].reduce((sum, p) => sum + p.value, 0), [
+    xiPlayers,
+    benchPlayers,
+  ]);
 
   const remainingBudget = useMemo(() => budget - totalValue, [budget, totalValue]);
 
@@ -196,14 +213,15 @@ export const StartingXI: FC<Props> = ({
   const counts = (pos: Player["position"]) => countByPos(xiPlayers, pos);
   const teamCountAll = (teamId: number) => [...xiPlayers, ...benchPlayers].filter((p) => p.teamId === teamId).length;
 
-  const LIMITS = useMemo(() => {
-    return {
+  const LIMITS = useMemo(
+    () => ({
       GK: { min: 1, max: 1 },
       DEF: { min: f.DEF, max: f.DEF },
       MID: { min: f.MID, max: f.MID },
       FWD: { min: f.FWD, max: f.FWD },
-    };
-  }, [f.DEF, f.MID, f.FWD]);
+    }),
+    [f.DEF, f.MID, f.FWD]
+  );
 
   function isPickedAnywhere(id: number) {
     return [...xiPlayers, ...benchPlayers].some((p) => p.id === id);
@@ -274,10 +292,9 @@ export const StartingXI: FC<Props> = ({
     return gkCount === 1 && fieldCount === 3;
   }
 
-  // Builder-only: allow switching formation while keeping players stable
   function applyFormation(next: FormationKey) {
     if (readOnly) return;
-    if (isTransfers) return; // no formation changes in transfers mode
+    if (isTransfers) return;
 
     const nextSlots = buildSlots(next);
     const nextReq = FORMATIONS[next];
@@ -307,7 +324,6 @@ export const StartingXI: FC<Props> = ({
     fillPos("MID", nextReq.MID);
     fillPos("FWD", nextReq.FWD);
 
-    // bench rebuild
     const nextBenchMap: Record<string, Player | null> = {};
     BENCH_SLOTS.forEach((s) => (nextBenchMap[s.id] = null));
 
@@ -316,7 +332,6 @@ export const StartingXI: FC<Props> = ({
       const leftoverField: Player[] = [...poolByPos.MID, ...poolByPos.DEF, ...poolByPos.FWD].filter(
         (p) => p.position !== "GK"
       );
-
       nextBenchMap["bench-gk"] = leftoverGK;
       nextBenchMap["bench-1"] = leftoverField[0] ?? null;
       nextBenchMap["bench-2"] = leftoverField[1] ?? null;
@@ -386,7 +401,6 @@ export const StartingXI: FC<Props> = ({
               {isOpen && !readOnly && (
                 <div className="slot-pop" onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
                   <div className="slot-pop-title">Valitse pelaaja</div>
-
                   <div className="slot-pop-list">
                     {available.map((p) => (
                       <button key={p.id} type="button" className="slot-pop-btn" onClick={() => assignToXISlot(s.id, p)}>
@@ -395,7 +409,6 @@ export const StartingXI: FC<Props> = ({
                         <span className="slot-pop-price">{p.value.toFixed(1)} M</span>
                       </button>
                     ))}
-
                     {available.length === 0 && <div className="slot-pop-empty">Ei saatavilla olevia pelaajia</div>}
                   </div>
                 </div>
@@ -465,7 +478,6 @@ export const StartingXI: FC<Props> = ({
                 {isOpen && !readOnly && (
                   <div className="slot-pop" onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
                     <div className="slot-pop-title">Valitse pelaaja</div>
-
                     <div className="slot-pop-list">
                       {available.map((p) => (
                         <button
@@ -479,7 +491,6 @@ export const StartingXI: FC<Props> = ({
                           <span className="slot-pop-price">{p.value.toFixed(1)} M</span>
                         </button>
                       ))}
-
                       {available.length === 0 && <div className="slot-pop-empty">Ei saatavilla olevia pelaajia</div>}
                     </div>
                   </div>
@@ -528,11 +539,7 @@ export const StartingXI: FC<Props> = ({
             )}
           </div>
 
-          {!isValidXI() && (
-            <div className="starting-xi-warning" role="alert">
-              Avaus ei ole kelvollinen.
-            </div>
-          )}
+          {!isValidXI() && <div className="starting-xi-warning" role="alert">Avaus ei ole kelvollinen.</div>}
         </header>
 
         <div className="pitch">
@@ -546,7 +553,12 @@ export const StartingXI: FC<Props> = ({
 
         <div className="starting-xi-controls">
           {!readOnly && (
-            <button type="button" className="xi-save" onClick={() => onSave({ startingXI: xiPlayers, bench: benchPlayers })} disabled={saveDisabled}>
+            <button
+              type="button"
+              className="xi-save"
+              onClick={() => onSave({ startingXI: xiPlayers, bench: benchPlayers })}
+              disabled={saveDisabled}
+            >
               Tallenna
             </button>
           )}
@@ -554,6 +566,4 @@ export const StartingXI: FC<Props> = ({
       </div>
     </div>
   );
-};
-
-export default StartingXI;
+}

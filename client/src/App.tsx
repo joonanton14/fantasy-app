@@ -2,7 +2,7 @@
 import { useEffect, useState, useMemo, JSX } from "react";
 import Login from "./login";
 import AdminPortal from "./adminPortal";
-import StartingXI from "./StartingXI";
+import { StartingXI } from "./StartingXI"; // ✅ default import
 import { apiCall } from "./api";
 import "./styles.css";
 import { loadSavedTeam, saveStartingXI } from "./userTeam";
@@ -22,6 +22,8 @@ interface Team {
 }
 
 const INITIAL_BUDGET = 100;
+
+type SavePayload = { startingXI: Player[]; bench: Player[] };
 
 export default function App() {
   // -------------------- STATE --------------------
@@ -44,14 +46,17 @@ export default function App() {
   const [startingXI, setStartingXI] = useState<Player[]>([]);
   const [bench, setBench] = useState<Player[]>([]);
   const [error, setError] = useState<string | null>(null);
-  type Fixture = { id: number; homeTeamId: number; awayTeamId: number; date: string; round?: number };
 
+  type Fixture = { id: number; homeTeamId: number; awayTeamId: number; date: string; round?: number };
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
   const [fixturesErr, setFixturesErr] = useState<string | null>(null);
   const [loadingFixtures, setLoadingFixtures] = useState(false);
+
   const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
+
   const [teamViewTab, setTeamViewTab] =
     useState<"startingXI" | "players" | "leaderboard" | "fixtures" | "transfers">("startingXI");
+
   const [filterTeamId, setFilterTeamId] = useState<number | null>(null);
   const [filterPositions, setFilterPositions] = useState<Set<"GK" | "DEF" | "MID" | "FWD">>(
     new Set(["GK", "DEF", "MID", "FWD"])
@@ -74,6 +79,7 @@ export default function App() {
     | "id_asc";
 
   const [playerSort, setPlayerSort] = useState<PlayerSort>("value_desc");
+
   // -------------------- MEMOS --------------------
   const filteredPlayers = useMemo(() => {
     const arr = players.filter((p) => {
@@ -117,14 +123,13 @@ export default function App() {
     return arr;
   }, [players, filterTeamId, filterPositions, playerSort, teamsById]);
 
-  // -------------------- AUTH RESTORE (cookie) --------------------
+  // -------------------- AUTH RESTORE --------------------
   useEffect(() => {
     let cancelled = false;
 
     async function restore() {
       setError(null);
 
-      // 1) Fast UI restore from localStorage (optional)
       const saved = localStorage.getItem("session");
       if (saved) {
         try {
@@ -143,7 +148,6 @@ export default function App() {
         }
       }
 
-      // 2) Source of truth: cookie session
       try {
         const res = await apiCall("/auth/me", { method: "GET" });
         if (!res.ok) {
@@ -167,7 +171,7 @@ export default function App() {
 
         localStorage.setItem("session", JSON.stringify({ userId: null, userName: me.name, isAdmin: !!me.isAdmin }));
       } catch {
-        // ignore (network / first load)
+        // ignore
       } finally {
         if (!cancelled) setAuthChecked(true);
       }
@@ -209,7 +213,7 @@ export default function App() {
     setLoadingFixtures(true);
     setFixturesErr(null);
     try {
-      const res = await apiCall("/admin/fixtures", { method: "GET" }); // ✅ public endpoint
+      const res = await apiCall("/admin/fixtures", { method: "GET" });
       if (!res.ok) throw new Error("Failed to load fixtures");
       const json = await res.json();
       setFixtures((json.fixtures ?? []) as Fixture[]);
@@ -219,6 +223,7 @@ export default function App() {
       setLoadingFixtures(false);
     }
   }
+
   // -------------------- LEADERBOARD --------------------
   async function loadLeaderboard() {
     setLoadingLb(true);
@@ -226,8 +231,7 @@ export default function App() {
       const res = await apiCall("/leaderboard", { method: "GET" });
       if (!res.ok) return;
       const data = await res.json();
-      setLeaderboard((data?.rows ?? []) as LeaderboardRow[]);
-      const rows = data.rows ?? [];
+      const rows = (data?.rows ?? []) as LeaderboardRow[];
       setLeaderboard(rows);
       saveCurrentRanks(rows);
     } finally {
@@ -235,7 +239,6 @@ export default function App() {
     }
   }
 
-  // Load once after login
   useEffect(() => {
     let cancelled = false;
 
@@ -265,7 +268,7 @@ export default function App() {
     async function run() {
       setLoadingSaved(true);
       try {
-        const data = await loadSavedTeam(); // { startingXIIds?: number[]; benchIds?: number[] } | null
+        const data = await loadSavedTeam();
         if (cancelled) return;
 
         const xiIds = data?.startingXIIds ?? [];
@@ -290,8 +293,6 @@ export default function App() {
           }
           return merged;
         });
-      } catch {
-        // optional
       } finally {
         if (!cancelled) setLoadingSaved(false);
       }
@@ -314,14 +315,13 @@ export default function App() {
     setIsLoggedIn(true);
     setPage(isAdmin ? "admin" : "builder");
 
-    // keep UI fast on refresh (optional)
     localStorage.setItem("session", JSON.stringify({ userId, userName, isAdmin }));
   }
 
   async function handleLogout() {
     try {
       await apiCall("/auth/logout", { method: "POST" });
-    } catch { }
+    } catch {}
 
     setIsLoggedIn(false);
     setUserId(null);
@@ -348,8 +348,7 @@ export default function App() {
     }
 
     const prevRank = prev[username];
-    if (typeof prevRank !== "number") return "new"; // no previous data
-
+    if (typeof prevRank !== "number") return "new";
     if (currentRank < prevRank) return "up";
     if (currentRank > prevRank) return "down";
     return "same";
@@ -371,10 +370,6 @@ export default function App() {
     setSelected([...selected, player]);
   }
 
-  function removePlayer(id: number) {
-    setSelected(selected.filter((p) => p.id !== id));
-  }
-
   function togglePositionFilter(pos: "GK" | "DEF" | "MID" | "FWD") {
     setFilterPositions((prev) => {
       const next = new Set(prev);
@@ -384,7 +379,7 @@ export default function App() {
     });
   }
 
-  const saveXI = async (payload: { startingXI: Player[]; bench: Player[] }) => {
+  const saveXI = async (payload: SavePayload): Promise<void> => {
     const xi = payload.startingXI;
     const b = payload.bench;
 
@@ -400,15 +395,10 @@ export default function App() {
       return merged;
     });
 
-    try {
-      await saveStartingXI({
-        startingXIIds: xi.map((p) => p.id),
-        benchIds: b.map((p) => p.id),
-      });
-    } catch { }
-
-    //setTeamViewTab("startingXI");
-    //setXiLocked(true);
+    await saveStartingXI({
+      startingXIIds: xi.map((p) => p.id),
+      benchIds: b.map((p) => p.id),
+    });
   };
 
   // -------------------- RENDER --------------------
@@ -424,7 +414,6 @@ export default function App() {
     return <Login onLoginSuccess={handleLoginSuccess} />;
   }
 
-  // -------------------- USER VIEW --------------------
   if (!isAdmin) {
     return (
       <div className="app-shell">
@@ -491,7 +480,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* ===== TAB CONTENT ===== */}
               {teamViewTab === "transfers" ? (
                 <TransfersPage
                   players={players}
@@ -503,7 +491,7 @@ export default function App() {
                     setTeamViewTab("startingXI");
                     setXiLocked(true);
                   }}
-                  onSave={async (payload) => {
+                  onSave={async (payload: SavePayload) => {
                     await saveXI(payload);
                     setTeamViewTab("startingXI");
                     setXiLocked(true);
@@ -513,7 +501,6 @@ export default function App() {
                 <div>
                   {loadingSaved && <div className="app-muted">Ladataan tallennettu joukkue…</div>}
 
-                  {/* show read-only lineup on this tab */}
                   <StartingXI
                     players={players}
                     teams={teams}
@@ -618,10 +605,10 @@ export default function App() {
                             trend === "up"
                               ? "Noussut"
                               : trend === "down"
-                                ? "Laskenut"
-                                : trend === "same"
-                                  ? "Ei muutosta"
-                                  : "Uusi";
+                              ? "Laskenut"
+                              : trend === "same"
+                              ? "Ei muutosta"
+                              : "Uusi";
 
                           return (
                             <tr key={r.username}>
@@ -641,7 +628,6 @@ export default function App() {
                 </div>
               ) : (
                 <>
-                  {/* PLAYERS TAB */}
                   <div className="app-section" style={{ marginBottom: 12 }}>
                     <h2 className="app-h2">Suodattimet</h2>
 
