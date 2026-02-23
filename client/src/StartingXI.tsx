@@ -37,15 +37,22 @@ function buildSlots(formation: FormationKey): Slot[] {
   return slots;
 }
 
-function countByPos(list: Player[], pos: Player["position"]) {
-  return list.filter((p) => p.position === pos).length;
+// ✅ NEW: fixed squad slots for Transfers: 2/5/5/3
+function buildSquadSlots(): Slot[] {
+  const slots: Slot[] = [];
+  slots.push({ id: "sq-gk-1", position: "GK" });
+  slots.push({ id: "sq-gk-2", position: "GK" });
+  for (let i = 1; i <= 5; i++) slots.push({ id: `sq-def-${i}`, position: "DEF" });
+  for (let i = 1; i <= 5; i++) slots.push({ id: `sq-mid-${i}`, position: "MID" });
+  for (let i = 1; i <= 3; i++) slots.push({ id: `sq-fwd-${i}`, position: "FWD" });
+  return slots;
 }
 
 function inferFormationFromXI(xi: Player[]): FormationKey | null {
-  const gk = countByPos(xi, "GK");
-  const def = countByPos(xi, "DEF");
-  const mid = countByPos(xi, "MID");
-  const fwd = countByPos(xi, "FWD");
+  const gk = xi.filter((p) => p.position === "GK").length;
+  const def = xi.filter((p) => p.position === "DEF").length;
+  const mid = xi.filter((p) => p.position === "MID").length;
+  const fwd = xi.filter((p) => p.position === "FWD").length;
   if (gk !== 1) return null;
 
   const hit = (Object.keys(FORMATIONS) as FormationKey[]).find((k) => {
@@ -55,15 +62,6 @@ function inferFormationFromXI(xi: Player[]): FormationKey | null {
 
   return hit ?? null;
 }
-
-type BenchSlot = { id: string; label: string; kind: "GK" | "FIELD" };
-
-const BENCH_SLOTS: BenchSlot[] = [
-  { id: "bench-gk", label: "MV", kind: "GK" },
-  { id: "bench-1", label: "PENKKI", kind: "FIELD" },
-  { id: "bench-2", label: "PENKKI", kind: "FIELD" },
-  { id: "bench-3", label: "PENKKI", kind: "FIELD" },
-];
 
 export type SavePayload = { startingXI: Player[]; bench: Player[] };
 
@@ -77,12 +75,48 @@ export interface StartingXIProps {
   readOnly?: boolean;
 
   mode?: "builder" | "transfers";
-  hideBench?: boolean; // true hides, false shows, undefined -> default
-  hideFormation?: boolean; // true hides, false shows, undefined -> default
+  hideFormation?: boolean;
   fixedFormation?: FormationKey;
 
   // ✅ NEW:
-  layout?: "standard" | "all15"; // all15 = show 4 bench slots on pitch, no bench section
+  layout?: "standard" | "squad15";
+}
+
+function teamNameOf(teams: Team[], teamId: number) {
+  return teams.find((t) => t.id === teamId)?.name ?? "";
+}
+
+function totalValueOf(list: Player[]) {
+  return list.reduce((sum, p) => sum + p.value, 0);
+}
+
+// ✅ NEW: split 15-player squad into startingXI (11) + bench (4)
+// Default policy: startingXI = 1 GK, 3 DEF, 4 MID, 3 FWD  (3-4-3)
+// Bench = remaining 4 (1 GK, 2 DEF, 1 MID)
+function splitSquadToXIAndBench(squad: Player[]): { startingXI: Player[]; bench: Player[]; ok: boolean } {
+  const gk = squad.filter((p) => p.position === "GK");
+  const def = squad.filter((p) => p.position === "DEF");
+  const mid = squad.filter((p) => p.position === "MID");
+  const fwd = squad.filter((p) => p.position === "FWD");
+
+  if (gk.length !== 2 || def.length !== 5 || mid.length !== 5 || fwd.length !== 3) {
+    return { startingXI: [], bench: [], ok: false };
+  }
+
+  const startingXI: Player[] = [
+    gk[0], // starter GK
+    ...def.slice(0, 3),
+    ...mid.slice(0, 4),
+    ...fwd.slice(0, 3),
+  ];
+
+  const bench: Player[] = [
+    gk[1], // bench GK
+    ...def.slice(3, 5), // 2 defs
+    ...mid.slice(4, 5), // 1 mid
+  ];
+
+  return { startingXI, bench, ok: true };
 }
 
 export function StartingXI({
@@ -95,7 +129,6 @@ export function StartingXI({
   readOnly = false,
 
   mode = "builder",
-  hideBench,
   hideFormation,
   fixedFormation,
 
@@ -103,29 +136,32 @@ export function StartingXI({
 }: StartingXIProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const isTransfers = mode === "transfers";
+  const isSquad15 = layout === "squad15";
 
-  // Optional overrides
-  const showBench = hideBench === undefined ? !isTransfers : !hideBench;
-  const showFormation = hideFormation === undefined ? !isTransfers : !hideFormation;
+  const showFormation = hideFormation === true ? false : !isTransfers; // transfers hides formation by default
 
-  const benchOnPitch = layout === "all15";
-  const showBenchSection = showBench && !benchOnPitch; // ✅ hide bench section in all15
-
+  // In squad15 layout, we ignore formation + ignore bench UI
   const inferred = inferFormationFromXI(initial);
-
   const initialFormation: FormationKey = isTransfers
     ? (fixedFormation ?? inferred ?? "4-4-2")
     : (inferred ?? "4-4-2");
 
   const [formation, setFormation] = useState<FormationKey>(initialFormation);
-  const [slots, setSlots] = useState<Slot[]>(() => buildSlots(initialFormation));
 
+  const [slots, setSlots] = useState<Slot[]>(() => {
+    return isSquad15 ? buildSquadSlots() : buildSlots(initialFormation);
+  });
+
+  // One assignment map drives BOTH layouts:
   const [slotAssignments, setSlotAssignments] = useState<Record<string, Player | null>>(() => {
-    const baseSlots = buildSlots(initialFormation);
+    const baseSlots = isSquad15 ? buildSquadSlots() : buildSlots(initialFormation);
     const map: Record<string, Player | null> = {};
     baseSlots.forEach((s) => (map[s.id] = null));
 
-    const remaining = [...initial];
+    // Seed from initial + initialBench (15 total possible)
+    const seed = [...initial, ...initialBench];
+
+    const remaining = [...seed];
     for (const s of baseSlots) {
       const idx = remaining.findIndex((p) => p.position === s.position);
       if (idx >= 0) {
@@ -133,23 +169,6 @@ export function StartingXI({
         remaining.splice(idx, 1);
       }
     }
-    return map;
-  });
-
-  const [benchAssignments, setBenchAssignments] = useState<Record<string, Player | null>>(() => {
-    const map: Record<string, Player | null> = {};
-    BENCH_SLOTS.forEach((s) => (map[s.id] = null));
-
-    // even if bench section is hidden, we still maintain bench assignments
-    if (!showBench) return map;
-
-    const gk = initialBench.find((p) => p.position === "GK") ?? null;
-    const field = initialBench.filter((p) => p.position !== "GK").slice(0, 3);
-
-    map["bench-gk"] = gk;
-    map["bench-1"] = field[0] ?? null;
-    map["bench-2"] = field[1] ?? null;
-    map["bench-3"] = field[2] ?? null;
 
     return map;
   });
@@ -158,8 +177,29 @@ export function StartingXI({
 
   // Sync when parent updates
   useEffect(() => {
-    const inferredNow = inferFormationFromXI(initial);
+    if (isSquad15) {
+      const baseSlots = buildSquadSlots();
+      const map: Record<string, Player | null> = {};
+      baseSlots.forEach((s) => (map[s.id] = null));
 
+      const seed = [...initial, ...initialBench];
+      const remaining = [...seed];
+
+      for (const s of baseSlots) {
+        const idx = remaining.findIndex((p) => p.position === s.position);
+        if (idx >= 0) {
+          map[s.id] = remaining[idx];
+          remaining.splice(idx, 1);
+        }
+      }
+
+      setSlots(baseSlots);
+      setSlotAssignments(map);
+      setOpenSlot(null);
+      return;
+    }
+
+    const inferredNow = inferFormationFromXI(initial);
     const effectiveFormation: FormationKey = isTransfers
       ? (fixedFormation ?? inferredNow ?? "4-4-2")
       : (inferredNow ?? formation);
@@ -177,24 +217,12 @@ export function StartingXI({
       }
     }
 
-    const bmap: Record<string, Player | null> = {};
-    BENCH_SLOTS.forEach((s) => (bmap[s.id] = null));
-    if (showBench) {
-      const gk = initialBench.find((p) => p.position === "GK") ?? null;
-      const field = initialBench.filter((p) => p.position !== "GK").slice(0, 3);
-      bmap["bench-gk"] = gk;
-      bmap["bench-1"] = field[0] ?? null;
-      bmap["bench-2"] = field[1] ?? null;
-      bmap["bench-3"] = field[2] ?? null;
-    }
-
     setFormation(effectiveFormation);
     setSlots(baseSlots);
     setSlotAssignments(map);
-    setBenchAssignments(bmap);
     setOpenSlot(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initial, initialBench, showBench, isTransfers, fixedFormation]);
+  }, [initial, initialBench, isTransfers, fixedFormation, isSquad15]);
 
   useEffect(() => {
     function handlePointerDown(e: MouseEvent | TouchEvent) {
@@ -209,111 +237,47 @@ export function StartingXI({
     };
   }, []);
 
-  const xiPlayers = useMemo(() => Object.values(slotAssignments).filter(Boolean) as Player[], [slotAssignments]);
-  const benchPlayers = useMemo(
-    () => (showBench ? (Object.values(benchAssignments).filter(Boolean) as Player[]) : []),
-    [benchAssignments, showBench]
-  );
+  const picked = useMemo(() => Object.values(slotAssignments).filter(Boolean) as Player[], [slotAssignments]);
 
-  const totalValue = useMemo(() => [...xiPlayers, ...benchPlayers].reduce((sum, p) => sum + p.value, 0), [
-    xiPlayers,
-    benchPlayers,
-  ]);
+  const totalValue = useMemo(() => totalValueOf(picked), [picked]);
   const remainingBudget = useMemo(() => budget - totalValue, [budget, totalValue]);
 
-  const f = FORMATIONS[formation];
-  const counts = (pos: Player["position"]) => countByPos(xiPlayers, pos);
-  const teamCountAll = (teamId: number) => [...xiPlayers, ...benchPlayers].filter((p) => p.teamId === teamId).length;
-
-  const LIMITS = useMemo(
-    () => ({
-      GK: { min: 1, max: 1 },
-      DEF: { min: f.DEF, max: f.DEF },
-      MID: { min: f.MID, max: f.MID },
-      FWD: { min: f.FWD, max: f.FWD },
-    }),
-    [f.DEF, f.MID, f.FWD]
-  );
-
   function isPickedAnywhere(id: number) {
-    return [...xiPlayers, ...benchPlayers].some((p) => p.id === id);
+    return picked.some((p) => p.id === id);
   }
 
-  function canAssignToXI(p: Player) {
+  function teamCountAll(teamId: number) {
+    return picked.filter((p) => p.teamId === teamId).length;
+  }
+
+  function canAssignToSlot(slotPos: Player["position"], p: Player) {
+    if (p.position !== slotPos) return false;
     if (isPickedAnywhere(p.id)) return false;
     if (teamCountAll(p.teamId) >= 3) return false;
-
-    const max = (LIMITS as any)[p.position].max as number;
-    if (counts(p.position) >= max) return false;
-
     if (totalValue + p.value > budget) return false;
     return true;
   }
 
-  function canAssignToBench(slotKind: "GK" | "FIELD", p: Player) {
-    if (!showBench) return false;
-    if (isPickedAnywhere(p.id)) return false;
-    if (teamCountAll(p.teamId) >= 3) return false;
-
-    if (slotKind === "GK" && p.position !== "GK") return false;
-    if (slotKind === "FIELD" && p.position === "GK") return false;
-
-    if (totalValue + p.value > budget) return false;
-    return true;
-  }
-
-  function assignToXISlot(slotId: string, p: Player) {
+  function assignToSlot(slotId: string, slotPos: Player["position"], p: Player) {
     if (readOnly) return;
-    if (!canAssignToXI(p)) return;
+    if (!canAssignToSlot(slotPos, p)) return;
     setSlotAssignments((prev) => ({ ...prev, [slotId]: p }));
     setOpenSlot(null);
   }
 
-  function removeFromXISlot(slotId: string) {
+  function removeFromSlot(slotId: string) {
     if (readOnly) return;
     setSlotAssignments((prev) => ({ ...prev, [slotId]: null }));
   }
 
-  function assignToBenchSlot(slotId: string, slotKind: "GK" | "FIELD", p: Player) {
-    if (readOnly) return;
-    if (!canAssignToBench(slotKind, p)) return;
-    setBenchAssignments((prev) => ({ ...prev, [slotId]: p }));
-    setOpenSlot(null);
-  }
-
-  function removeFromBenchSlot(slotId: string) {
-    if (readOnly) return;
-    setBenchAssignments((prev) => ({ ...prev, [slotId]: null }));
-  }
-
-  function isValidXI() {
-    if (xiPlayers.length !== 11) return false;
-    return (
-      counts("GK") === LIMITS.GK.max &&
-      counts("DEF") === LIMITS.DEF.max &&
-      counts("MID") === LIMITS.MID.max &&
-      counts("FWD") === LIMITS.FWD.max
-    );
-  }
-
-  function isValidBench() {
-    if (!showBench) return true;
-    if (benchPlayers.length !== 4) return false;
-    const gkCount = benchPlayers.filter((p) => p.position === "GK").length;
-    const fieldCount = benchPlayers.filter((p) => p.position !== "GK").length;
-    return gkCount === 1 && fieldCount === 3;
-  }
-
+  // builder formation change (only for standard layout)
   function applyFormation(next: FormationKey) {
     if (readOnly) return;
     if (isTransfers) return;
+    if (isSquad15) return;
 
     const nextSlots = buildSlots(next);
-    const nextReq = FORMATIONS[next];
-
-    const xiNow = Object.values(slotAssignments).filter(Boolean) as Player[];
-    const benchNow = Object.values(benchAssignments).filter(Boolean) as Player[];
-    const pool = [...xiNow, ...benchNow];
+    const pool = Object.values(slotAssignments).filter(Boolean) as Player[];
 
     const poolByPos: Record<Player["position"], Player[]> = { GK: [], DEF: [], MID: [], FWD: [] };
     for (const p of pool) poolByPos[p.position].push(p);
@@ -324,43 +288,48 @@ export function StartingXI({
     const gkPick = poolByPos.GK.shift() ?? null;
     if (gkPick) nextMap["gk-1"] = gkPick;
 
+    const req = FORMATIONS[next];
     const fillPos = (pos: "DEF" | "MID" | "FWD", count: number) => {
       const slotsForPos = nextSlots.filter((s) => s.position === pos);
       for (let i = 0; i < count; i++) {
-        const p = poolByPos[pos].shift() ?? null;
-        if (p) nextMap[slotsForPos[i].id] = p;
+        const pp = poolByPos[pos].shift() ?? null;
+        if (pp) nextMap[slotsForPos[i].id] = pp;
       }
     };
 
-    fillPos("DEF", nextReq.DEF);
-    fillPos("MID", nextReq.MID);
-    fillPos("FWD", nextReq.FWD);
-
-    // keep bench map as-is (rebuild from leftovers)
-    const nextBenchMap: Record<string, Player | null> = {};
-    BENCH_SLOTS.forEach((s) => (nextBenchMap[s.id] = null));
-    if (showBench) {
-      const leftoverGK = poolByPos.GK.shift() ?? null;
-      const leftoverField: Player[] = [...poolByPos.MID, ...poolByPos.DEF, ...poolByPos.FWD].filter(
-        (p) => p.position !== "GK"
-      );
-      nextBenchMap["bench-gk"] = leftoverGK;
-      nextBenchMap["bench-1"] = leftoverField[0] ?? null;
-      nextBenchMap["bench-2"] = leftoverField[1] ?? null;
-      nextBenchMap["bench-3"] = leftoverField[2] ?? null;
-    }
+    fillPos("DEF", req.DEF);
+    fillPos("MID", req.MID);
+    fillPos("FWD", req.FWD);
 
     setFormation(next);
     setSlots(nextSlots);
     setSlotAssignments(nextMap);
-    setBenchAssignments(nextBenchMap);
     setOpenSlot(null);
   }
 
-  const saveDisabled = !(isValidXI() && isValidBench() && remainingBudget >= 0);
+  // ✅ validation
+  const saveDisabled = useMemo(() => {
+    if (remainingBudget < 0) return true;
 
-  const Row = ({ position, label }: { position: Player["position"]; label: string }) => {
-    const rowSlots = slots.filter((s) => s.position === position);
+    if (isSquad15) {
+      const gk = picked.filter((p) => p.position === "GK").length;
+      const def = picked.filter((p) => p.position === "DEF").length;
+      const mid = picked.filter((p) => p.position === "MID").length;
+      const fwd = picked.filter((p) => p.position === "FWD").length;
+      return !(picked.length === 15 && gk === 2 && def === 5 && mid === 5 && fwd === 3);
+    }
+
+    // standard XI must have 11 (with formation)
+    const f = FORMATIONS[formation];
+    const gk = picked.filter((p) => p.position === "GK").length;
+    const def = picked.filter((p) => p.position === "DEF").length;
+    const mid = picked.filter((p) => p.position === "MID").length;
+    const fwd = picked.filter((p) => p.position === "FWD").length;
+    return !(picked.length === 11 && gk === 1 && def === f.DEF && mid === f.MID && fwd === f.FWD);
+  }, [picked, remainingBudget, isSquad15, formation]);
+
+  const Row = ({ position, label, slotsCount }: { position: Player["position"]; label: string; slotsCount: number }) => {
+    const rowSlots = slots.filter((s) => s.position === position).slice(0, slotsCount);
 
     return (
       <div className={`pitch-row pitch-cols-${rowSlots.length}`}>
@@ -369,11 +338,8 @@ export function StartingXI({
           const isOpen = openSlot === s.id;
 
           const available = players
-            .filter((p) => p.position === s.position && canAssignToXI(p))
-            .map((p) => ({
-              ...p,
-              teamName: teams.find((t) => t.id === p.teamId)?.name ?? "",
-            }))
+            .filter((p) => canAssignToSlot(position, p))
+            .map((p) => ({ ...p, teamName: teamNameOf(teams, p.teamId) }))
             .sort((a, b) => a.name.localeCompare(b.name));
 
           return (
@@ -390,14 +356,14 @@ export function StartingXI({
               {assigned ? (
                 <div className="player-chip">
                   <div className="player-name">{assigned.name}</div>
-                  <div className="player-team">{teams.find((t) => t.id === assigned.teamId)?.name}</div>
+                  <div className="player-team">{teamNameOf(teams, assigned.teamId)}</div>
                   {!readOnly && (
                     <button
                       type="button"
                       className="remove-slot"
                       onClick={(e) => {
                         e.stopPropagation();
-                        removeFromXISlot(s.id);
+                        removeFromSlot(s.id);
                       }}
                       aria-label="Remove player"
                       title="Remove"
@@ -415,7 +381,7 @@ export function StartingXI({
                   <div className="slot-pop-title">Valitse pelaaja</div>
                   <div className="slot-pop-list">
                     {available.map((p) => (
-                      <button key={p.id} type="button" className="slot-pop-btn" onClick={() => assignToXISlot(s.id, p)}>
+                      <button key={p.id} type="button" className="slot-pop-btn" onClick={() => assignToSlot(s.id, position, p)}>
                         <span className="slot-pop-name">{p.name}</span>
                         <span className="slot-pop-team">{p.teamName}</span>
                         <span className="slot-pop-price">{p.value.toFixed(1)} M</span>
@@ -432,182 +398,28 @@ export function StartingXI({
     );
   };
 
-  // ✅ NEW: bench slots rendered as an extra pitch row (4 columns) for Transfers
-  const BenchOnPitchRow = () => {
-    if (!benchOnPitch || !showBench) return null;
+  function handleSave() {
+    if (isSquad15) {
+      const { startingXI, bench, ok } = splitSquadToXIAndBench(picked);
+      if (!ok) return;
+      onSave({ startingXI, bench });
+      return;
+    }
 
-    return (
-      <div className="pitch-row pitch-cols-4">
-        {BENCH_SLOTS.map((s) => {
-          const assigned = benchAssignments[s.id];
-          const isOpen = openSlot === s.id;
-
-          const available = players
-            .filter((p) => canAssignToBench(s.kind, p))
-            .map((p) => ({
-              ...p,
-              teamName: teams.find((t) => t.id === p.teamId)?.name ?? "",
-            }))
-            .sort((a, b) => a.name.localeCompare(b.name));
-
-          return (
-            <div
-              key={s.id}
-              className={`slot ${assigned ? "slot-filled" : ""} ${isOpen ? "slot-open" : ""}`}
-              onClick={() => {
-                if (readOnly) return;
-                setOpenSlot(isOpen ? null : s.id);
-              }}
-              role="button"
-              tabIndex={0}
-            >
-              {assigned ? (
-                <div className="player-chip">
-                  <div className="player-name">{assigned.name}</div>
-                  <div className="player-team">{teams.find((t) => t.id === assigned.teamId)?.name}</div>
-                  {!readOnly && (
-                    <button
-                      type="button"
-                      className="remove-slot"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeFromBenchSlot(s.id);
-                      }}
-                      aria-label="Remove player"
-                      title="Remove"
-                    >
-                      ×
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div className="slot-empty">{s.label}</div>
-              )}
-
-              {isOpen && !readOnly && (
-                <div className="slot-pop" onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
-                  <div className="slot-pop-title">Valitse pelaaja</div>
-                  <div className="slot-pop-list">
-                    {available.map((p) => (
-                      <button
-                        key={p.id}
-                        type="button"
-                        className="slot-pop-btn"
-                        onClick={() => assignToBenchSlot(s.id, s.kind, p)}
-                      >
-                        <span className="slot-pop-name">{p.name}</span>
-                        <span className="slot-pop-team">{p.teamName}</span>
-                        <span className="slot-pop-price">{p.value.toFixed(1)} M</span>
-                      </button>
-                    ))}
-                    {available.length === 0 && <div className="slot-pop-empty">Ei saatavilla olevia pelaajia</div>}
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
-  const BenchSection = () => {
-    if (!showBenchSection) return null;
-
-    return (
-      <div className="bench">
-        <h3 className="app-h2" style={{ marginTop: 16 }}>
-          Penkki
-        </h3>
-        <div className="bench-row">
-          {BENCH_SLOTS.map((s) => {
-            const assigned = benchAssignments[s.id];
-            const isOpen = openSlot === s.id;
-
-            const available = players
-              .filter((p) => canAssignToBench(s.kind, p))
-              .map((p) => ({
-                ...p,
-                teamName: teams.find((t) => t.id === p.teamId)?.name ?? "",
-              }))
-              .sort((a, b) => a.name.localeCompare(b.name));
-
-            return (
-              <div
-                key={s.id}
-                className={`slot ${assigned ? "slot-filled" : ""} ${isOpen ? "slot-open" : ""}`}
-                onClick={() => {
-                  if (readOnly) return;
-                  setOpenSlot(isOpen ? null : s.id);
-                }}
-                role="button"
-                tabIndex={0}
-              >
-                {assigned ? (
-                  <div className="player-chip">
-                    <div className="player-name">{assigned.name}</div>
-                    <div className="player-team">{teams.find((t) => t.id === assigned.teamId)?.name}</div>
-                    {!readOnly && (
-                      <button
-                        type="button"
-                        className="remove-slot"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeFromBenchSlot(s.id);
-                        }}
-                        aria-label="Poista pelaaja"
-                        title="Poista"
-                      >
-                        ×
-                      </button>
-                    )}
-                  </div>
-                ) : (
-                  <div className="slot-empty">{s.label}</div>
-                )}
-
-                {isOpen && !readOnly && (
-                  <div className="slot-pop" onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
-                    <div className="slot-pop-title">Valitse pelaaja</div>
-                    <div className="slot-pop-list">
-                      {available.map((p) => (
-                        <button
-                          key={p.id}
-                          type="button"
-                          className="slot-pop-btn"
-                          onClick={() => assignToBenchSlot(s.id, s.kind, p)}
-                        >
-                          <span className="slot-pop-name">{p.name}</span>
-                          <span className="slot-pop-team">{p.teamName}</span>
-                          <span className="slot-pop-price">{p.value.toFixed(1)} M</span>
-                        </button>
-                      ))}
-                      {available.length === 0 && <div className="slot-pop-empty">Ei saatavilla olevia pelaajia</div>}
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {!isValidBench() && (
-          <div className="starting-xi-warning" role="alert" style={{ marginTop: 8 }}>
-            Valitse 1 maalivahti ja 3 kenttäpelaajaa.
-          </div>
-        )}
-      </div>
-    );
-  };
+    // standard mode: only XI stored here (bench handled elsewhere in your old version)
+    // For standard, we save exactly what is on slots as startingXI, and keep initialBench as bench (unchanged)
+    // If you want standard editor to also edit bench here, tell me and I’ll merge logic back in.
+    onSave({ startingXI: picked, bench: initialBench });
+  }
 
   return (
     <div className="starting-xi-root" ref={rootRef}>
       <div className="starting-xi-card">
         <header className="starting-xi-header">
-          <h2>Avauskokoonpano</h2>
+          <h2>{isSquad15 ? "Joukkue (15)" : "Avauskokoonpano"}</h2>
 
           <div className="starting-xi-meta">
-            {showFormation && (
+            {showFormation && !isSquad15 && (
               <div className="meta-pill meta-formation">
                 <span>
                   Formaatio: <b>{formation}</b>
@@ -630,29 +442,34 @@ export function StartingXI({
             )}
           </div>
 
-          {!isValidXI() && (
-            <div className="starting-xi-warning" role="alert">
-              Avaus ei ole kelvollinen.
-            </div>
+          {isSquad15 ? (
+            picked.length !== 15 && <div className="starting-xi-warning">Valitse 15 pelaajaa (2 MV, 5 P, 5 KK, 3 H).</div>
+          ) : (
+            picked.length !== 11 && <div className="starting-xi-warning">Valitse 11 pelaajaa.</div>
           )}
         </header>
 
         <div className="pitch">
-          <Row position="GK" label="MV" />
-          <Row position="DEF" label="P" />
-          <Row position="MID" label="KK" />
-          <Row position="FWD" label="H" />
-
-          {/* ✅ Transfers layout: show 4 “bench” slots on the pitch */}
-          <BenchOnPitchRow />
+          {isSquad15 ? (
+            <>
+              <Row position="GK" label="MV" slotsCount={2} />
+              <Row position="DEF" label="P" slotsCount={5} />
+              <Row position="MID" label="KK" slotsCount={5} />
+              <Row position="FWD" label="H" slotsCount={3} />
+            </>
+          ) : (
+            <>
+              <Row position="GK" label="MV" slotsCount={1} />
+              <Row position="DEF" label="P" slotsCount={slots.filter((s) => s.position === "DEF").length} />
+              <Row position="MID" label="KK" slotsCount={slots.filter((s) => s.position === "MID").length} />
+              <Row position="FWD" label="H" slotsCount={slots.filter((s) => s.position === "FWD").length} />
+            </>
+          )}
         </div>
-
-        {/* ✅ Standard layout: show actual bench section below */}
-        <BenchSection />
 
         <div className="starting-xi-controls">
           {!readOnly && (
-            <button type="button" className="xi-save" onClick={() => onSave({ startingXI: xiPlayers, bench: benchPlayers })} disabled={saveDisabled}>
+            <button type="button" className="xi-save" onClick={handleSave} disabled={saveDisabled}>
               Tallenna
             </button>
           )}
