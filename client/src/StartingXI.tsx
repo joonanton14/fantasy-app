@@ -70,7 +70,7 @@ function split15ToXIAndBench(squad: Player[]): SavePayload | null {
   const fwd = squad.filter((p) => p.position === "FWD");
   if (gk.length !== 2 || def.length !== 5 || mid.length !== 5 || fwd.length !== 3) return null;
 
-  // deterministic "random enough" split
+  // deterministic "random enough" split (must satisfy server)
   const startingXI: Player[] = [gk[0], ...def.slice(0, 4), ...mid.slice(0, 4), ...fwd.slice(0, 2)];
   const bench: Player[] = [gk[1], def[4], mid[4], fwd[2]];
   return { startingXI, bench };
@@ -130,8 +130,7 @@ export function StartingXI({
     const map: Record<string, Player | null> = {};
     BENCH_SLOTS.forEach((s) => (map[s.id] = null));
 
-    // "random default bench" is fine:
-    // seed from initialBench first; if missing, fill from leftovers of initial (by position constraints)
+    // random default bench is fine: seed from initialBench
     const seedBench = [...initialBench];
     const gk = seedBench.find((p) => p.position === "GK") ?? null;
     const field = seedBench.filter((p) => p.position !== "GK").slice(0, 3);
@@ -166,6 +165,13 @@ export function StartingXI({
   // shared
   const [openSlot, setOpenSlot] = useState<string | null>(null);
 
+  // ✅ NEW: swap picker (choose exact swap target)
+  const [swapPicker, setSwapPicker] = useState<
+    | null
+    | { from: "xi"; slotId: string; player: Player }
+    | { from: "bench"; slotId: string; player: Player }
+  >(null);
+
   // ---------- sync from props ----------
   useEffect(() => {
     if (isSquad15) {
@@ -186,6 +192,7 @@ export function StartingXI({
       setSquadSlots(base);
       setSquadAssign(map);
       setOpenSlot(null);
+      setSwapPicker(null);
       return;
     }
 
@@ -206,7 +213,7 @@ export function StartingXI({
     const bmap: Record<string, Player | null> = {};
     BENCH_SLOTS.forEach((s) => (bmap[s.id] = null));
 
-    // seed bench randomly from initialBench, if present; otherwise leave empties (user can move)
+    // seed bench randomly from initialBench (ok)
     const seedBench = [...initialBench];
     const gk = seedBench.find((p) => p.position === "GK") ?? null;
     const field = seedBench.filter((p) => p.position !== "GK").slice(0, 3);
@@ -219,6 +226,7 @@ export function StartingXI({
     setXiAssign(map);
     setBenchAssign(bmap);
     setOpenSlot(null);
+    setSwapPicker(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initial, initialBench, isSquad15]);
 
@@ -226,7 +234,10 @@ export function StartingXI({
   useEffect(() => {
     function handlePointerDown(e: MouseEvent | TouchEvent) {
       if (!rootRef.current) return;
-      if (!rootRef.current.contains(e.target as Node)) setOpenSlot(null);
+      if (!rootRef.current.contains(e.target as Node)) {
+        setOpenSlot(null);
+        setSwapPicker(null);
+      }
     }
     document.addEventListener("mousedown", handlePointerDown);
     document.addEventListener("touchstart", handlePointerDown);
@@ -327,77 +338,10 @@ export function StartingXI({
     return gk === 2 && def === 5 && mid === 5 && fwd === 3 && remainingBudget >= 0;
   }
 
-  // ---------- moving between XI and bench (standard) ----------
-  function findEmptyBenchSlotFor(p: Player): string | null {
-    if (p.position === "GK") {
-      return benchAssign["bench-gk"] ? null : "bench-gk";
-    }
-    const ids = ["bench-1", "bench-2", "bench-3"] as const;
-    for (const id of ids) {
-      if (!benchAssign[id]) return id;
-    }
-    return null;
-  }
-
-  function findEmptyXiSlotFor(p: Player): string | null {
-    const candidates = xiSlots.filter((s) => s.position === p.position);
-    for (const s of candidates) {
-      if (!xiAssign[s.id]) return s.id;
-    }
-    return null;
-  }
-
-  function swapOrMoveXiToBench(xiSlotId: string) {
-    const p = xiAssign[xiSlotId];
-    if (!p) return;
-
-    const emptyBench = findEmptyBenchSlotFor(p);
-    if (emptyBench) {
-      setXiAssign((prev) => ({ ...prev, [xiSlotId]: null }));
-      setBenchAssign((prev) => ({ ...prev, [emptyBench]: p }));
-      return;
-    }
-
-    // no empty: swap with compatible bench player
-    if (p.position === "GK") {
-      const benchGk = benchAssign["bench-gk"];
-      if (!benchGk) return;
-      setXiAssign((prev) => ({ ...prev, [xiSlotId]: benchGk }));
-      setBenchAssign((prev) => ({ ...prev, ["bench-gk"]: p }));
-      return;
-    }
-
-    const ids = ["bench-1", "bench-2", "bench-3"] as const;
-    const swapId = ids.find((id) => benchAssign[id] && benchAssign[id]!.position !== "GK");
-    if (!swapId) return;
-    const bp = benchAssign[swapId]!;
-    setXiAssign((prev) => ({ ...prev, [xiSlotId]: bp }));
-    setBenchAssign((prev) => ({ ...prev, [swapId]: p }));
-  }
-
-  function swapOrMoveBenchToXi(benchSlotId: string) {
-    const p = benchAssign[benchSlotId];
-    if (!p) return;
-
-    const emptyXi = findEmptyXiSlotFor(p);
-    if (emptyXi) {
-      setBenchAssign((prev) => ({ ...prev, [benchSlotId]: null }));
-      setXiAssign((prev) => ({ ...prev, [emptyXi]: p }));
-      return;
-    }
-
-    // no empty: swap with same-position XI player
-    const candidates = xiSlots.filter((s) => s.position === p.position);
-    const swapSlot = candidates.find((s) => !!xiAssign[s.id]);
-    if (!swapSlot) return;
-    const xp = xiAssign[swapSlot.id]!;
-    setBenchAssign((prev) => ({ ...prev, [benchSlotId]: xp }));
-    setXiAssign((prev) => ({ ...prev, [swapSlot.id]: p }));
-  }
-
   // ---------- formation switching (standard) ----------
   function applyFormation(next: FormationKey) {
     if (readOnly) return;
+    if (isSquad15) return;
 
     const nextSlots = buildStandardSlots(next);
 
@@ -409,7 +353,6 @@ export function StartingXI({
     const nextXi: Record<string, Player | null> = {};
     nextSlots.forEach((s) => (nextXi[s.id] = null));
 
-    // fill XI: 1 GK then required DEF/MID/FWD
     const f = FORMATIONS[next];
     const pick = (pos: Player["position"]) => byPos[pos].shift() ?? null;
 
@@ -427,7 +370,7 @@ export function StartingXI({
     fillPos("MID", f.MID);
     fillPos("FWD", f.FWD);
 
-    // rebuild bench: 1 GK + 3 field from leftovers (random is fine)
+    // rebuild bench: 1 GK + 3 field from leftovers (random ok)
     const nextBench: Record<string, Player | null> = {};
     BENCH_SLOTS.forEach((s) => (nextBench[s.id] = null));
 
@@ -442,7 +385,116 @@ export function StartingXI({
     setXiAssign(nextXi);
     setBenchAssign(nextBench);
     setOpenSlot(null);
+    setSwapPicker(null);
   }
+
+  // ---------- targeted swap picker (standard) ----------
+  function moveXiToBenchWithChoice(xiSlotId: string) {
+    const p = xiAssign[xiSlotId];
+    if (!p) return;
+    setSwapPicker({ from: "xi", slotId: xiSlotId, player: p });
+  }
+
+  function moveBenchToXiWithChoice(benchSlotId: string) {
+    const p = benchAssign[benchSlotId];
+    if (!p) return;
+    setSwapPicker({ from: "bench", slotId: benchSlotId, player: p });
+  }
+
+  function doSwap(
+    from:
+      | { from: "xi"; slotId: string; player: Player }
+      | { from: "bench"; slotId: string; player: Player },
+    targetSlotId: string
+  ) {
+    if (from.from === "xi") {
+      const srcId = from.slotId;
+      const srcP = from.player;
+      const tgtP = benchAssign[targetSlotId] ?? null;
+
+      setXiAssign((prev) => ({ ...prev, [srcId]: tgtP }));
+      setBenchAssign((prev) => ({ ...prev, [targetSlotId]: srcP }));
+    } else {
+      const srcId = from.slotId;
+      const srcP = from.player;
+      const tgtP = xiAssign[targetSlotId] ?? null;
+
+      setBenchAssign((prev) => ({ ...prev, [srcId]: tgtP }));
+      setXiAssign((prev) => ({ ...prev, [targetSlotId]: srcP }));
+    }
+
+    setSwapPicker(null);
+  }
+
+  const SwapPicker = () => {
+    if (!swapPicker) return null;
+
+    if (swapPicker.from === "xi") {
+      const p = swapPicker.player;
+      const targets = BENCH_SLOTS.filter((s) => {
+        if (s.kind === "GK") return p.position === "GK";
+        return p.position !== "GK";
+      });
+
+      return (
+        <div className="swap-picker-backdrop" onMouseDown={() => setSwapPicker(null)} onClick={() => setSwapPicker(null)}>
+          <div className="swap-picker" onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
+            <div className="swap-picker-title">Valitse penkkipaikka (vaihto / tyhjä)</div>
+
+            <div className="swap-picker-list">
+              {targets.map((t) => {
+                const assigned = benchAssign[t.id];
+                return (
+                  <button key={t.id} type="button" className="swap-picker-btn" onClick={() => doSwap(swapPicker, t.id)}>
+                    <span className="swap-picker-slot">{t.label}</span>
+                    <span className="swap-picker-name">{assigned ? assigned.name : "— Tyhjä —"}</span>
+                    <span className="swap-picker-team">{assigned ? teamName(teams, assigned.teamId) : ""}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="swap-picker-actions">
+              <button type="button" className="app-btn" onClick={() => setSwapPicker(null)}>
+                Sulje
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // bench -> XI
+    const p = swapPicker.player;
+    const targets = xiSlots.filter((s) => s.position === p.position);
+
+    return (
+      <div className="swap-picker-backdrop" onMouseDown={() => setSwapPicker(null)} onClick={() => setSwapPicker(null)}>
+        <div className="swap-picker" onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
+          <div className="swap-picker-title">Valitse kenttäpaikka (vaihto / tyhjä)</div>
+
+          <div className="swap-picker-list">
+            {targets.map((t) => {
+              const assigned = xiAssign[t.id];
+              return (
+                <button key={t.id} type="button" className="swap-picker-btn" onClick={() => doSwap(swapPicker, t.id)}>
+                  <span className="swap-picker-slot">{t.label}</span>
+                  <span className="swap-picker-name">{assigned ? assigned.name : "— Tyhjä —"}</span>
+                  <span className="swap-picker-team">{assigned ? teamName(teams, assigned.teamId) : ""}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="swap-picker-actions">
+            <button type="button" className="app-btn" onClick={() => setSwapPicker(null)}>
+              Sulje
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // ---------- rendering helpers ----------
   const SlotChip = ({
@@ -462,14 +514,13 @@ export function StartingXI({
         {!readOnly && onMove && (
           <button
             type="button"
-            className="remove-slot"
+            className="move-slot"
             title="Vaihda XI ↔ penkki"
             aria-label="Vaihda XI ↔ penkki"
             onClick={(e) => {
               e.stopPropagation();
               onMove();
             }}
-            style={{ right: 28 }}
           >
             ⇄
           </button>
@@ -514,6 +565,7 @@ export function StartingXI({
               onClick={() => {
                 if (readOnly) return;
                 setOpenSlot(isOpen ? null : s.id);
+                setSwapPicker(null);
               }}
               role="button"
               tabIndex={0}
@@ -522,7 +574,7 @@ export function StartingXI({
                 <SlotChip
                   player={assigned}
                   onRemove={() => setXiAssign((prev) => ({ ...prev, [s.id]: null }))}
-                  onMove={() => swapOrMoveXiToBench(s.id)}
+                  onMove={() => moveXiToBenchWithChoice(s.id)}
                 />
               ) : (
                 <div className="slot-empty">{s.label}</div>
@@ -581,6 +633,7 @@ export function StartingXI({
                 onClick={() => {
                   if (readOnly) return;
                   setOpenSlot(isOpen ? null : s.id);
+                  setSwapPicker(null);
                 }}
                 role="button"
                 tabIndex={0}
@@ -589,7 +642,7 @@ export function StartingXI({
                   <SlotChip
                     player={assigned}
                     onRemove={() => setBenchAssign((prev) => ({ ...prev, [s.id]: null }))}
-                    onMove={() => swapOrMoveBenchToXi(s.id)}
+                    onMove={() => moveBenchToXiWithChoice(s.id)}
                   />
                 ) : (
                   <div className="slot-empty">{s.label}</div>
@@ -652,10 +705,7 @@ export function StartingXI({
               tabIndex={0}
             >
               {assigned ? (
-                <SlotChip
-                  player={assigned}
-                  onRemove={() => setSquadAssign((prev) => ({ ...prev, [s.id]: null }))}
-                />
+                <SlotChip player={assigned} onRemove={() => setSquadAssign((prev) => ({ ...prev, [s.id]: null }))} />
               ) : (
                 <div className="slot-empty">{s.label}</div>
               )}
@@ -718,12 +768,7 @@ export function StartingXI({
                   Formaatio: <b>{formation}</b>
                 </span>
 
-                <select
-                  className="formation-select"
-                  value={formation}
-                  onChange={(e) => applyFormation(e.target.value as FormationKey)}
-                  disabled={readOnly}
-                >
+                <select className="formation-select" value={formation} onChange={(e) => applyFormation(e.target.value as FormationKey)} disabled={readOnly}>
                   {(Object.keys(FORMATIONS) as FormationKey[]).map((k) => (
                     <option key={k} value={k}>
                       {k}
@@ -775,6 +820,9 @@ export function StartingXI({
           )}
         </div>
       </div>
+
+      {/* ✅ targeted swap chooser */}
+      <SwapPicker />
     </div>
   );
 }

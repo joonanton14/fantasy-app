@@ -20,7 +20,6 @@ export default function TransfersPage(props: {
         </button>
       </div>
 
-      {/* ✅ Transfers: show 15 fixed slots by position. No bench UI. No formation UI. */}
       <StartingXI
         players={props.players}
         teams={props.teams}
