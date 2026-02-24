@@ -6,11 +6,23 @@ import StartingXI, { type FormationKey, type Player, type Team } from "./Startin
 import { apiCall } from "./api";
 import "./styles.css";
 import { loadSavedTeam, saveStartingXI } from "./userTeam";
-import TransfersPage from "./transferPage"; // NOTE: filename must match (TransfersPage.tsx)
+import TransfersPage from "./transferPage";
 
 const INITIAL_BUDGET = 100;
 
-function uniqIds(list: Player[]) {
+type Fixture = { id: number; homeTeamId: number; awayTeamId: number; date: string; round?: number };
+type LeaderboardRow = { username: string; total: number; last: number };
+
+function idsToPlayersInOrder(ids: number[], playersById: Map<number, Player>): Player[] {
+  const out: Player[] = [];
+  for (const id of ids) {
+    const p = playersById.get(id);
+    if (p) out.push(p);
+  }
+  return out;
+}
+
+function uniqIdsFromPlayers(list: Player[]): number[] {
   const set = new Set<number>();
   for (const p of list) set.add(p.id);
   return Array.from(set);
@@ -19,7 +31,6 @@ function uniqIds(list: Player[]) {
 export default function App() {
   const [authChecked, setAuthChecked] = useState(false);
 
-  type LeaderboardRow = { username: string; total: number; last: number };
   const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
   const [loadingLb, setLoadingLb] = useState(false);
 
@@ -27,32 +38,31 @@ export default function App() {
   const [userId, setUserId] = useState<number | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-
   const [page, setPage] = useState<"builder" | "admin">("builder");
 
   const [players, setPlayers] = useState<Player[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
 
+  const playersById = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
+  const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
+
   // saved team pieces
-  const [squad, setSquad] = useState<Player[]>([]); // 15-man pool
+  const [squad, setSquad] = useState<Player[]>([]);
   const [startingXI, setStartingXI] = useState<Player[]>([]);
   const [bench, setBench] = useState<Player[]>([]);
   const [savedFormation, setSavedFormation] = useState<FormationKey>("4-4-2");
 
   const [error, setError] = useState<string | null>(null);
 
-  type Fixture = { id: number; homeTeamId: number; awayTeamId: number; date: string; round?: number };
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
   const [fixturesErr, setFixturesErr] = useState<string | null>(null);
   const [loadingFixtures, setLoadingFixtures] = useState(false);
-
-  const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
 
   const [teamViewTab, setTeamViewTab] =
     useState<"startingXI" | "players" | "leaderboard" | "fixtures" | "transfers">("startingXI");
 
   const [filterTeamId, setFilterTeamId] = useState<number | null>(null);
-  const [filterPositions, setFilterPositions] = useState<Set<"GK" | "DEF" | "MID" | "FWD">>(
+  const [filterPositions, setFilterPositions] = useState<Set<Player["position"]>>(
     new Set(["GK", "DEF", "MID", "FWD"])
   );
 
@@ -86,25 +96,20 @@ export default function App() {
           return a.name.localeCompare(b.name);
         case "name_desc":
           return b.name.localeCompare(a.name);
-
         case "team_asc":
           return teamName(a.teamId).localeCompare(teamName(b.teamId)) || a.name.localeCompare(b.name);
         case "team_desc":
           return teamName(b.teamId).localeCompare(teamName(a.teamId)) || a.name.localeCompare(b.name);
-
         case "pos_asc":
           return a.position.localeCompare(b.position) || a.name.localeCompare(b.name);
-
         case "value_desc":
           return b.value - a.value || a.name.localeCompare(b.name);
         case "value_asc":
           return a.value - b.value || a.name.localeCompare(b.name);
-
         case "id_desc":
           return b.id - a.id;
         case "id_asc":
           return a.id - b.id;
-
         default:
           return 0;
       }
@@ -219,9 +224,7 @@ export default function App() {
       const res = await apiCall("/leaderboard", { method: "GET" });
       if (!res.ok) return;
       const data = await res.json();
-      const rows = data.rows ?? [];
-      setLeaderboard(rows);
-      saveCurrentRanks(rows);
+      setLeaderboard((data?.rows ?? []) as LeaderboardRow[]);
     } finally {
       setLoadingLb(false);
     }
@@ -265,13 +268,19 @@ export default function App() {
         const xiIds = data?.startingXIIds ?? [];
         const benchIds = data?.benchIds ?? [];
 
-        const squadSet = new Set(squadIds);
-        const xiSet = new Set(xiIds);
-        const benchSet = new Set(benchIds);
+        // ✅ preserve order exactly
+        const xiPlayers = idsToPlayersInOrder(xiIds, playersById);
+        const benchPlayers = idsToPlayersInOrder(benchIds, playersById);
 
-        setSquad(players.filter((p) => squadSet.has(p.id)));
-        setStartingXI(players.filter((p) => xiSet.has(p.id)));
-        setBench(players.filter((p) => benchSet.has(p.id)));
+        // ✅ squad pool: prefer explicit squadIds; else derive from xi+bench
+        const derivedSquadIds = uniqIdsFromPlayers([...xiPlayers, ...benchPlayers]);
+        const poolIds = squadIds.length === 15 ? squadIds : derivedSquadIds;
+
+        const squadPlayers = idsToPlayersInOrder(poolIds, playersById);
+
+        setSquad(squadPlayers);
+        setStartingXI(xiPlayers);
+        setBench(benchPlayers);
       } catch {
         // ignore
       } finally {
@@ -283,9 +292,8 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [isLoggedIn, players]);
+  }, [isLoggedIn, players, playersById]);
 
-  // -------------------- HELPERS --------------------
   function handleLoginSuccess(userId: number, userName: string, isAdmin: boolean) {
     setUserId(userId);
     setUserName(userName);
@@ -317,30 +325,7 @@ export default function App() {
     localStorage.removeItem("session");
   }
 
-  function rankDiffSymbol(username: string, currentRank: number): "up" | "down" | "same" | "new" {
-    const key = "lb_prev_ranks";
-    let prev: Record<string, number> = {};
-    try {
-      prev = JSON.parse(localStorage.getItem(key) || "{}");
-    } catch {
-      prev = {};
-    }
-
-    const prevRank = prev[username];
-    if (typeof prevRank !== "number") return "new";
-    if (currentRank < prevRank) return "up";
-    if (currentRank > prevRank) return "down";
-    return "same";
-  }
-
-  function saveCurrentRanks(rows: Array<{ username: string }>) {
-    const key = "lb_prev_ranks";
-    const next: Record<string, number> = {};
-    rows.forEach((r, i) => (next[r.username] = i + 1));
-    localStorage.setItem(key, JSON.stringify(next));
-  }
-
-  function togglePositionFilter(pos: "GK" | "DEF" | "MID" | "FWD") {
+  function togglePositionFilter(pos: Player["position"]) {
     setFilterPositions((prev) => {
       const next = new Set(prev);
       if (next.has(pos)) next.delete(pos);
@@ -349,24 +334,23 @@ export default function App() {
     });
   }
 
-  // ✅ SAVE: StartingXI (formation + xi + bench)
+  // ✅ SAVE: StartingXI (always also save squadIds as union of xi+bench)
   const saveXI = async (payload: { startingXI: Player[]; bench: Player[]; formation?: FormationKey }) => {
     const xi = payload.startingXI;
     const b = payload.bench;
     const nextFormation = payload.formation ?? savedFormation;
 
+    // Always derive squad from XI+bench; this fixes missing strikers permanently
+    const squadIds = uniqIdsFromPlayers([...xi, ...b]);
+    const squadPlayers = idsToPlayersInOrder(squadIds, playersById);
+
     setStartingXI(xi);
     setBench(b);
+    setSquad(squadPlayers);
     setSavedFormation(nextFormation);
 
-    // ✅ IMPORTANT: squadIds must be 15 if included
-    // Prefer saved squad; otherwise derive from xi+bench.
-    const derivedSquadIds = uniqIds([...xi, ...b]);
-    const squadIdsToSave =
-      squad.length === 15 ? squad.map((p) => p.id) : derivedSquadIds.length === 15 ? derivedSquadIds : undefined;
-
     await saveStartingXI({
-      ...(squadIdsToSave ? { squadIds: squadIdsToSave } : {}),
+      squadIds,
       startingXIIds: xi.map((p) => p.id),
       benchIds: b.map((p) => p.id),
       formation: nextFormation,
@@ -378,8 +362,7 @@ export default function App() {
     setSquad(nextSquad);
 
     await saveStartingXI({
-      squadIds: nextSquad.map((p) => p.id), // must be 15 (TransfersPage enforces)
-      // do NOT touch xi/bench/formation here
+      squadIds: nextSquad.map((p) => p.id),
     });
   };
 
@@ -475,7 +458,7 @@ export default function App() {
                     teams={teams}
                     initial={startingXI}
                     initialBench={bench}
-                    initialSquad={squad}
+                    initialSquad={squad}             // ✅ pool locked to squad
                     initialFormation={savedFormation}
                     budget={INITIAL_BUDGET}
                     readOnly={false}
@@ -553,7 +536,6 @@ export default function App() {
               ) : teamViewTab === "leaderboard" ? (
                 <div>
                   <h2 className="app-h2">Tulostaulu</h2>
-
                   {loadingLb ? (
                     <div className="app-muted">Ladataan…</div>
                   ) : leaderboard.length === 0 ? (
@@ -562,7 +544,6 @@ export default function App() {
                     <table className="app-table">
                       <thead>
                         <tr>
-                          <th></th>
                           <th>#</th>
                           <th>Käyttäjä</th>
                           <th style={{ textAlign: "right" }}>Viime kierros</th>
@@ -570,40 +551,21 @@ export default function App() {
                         </tr>
                       </thead>
                       <tbody>
-                        {leaderboard.map((r, idx) => {
-                          const rank = idx + 1;
-                          const trend = rankDiffSymbol(r.username, rank);
-                          const icon =
-                            trend === "up" ? "▲" : trend === "down" ? "▼" : trend === "same" ? "•" : "★";
-
-                          const title =
-                            trend === "up"
-                              ? "Noussut"
-                              : trend === "down"
-                              ? "Laskenut"
-                              : trend === "same"
-                              ? "Ei muutosta"
-                              : "Uusi";
-
-                          return (
-                            <tr key={r.username}>
-                              <td title={title} style={{ width: 28, textAlign: "center", opacity: 0.85 }}>
-                                {icon}
-                              </td>
-                              <td>{rank}</td>
-                              <td>{r.username}</td>
-                              <td style={{ textAlign: "right" }}>{r.last ?? 0}</td>
-                              <td style={{ textAlign: "right" }}>{r.total ?? 0}</td>
-                            </tr>
-                          );
-                        })}
+                        {leaderboard.map((r, idx) => (
+                          <tr key={r.username}>
+                            <td>{idx + 1}</td>
+                            <td>{r.username}</td>
+                            <td style={{ textAlign: "right" }}>{r.last ?? 0}</td>
+                            <td style={{ textAlign: "right" }}>{r.total ?? 0}</td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
                   )}
                 </div>
               ) : (
                 <>
-                  {/* PLAYERS TAB (unchanged from your original, trimmed for brevity) */}
+                  {/* Players tab (unchanged, trimmed) */}
                   <div className="app-table-wrap">
                     <table className="app-table">
                       <thead>
@@ -611,7 +573,7 @@ export default function App() {
                           <th>Nimi</th>
                           <th>Pelipaikka</th>
                           <th>Joukkue</th>
-                          <th>Arvo (M)</th>
+                          <th>Arvo</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -619,8 +581,8 @@ export default function App() {
                           <tr key={p.id}>
                             <td>{p.name}</td>
                             <td>{p.position}</td>
-                            <td>{teamsById.get(p.teamId)?.name ?? ""}</td>
-                            <td>{p.value.toFixed(1)}</td>
+                            <td>{teamsById.get(p.teamId)?.name ?? p.teamId}</td>
+                            <td>{p.value.toFixed(1)} M</td>
                           </tr>
                         ))}
                       </tbody>

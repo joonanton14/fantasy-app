@@ -48,7 +48,6 @@ function buildStandardSlots(formation: FormationKey): Slot[] {
   return slots;
 }
 
-// Transfers: 15 slots only
 function buildSquad15Slots(): Slot[] {
   const slots: Slot[] = [];
   slots.push({ id: "sq-gk-1", position: "GK", label: "MV" });
@@ -81,15 +80,12 @@ export type SavePayload =
   | { mode: "standard"; startingXI: Player[]; bench: Player[]; formation: FormationKey };
 
 interface Props {
-  players: Player[];
+  players: Player[];      // full db list (used only in transfers picker)
   teams: Team[];
 
-  // standard mode inputs (from Redis)
-  initial?: Player[];        // saved XI (11)
-  initialBench?: Player[];   // saved bench (4)
-
-  // squad pool input (from Redis)
-  initialSquad?: Player[];   // saved squadIds (15 players)
+  initial?: Player[];
+  initialBench?: Player[];
+  initialSquad?: Player[];
 
   onSave: (payload: SavePayload) => void;
   budget?: number;
@@ -97,8 +93,6 @@ interface Props {
 
   layout?: "standard" | "squad15";
   hideFormation?: boolean;
-
-  // formation persisted (standard)
   initialFormation?: FormationKey;
 }
 
@@ -119,15 +113,11 @@ export const StartingXI: FC<Props> = ({
   const isSquad15 = layout === "squad15";
 
   const [formation, setFormation] = useState<FormationKey>(initialFormation);
-
-  const [slots, setSlots] = useState<Slot[]>(() =>
-    isSquad15 ? buildSquad15Slots() : buildStandardSlots(initialFormation)
-  );
+  const [slots, setSlots] = useState<Slot[]>(() => (isSquad15 ? buildSquad15Slots() : buildStandardSlots(initialFormation)));
 
   const [xiAssign, setXiAssign] = useState<Record<string, Player | null>>({});
   const [benchAssign, setBenchAssign] = useState<Record<string, Player | null>>({});
   const [openSlot, setOpenSlot] = useState<string | null>(null);
-
   const [swapSource, setSwapSource] = useState<SwapSource>(null);
 
   // close popups on outside click
@@ -147,15 +137,13 @@ export const StartingXI: FC<Props> = ({
     };
   }, []);
 
+  // ✅ poolPlayers = your squad (15). If not provided, fallback to xi+bench union.
   const poolPlayers = useMemo(() => {
-    // Standard mode: pool comes from squadIds if available, otherwise fallback to xi+bench
-    if (!isSquad15 && initialSquad.length > 0) return uniqById(initialSquad);
-    if (!isSquad15) return uniqById([...initial, ...initialBench]);
-    // transfers: pool is current squad (seed)
-    return uniqById(initialSquad);
-  }, [initial, initialBench, initialSquad, isSquad15]);
+    if (initialSquad.length > 0) return uniqById(initialSquad);
+    return uniqById([...initial, ...initialBench]);
+  }, [initial, initialBench, initialSquad]);
 
-  // sync initial state from props
+  // sync initial state
   useEffect(() => {
     if (isSquad15) {
       const s = buildSquad15Slots();
@@ -164,14 +152,12 @@ export const StartingXI: FC<Props> = ({
       const map: Record<string, Player | null> = {};
       s.forEach((sl) => (map[sl.id] = null));
 
-      // seed from poolPlayers (already 15 players)
+      // seed using CURRENT squad pool (15 players)
       const byPos: Record<Position, Player[]> = { GK: [], DEF: [], MID: [], FWD: [] };
       for (const p of poolPlayers) byPos[p.position].push(p);
       (Object.keys(byPos) as Position[]).forEach((pos) => byPos[pos].sort((a, b) => a.id - b.id));
 
-      for (const sl of s) {
-        map[sl.id] = (byPos[sl.position].shift() ?? null) as Player | null;
-      }
+      for (const sl of s) map[sl.id] = byPos[sl.position].shift() ?? null;
 
       setXiAssign(map);
       setBenchAssign({});
@@ -185,12 +171,11 @@ export const StartingXI: FC<Props> = ({
     const s = buildStandardSlots(initialFormation);
     setSlots(s);
 
-    // build assignment maps
+    // place starters by position into XI slots
     const xiMap: Record<string, Player | null> = {};
     s.forEach((sl) => (xiMap[sl.id] = null));
 
-    // If saved XI exists, place those first by position into slots
-    const remainingXI = [...initial].sort((a, b) => a.id - b.id);
+    const remainingXI = [...initial];
     for (const sl of s) {
       const idx = remainingXI.findIndex((p) => p.position === sl.position);
       if (idx >= 0) {
@@ -199,18 +184,13 @@ export const StartingXI: FC<Props> = ({
       }
     }
 
-    // bench map: use saved bench order directly if present, otherwise fill from leftovers
+    // ✅ bench order matters: map exactly to bench slots [0..3]
     const bMap: Record<string, Player | null> = {};
     BENCH_SLOTS.forEach((b) => (bMap[b.id] = null));
-
-    const savedBench = [...initialBench];
-    const gk = savedBench.find((p) => p.position === "GK") ?? null;
-    const field = savedBench.filter((p) => p.position !== "GK");
-
-    bMap["bench-gk"] = gk;
-    bMap["bench-1"] = field[0] ?? null;
-    bMap["bench-2"] = field[1] ?? null;
-    bMap["bench-3"] = field[2] ?? null;
+    bMap["bench-gk"] = initialBench[0] ?? null;
+    bMap["bench-1"] = initialBench[1] ?? null;
+    bMap["bench-2"] = initialBench[2] ?? null;
+    bMap["bench-3"] = initialBench[3] ?? null;
 
     setXiAssign(xiMap);
     setBenchAssign(bMap);
@@ -220,10 +200,7 @@ export const StartingXI: FC<Props> = ({
   }, [isSquad15, initialFormation, initial, initialBench, poolPlayers]);
 
   const xiPlayers = useMemo(() => Object.values(xiAssign).filter(Boolean) as Player[], [xiAssign]);
-  const benchPlayers = useMemo(() => {
-    if (isSquad15) return [];
-    return (Object.values(benchAssign).filter(Boolean) as Player[]) ?? [];
-  }, [benchAssign, isSquad15]);
+  const benchPlayers = useMemo(() => (isSquad15 ? [] : (Object.values(benchAssign).filter(Boolean) as Player[])), [benchAssign, isSquad15]);
 
   const pickedIds = useMemo(() => new Set<number>([...xiPlayers, ...benchPlayers].map((p) => p.id)), [xiPlayers, benchPlayers]);
 
@@ -257,15 +234,18 @@ export const StartingXI: FC<Props> = ({
       counts.FWD !== LIMITS.FWD.max
     ) return false;
 
-    const gkCount = benchPlayers.filter((p) => p.position === "GK").length;
-    const fieldCount = benchPlayers.filter((p) => p.position !== "GK").length;
-    if (gkCount !== 1 || fieldCount !== 3) return false;
+    // bench slot composition: bench-gk must be GK, others must be field
+    const b0 = benchAssign["bench-gk"];
+    if (!b0 || b0.position !== "GK") return false;
+    for (const id of ["bench-1", "bench-2", "bench-3"] as const) {
+      const p = benchAssign[id];
+      if (!p || p.position === "GK") return false;
+    }
 
     return remainingBudget >= 0;
   }
 
   function isValidSquad15() {
-    // all 15 must be filled
     return xiPlayers.length === 15 && remainingBudget >= 0;
   }
 
@@ -274,8 +254,8 @@ export const StartingXI: FC<Props> = ({
     if (readOnly) return;
     if (isSquad15) return;
 
-    // pool = current picked 15 if squad exists, else xi+bench
-    const pool = uniqById([...xiPlayers, ...benchPlayers]);
+    // pool = the locked squad pool (15). This prevents losing strikers.
+    const pool = uniqById(poolPlayers);
     const nextSlots = buildStandardSlots(next);
 
     const byPos: Record<Position, Player[]> = { GK: [], DEF: [], MID: [], FWD: [] };
@@ -285,22 +265,18 @@ export const StartingXI: FC<Props> = ({
     const xiMap: Record<string, Player | null> = {};
     nextSlots.forEach((sl) => (xiMap[sl.id] = null));
 
-    // GK
     xiMap["gk-1"] = byPos.GK.shift() ?? null;
 
     const req = FORMATIONS[next];
     const fill = (pos: "DEF" | "MID" | "FWD", count: number) => {
       const rowSlots = nextSlots.filter((s) => s.position === pos);
-      for (let i = 0; i < count; i++) {
-        xiMap[rowSlots[i].id] = byPos[pos].shift() ?? null;
-      }
+      for (let i = 0; i < count; i++) xiMap[rowSlots[i].id] = byPos[pos].shift() ?? null;
     };
-
     fill("DEF", req.DEF);
     fill("MID", req.MID);
     fill("FWD", req.FWD);
 
-    // bench from leftovers (order doesn't matter by default)
+    // bench (exactly 4)
     const bMap: Record<string, Player | null> = {};
     BENCH_SLOTS.forEach((b) => (bMap[b.id] = null));
 
@@ -319,6 +295,10 @@ export const StartingXI: FC<Props> = ({
   }
 
   // ---------- assign/remove ----------
+  // Transfers mode uses full players list to pick squad.
+  // Standard mode must NOT allow adding outside pool -> use pool list only.
+  const pickerSource = isSquad15 ? players : poolPlayers;
+
   function assignToSlot(slotId: string, p: Player) {
     if (readOnly) return;
     if (pickedIds.has(p.id)) return;
@@ -354,7 +334,7 @@ export const StartingXI: FC<Props> = ({
     setSwapSource(null);
   }
 
-  // ---------- swap (icon is back) ----------
+  // ---------- swap icon ----------
   function beginSwap(area: "xi" | "bench", slotId: string) {
     if (readOnly) return;
     if (isSquad15) return;
@@ -386,14 +366,10 @@ export const StartingXI: FC<Props> = ({
     const incomingToXI = targetArea === "xi" ? srcP : dstP;
     const incomingToBench = targetArea === "bench" ? srcP : dstP;
 
-    // xi must match slot position
     if (incomingToXI.position !== xiSlot.position) return;
-
-    // bench kind rules
     if (benchSlot.kind === "GK" && incomingToBench.position !== "GK") return;
     if (benchSlot.kind === "FIELD" && incomingToBench.position === "GK") return;
 
-    // perform swap
     if (targetArea === "xi") {
       setXiAssign((prev) => ({ ...prev, [targetSlotId]: srcP }));
       setBenchAssign((prev) => ({ ...prev, [swapSource.slotId]: dstP }));
@@ -405,11 +381,10 @@ export const StartingXI: FC<Props> = ({
     setSwapSource(null);
   }
 
-  // ---------- save ----------
   function handleSave() {
     if (isSquad15) {
-      const squad = slots.map((s) => xiAssign[s.id]).filter(Boolean) as Player[];
-      onSave({ mode: "squad15", squad });
+      const squadPicked = slots.map((s) => xiAssign[s.id]).filter(Boolean) as Player[];
+      onSave({ mode: "squad15", squad: squadPicked });
       return;
     }
     onSave({ mode: "standard", startingXI: xiPlayers, bench: benchPlayers, formation });
@@ -425,9 +400,9 @@ export const StartingXI: FC<Props> = ({
         {rowSlots.map((s) => {
           const assigned = xiAssign[s.id];
           const isOpen = openSlot === s.id;
-          const canSwapHere = !isSquad15 && !readOnly;
+          const canSwap = !isSquad15 && !readOnly;
 
-          const available = players
+          const available = pickerSource
             .filter((p) => p.position === s.position && !pickedIds.has(p.id))
             .map((p) => ({
               ...p,
@@ -443,13 +418,12 @@ export const StartingXI: FC<Props> = ({
               onClick={() => {
                 if (readOnly) return;
 
-                // if swap armed from bench and this XI has a player -> swap
                 if (swapSource && swapSource.area === "bench" && assigned) {
                   trySwap("xi", s.id);
                   return;
                 }
 
-                // open picker for empty
+                // in standard mode, empty slots are rare; if they exist, allow filling ONLY from pool
                 if (!assigned) setOpenSlot(isOpen ? null : s.id);
               }}
               role="button"
@@ -460,7 +434,7 @@ export const StartingXI: FC<Props> = ({
                   <div className="player-name">{assigned.name}</div>
                   <div className="player-team">{teamName(teams, assigned.teamId)}</div>
 
-                  {canSwapHere && (
+                  {canSwap && (
                     <button
                       type="button"
                       className="swap-slot"
@@ -482,8 +456,7 @@ export const StartingXI: FC<Props> = ({
                         e.stopPropagation();
                         removeFromSlot(s.id);
                       }}
-                      aria-label="Remove player"
-                      title="Remove"
+                      title="Poista"
                     >
                       ×
                     </button>
@@ -512,7 +485,7 @@ export const StartingXI: FC<Props> = ({
                         <span className="slot-pop-price">{p.value.toFixed(1)} M</span>
                       </button>
                     ))}
-                    {available.length === 0 && <div className="slot-pop-empty">Ei saatavilla olevia pelaajia</div>}
+                    {available.length === 0 && <div className="slot-pop-empty">Ei saatavilla</div>}
                   </div>
                 </div>
               )}
@@ -537,7 +510,7 @@ export const StartingXI: FC<Props> = ({
             const assigned = benchAssign[s.id] ?? null;
             const isOpen = openSlot === s.id;
 
-            const available = players
+            const available = pickerSource
               .filter((p) => {
                 if (pickedIds.has(p.id)) return false;
                 if (s.kind === "GK") return p.position === "GK";
@@ -557,13 +530,11 @@ export const StartingXI: FC<Props> = ({
                 onClick={() => {
                   if (readOnly) return;
 
-                  // if swap armed from XI and this bench has a player -> swap
                   if (swapSource && swapSource.area === "xi" && assigned) {
                     trySwap("bench", s.id);
                     return;
                   }
 
-                  // open picker for empty slot
                   if (!assigned) setOpenSlot(isOpen ? null : s.id);
                 }}
                 role="button"
@@ -595,7 +566,6 @@ export const StartingXI: FC<Props> = ({
                             e.stopPropagation();
                             removeFromBench(s.id);
                           }}
-                          aria-label="Poista pelaaja"
                           title="Poista"
                         >
                           ×
@@ -625,7 +595,7 @@ export const StartingXI: FC<Props> = ({
                           <span className="slot-pop-price">{p.value.toFixed(1)} M</span>
                         </button>
                       ))}
-                      {available.length === 0 && <div className="slot-pop-empty">Ei saatavilla olevia pelaajia</div>}
+                      {available.length === 0 && <div className="slot-pop-empty">Ei saatavilla</div>}
                     </div>
                   </div>
                 )}
@@ -636,7 +606,7 @@ export const StartingXI: FC<Props> = ({
 
         {swapSource && (
           <div className="starting-xi-warning" role="alert" style={{ marginTop: 8, opacity: 0.9 }}>
-            Vaihto valittu — klikkaa vastapuolen pelaajaa tai ⇄ -ikonia vaihtaaksesi.
+            Vaihto valittu — klikkaa vastapuolen pelaajaa tai ⇄.
             <button
               type="button"
               className="app-btn"
