@@ -1,14 +1,15 @@
+// client/src/TransfersPage.tsx
 import React from "react";
 import StartingXI, { type Player, type Team } from "./StartingXI";
 
 export default function TransfersPage(props: {
   players: Player[];
   teams: Team[];
-  startingXI: Player[];
-  bench: Player[];
+  // current saved data (may be empty on first time)
+  squad: Player[]; // 15-man pool
   budget: number;
   onCancel: () => void;
-  onSave: (payload: { startingXI: Player[]; bench: Player[] }) => void;
+  onSave: (payload: { squad: Player[] }) => void; // ✅ save only squad here
 }) {
   return (
     <div className="app-card">
@@ -21,17 +22,14 @@ export default function TransfersPage(props: {
       <StartingXI
         players={props.players}
         teams={props.teams}
-        // transfers = 15 slots on field (2/5/5/3), no bench UI, no formation
-        layout="squad15"
-        hideFormation={true}
-        // seed from current saved team (xi + bench)
-        initial={props.startingXI}
-        initialBench={props.bench}
+        layout="squad15"      // ✅ 2 GK, 5 DEF, 5 MID, 3 FWD on pitch
+        hideFormation={true}  // ✅ no formation in transfers
+        initialSquad={props.squad}
         budget={props.budget}
         readOnly={false}
         onSave={(payload) => {
-          // payload from squad15 builder is guaranteed to be { startingXI, bench } (formation omitted)
-          props.onSave({ startingXI: payload.startingXI, bench: payload.bench });
+          if (payload.mode !== "squad15") return;
+          props.onSave({ squad: payload.squad });
         }}
       />
     </div>
