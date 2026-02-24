@@ -38,7 +38,7 @@ function validateTeamPayload(body: any): { ok: true; data: SavedTeam } | { ok: f
   if (!Array.isArray(starting)) return { ok: false, error: "startingXIIds must be an array" };
   if (!Array.isArray(bench)) return { ok: false, error: "benchIds must be an array" };
 
-  if (starting.length > 11) return { ok: false, error: "startingXIIds max length is 11" };
+  if (starting.length > 15) return { ok: false, error: "startingXIIds max length is 15" };
   if (bench.length > 4) return { ok: false, error: "benchIds max length is 4" };
 
   if (!starting.every(isInt) || !bench.every(isInt)) return { ok: false, error: "Ids must be integers" };
