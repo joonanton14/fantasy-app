@@ -46,7 +46,8 @@ export default function App() {
   const [startingXI, setStartingXI] = useState<Player[]>([]);
   const [bench, setBench] = useState<Player[]>([]);
   const [error, setError] = useState<string | null>(null);
-
+  type FormationKey = import("./userTeam").FormationKey;
+  const [savedFormation, setSavedFormation] = useState<FormationKey>("4-4-2");
   type Fixture = { id: number; homeTeamId: number; awayTeamId: number; date: string; round?: number };
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
   const [fixturesErr, setFixturesErr] = useState<string | null>(null);
@@ -269,6 +270,8 @@ export default function App() {
       setLoadingSaved(true);
       try {
         const data = await loadSavedTeam();
+        const formation = (data?.formation ?? "4-4-2") as FormationKey;
+        setSavedFormation(formation);
         if (cancelled) return;
 
         const xiIds = data?.startingXIIds ?? [];
@@ -379,12 +382,17 @@ export default function App() {
     });
   }
 
-  const saveXI = async (payload: SavePayload): Promise<void> => {
+  const saveXI = async (payload: { startingXI: Player[]; bench: Player[]; formation?: FormationKey }) => {
     const xi = payload.startingXI;
     const b = payload.bench;
 
     setStartingXI(xi);
     setBench(b);
+
+    // ✅ persist formation in app state (so UI stays correct immediately)
+    if (payload.formation) {
+      setSavedFormation(payload.formation);
+    }
 
     setSelected((prev) => {
       const ids = new Set(prev.map((p) => p.id));
@@ -398,6 +406,8 @@ export default function App() {
     await saveStartingXI({
       startingXIIds: xi.map((p) => p.id),
       benchIds: b.map((p) => p.id),
+      // ✅ persist formation to Redis
+      formation: payload.formation ?? savedFormation,
     });
   };
 
@@ -510,6 +520,7 @@ export default function App() {
                     budget={INITIAL_BUDGET}
                     readOnly={false}   // ✅ allow editing here
                     layout="standard"
+                    initialFormation={savedFormation} 
                   />
                 </div>
               ) : teamViewTab === "fixtures" ? (
