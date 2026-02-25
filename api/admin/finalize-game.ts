@@ -178,12 +178,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // write round sums (optional)
-    if (roundField) {
+   /* if (roundField) {
       for (const [username, v] of acc.entries()) {
         await redis.hset(`${PREFIX}:user:${username}:gw_points`, { [roundField]: v.sum });
       }
       await redis.sadd(`${PREFIX}:rounds_finalized`, String(roundNum));
-    }
+    }*/
 
     // response
     const results = Array.from(acc.entries()).map(([username, v]) => ({
