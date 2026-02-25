@@ -31,7 +31,6 @@ async function scanAllTeamKeys(): Promise<string[]> {
     if (cursor === "0") break;
   }
 
-  // de-dupe just in case
   return Array.from(new Set(keysAll));
 }
 
@@ -41,16 +40,13 @@ function coerceTeamFromHash(obj: any): TeamData | null {
   const startingRaw = (obj.startingXIIds ?? obj.startingXI ?? obj.starting ?? null) as any;
   const benchRaw = (obj.benchIds ?? obj.bench ?? null) as any;
 
-  // Upstash hgetall often returns strings -> convert to numbers
   const toNumArray = (v: any): number[] => {
     if (Array.isArray(v)) return v.map((x) => Number(x)).filter((n) => Number.isFinite(n));
     if (typeof v === "string") {
-      // might be JSON stringified array
       try {
         const parsed = JSON.parse(v);
         if (Array.isArray(parsed)) return parsed.map((x) => Number(x)).filter((n) => Number.isFinite(n));
-      } catch { }
-      // might be comma-separated
+      } catch {}
       return v
         .split(",")
         .map((x) => Number(x.trim()))
@@ -66,16 +62,14 @@ function coerceTeamFromHash(obj: any): TeamData | null {
 }
 
 async function loadTeam(teamKey: string): Promise<{ team: TeamData | null; redisType: string | null }> {
-  // First try GET (string/json)
   const fromGet = (await redis.get<TeamData>(teamKey)) ?? null;
   if (fromGet && Array.isArray((fromGet as any).startingXIIds)) {
     return { team: fromGet, redisType: "string/json(get)" };
   }
 
-  // If GET failed, check redis type + try HGETALL
   let t: string | null = null;
   try {
-    t = (await (redis as any).type(teamKey)) as string; // "hash", "string", ...
+    t = (await (redis as any).type(teamKey)) as string;
   } catch {
     t = null;
   }
@@ -84,11 +78,19 @@ async function loadTeam(teamKey: string): Promise<{ team: TeamData | null; redis
     const h = (await (redis as any).hgetall(teamKey)) as any;
     const coerced = coerceTeamFromHash(h);
     if (coerced) return { team: coerced, redisType: t ?? "hash(hgetall)" };
-  } catch {
-    // ignore
-  }
+  } catch {}
 
   return { team: null, redisType: t };
+}
+
+function toIntArray(v: any): number[] {
+  if (!Array.isArray(v)) return [];
+  const out: number[] = [];
+  for (const x of v) {
+    const n = Number(x);
+    if (Number.isInteger(n) && n > 0) out.push(n);
+  }
+  return out;
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -98,71 +100,110 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!session.isAdmin) return res.status(403).json({ error: "Forbidden" });
     if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-    const gameId = Number(req.body?.gameId);
-    if (!Number.isInteger(gameId) || gameId <= 0) {
-      return res.status(400).json({ error: "Invalid gameId" });
+    // ✅ Accept either single game or multiple games (gameweek)
+    const singleGameId = Number(req.body?.gameId);
+    const gameIdsFromBody = toIntArray(req.body?.gameIds);
+
+    const round = req.body?.round;
+    const roundNum = Number.isInteger(Number(round)) ? Number(round) : null;
+    const roundField = roundNum ? `gw:${roundNum}` : null;
+
+    const gameIds =
+      gameIdsFromBody.length > 0
+        ? gameIdsFromBody
+        : Number.isInteger(singleGameId) && singleGameId > 0
+          ? [singleGameId]
+          : [];
+
+    if (gameIds.length === 0) {
+      return res.status(400).json({ error: "Provide gameId or gameIds[]" });
     }
 
-    const eventsKey = `${PREFIX}:game:${gameId}:events`;
-    const eventsById = (await redis.get<Record<string, PlayerEventInput>>(eventsKey)) ?? {};
-
+    // Load players map once
     const playersById = new Map<number, PlayerLite>();
     for (const p of players) playersById.set(p.id, { id: p.id, position: p.position });
 
     const teamKeys = await scanAllTeamKeys();
 
-    const results: Array<{ username: string; points: number; subsUsed: number[] }> = [];
+    // per user accumulators
+    type PerGame = { gameId: number; points: number; subsUsed: number[] };
+    const acc = new Map<string, { sum: number; perGame: PerGame[] }>();
+
     const perUserDebug: Array<any> = [];
 
-    for (const teamKey of teamKeys) {
-      const usernamePart = String(teamKey).split(":").pop() ?? "";
-      const username = normalizeUsername(usernamePart);
+    // compute all requested games
+    for (const gameId of gameIds) {
+      const eventsKey = `${PREFIX}:game:${gameId}:events`;
+      const eventsById = (await redis.get<Record<string, PlayerEventInput>>(eventsKey)) ?? {};
 
-      const { team, redisType } = await loadTeam(teamKey);
+      for (const teamKey of teamKeys) {
+        const usernamePart = String(teamKey).split(":").pop() ?? "";
+        const username = normalizeUsername(usernamePart);
 
-      const startingXIIds = team?.startingXIIds ?? [];
-      const benchIds = team?.benchIds ?? [];
+        const { team, redisType } = await loadTeam(teamKey);
+        const startingXIIds = team?.startingXIIds ?? [];
+        const benchIds = team?.benchIds ?? [];
 
-      const startingMatches = startingXIIds.filter((id) => playersById.has(id)).length;
+        const { total, subsUsed } = scoreTeamForGameWithAutosub({
+          team: { startingXIIds, benchIds },
+          playersById,
+          eventsById,
+        });
 
-      const { total, subsUsed } = scoreTeamForGameWithAutosub({
-        team: { startingXIIds, benchIds },
-        playersById,
-        eventsById,
-      });
+        // store per-game (same as before)
+        await redis.set(`${PREFIX}:user:${username}:game:${gameId}:points`, total);
+        await redis.set(`${PREFIX}:user:${username}:game:${gameId}:subs`, subsUsed);
 
-      results.push({ username, points: total, subsUsed });
+        // accumulate per user for round sum
+        const cur = acc.get(username) ?? { sum: 0, perGame: [] as PerGame[] };
+        cur.sum += total;
+        cur.perGame.push({ gameId, points: total, subsUsed });
+        acc.set(username, cur);
 
-      await redis.set(`${PREFIX}:user:${username}:game:${gameId}:points`, total);
-      await redis.set(`${PREFIX}:user:${username}:game:${gameId}:subs`, subsUsed);
-      await redis.hset(`${PREFIX}:user:${username}:gw_points`, { [String(gameId)]: total });
+        // lightweight debug (only once per user total loop is huge; keep minimal)
+        if (gameId === gameIds[0]) {
+          perUserDebug.push({
+            username,
+            teamKey,
+            redisType,
+            teamExists: !!team,
+            startingLen: startingXIIds.length,
+            benchLen: benchIds.length,
+          });
+        }
+      }
 
-      perUserDebug.push({
-        username,
-        teamKey,
-        redisType,
-        teamExists: !!team,
-        startingLen: startingXIIds.length,
-        benchLen: benchIds.length,
-        startingFirst: startingXIIds[0] ?? null,
-        startingMatches,
-      });
+      // mark each game finalized
+      await redis.sadd(`${PREFIX}:games_finalized`, String(gameId));
     }
 
-    await redis.sadd(`${PREFIX}:games_finalized`, String(gameId));
+    // write round sums (optional)
+    if (roundField) {
+      for (const [username, v] of acc.entries()) {
+        await redis.hset(`${PREFIX}:user:${username}:gw_points`, { [roundField]: v.sum });
+      }
+      await redis.sadd(`${PREFIX}:rounds_finalized`, String(roundNum));
+    }
+
+    // response
+    const results = Array.from(acc.entries()).map(([username, v]) => ({
+      username,
+      points: v.sum,
+      perGame: v.perGame.sort((a, b) => a.gameId - b.gameId),
+    }));
 
     return res.status(200).json({
       ok: true,
-      gameId,
+      mode: gameIds.length === 1 ? "single" : "multi",
+      gameIds,
+      round: roundNum ?? null,
       results,
       debug: {
         prefix: PREFIX,
-        eventsKey,
-        eventsCount: Object.keys(eventsById).length,
         playersByIdSize: playersById.size,
         discoveredTeamKeysCount: teamKeys.length,
         discoveredTeamKeys: teamKeys.slice(0, 50),
-        perUserDebug,
+        perUserDebug: perUserDebug.slice(0, 50),
       },
     });
   } catch (e: unknown) {
