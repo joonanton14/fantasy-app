@@ -273,27 +273,27 @@ export const StartingXI: FC<Props> = ({
   }
 
   // ===== ASSIGN / REPLACE (squad15 must support replacement) =====
-function assignToSlot(slotId: string, p: Player) {
-  if (readOnly) return;
+  function assignToSlot(slotId: string, p: Player) {
+    if (readOnly) return;
 
-  const current = xiAssign[slotId] ?? null;
+    const current = xiAssign[slotId] ?? null;
 
-  // allow replacing the player in THIS slot
-  if (pickedIds.has(p.id) && current?.id !== p.id) return;
+    // allow replacing the player in THIS slot
+    if (pickedIds.has(p.id) && current?.id !== p.id) return;
 
-  // budget check must consider replacement
-  const nextTotal =
-    totalValue - (current?.value ?? 0) + p.value;
+    // budget check must consider replacement
+    const nextTotal =
+      totalValue - (current?.value ?? 0) + p.value;
 
-  if (nextTotal > budget) return;
+    if (nextTotal > budget) return;
 
-  setXiAssign((prev) => ({
-    ...prev,
-    [slotId]: p,
-  }));
+    setXiAssign((prev) => ({
+      ...prev,
+      [slotId]: p,
+    }));
 
-  setOpenSlot(null);
-}
+    setOpenSlot(null);
+  }
 
   function removeFromSlot(slotId: string) {
     if (readOnly) return;
@@ -472,20 +472,24 @@ function assignToSlot(slotId: string, p: Player) {
               onClick={() => {
                 if (readOnly) return;
 
-                // if swapping from bench -> clicking XI player swaps
-                if (swapSource && swapSource.area === "bench" && assigned) {
-                  trySwap("xi", s.id);
-                  return;
-                }
-
-                // squad15: allow open even if filled (replacement)
+                // ✅ TransfersPage (squad15): ALWAYS open picker
                 if (isSquad15) {
                   setOpenSlot(isOpen ? null : s.id);
                   return;
                 }
 
-                // standard: open only empty slots (normally shouldn’t exist)
-                if (!assigned) setOpenSlot(isOpen ? null : s.id);
+                // ✅ StartingXI only below this point
+
+                // swapping from bench -> clicking XI player swaps
+                if (swapSource && swapSource.area === "bench" && assigned) {
+                  trySwap("xi", s.id);
+                  return;
+                }
+
+                // standard: open only empty slots
+                if (!assigned) {
+                  setOpenSlot(isOpen ? null : s.id);
+                }
               }}
               role="button"
               tabIndex={0}
