@@ -268,31 +268,31 @@ export default function App() {
         const xiIds = data?.startingXIIds ?? [];
         const benchIds = data?.benchIds ?? [];
 
-        // ✅ preserve order exactly
-        const xiPlayers = idsToPlayersInOrder(xiIds, playersById);
-        const benchPlayers = idsToPlayersInOrder(benchIds, playersById);
+        const getById = (id: number) => players.find((p) => p.id === id) ?? null;
+        const mapIds = (ids: number[]) => ids.map(getById).filter(Boolean) as Player[];
 
-        // ✅ squad pool: prefer explicit squadIds; else derive from xi+bench
-        const derivedSquadIds = uniqIdsFromPlayers([...xiPlayers, ...benchPlayers]);
-        const poolIds = squadIds.length === 15 ? squadIds : derivedSquadIds;
+        const squadPlayers = mapIds(squadIds);
+        const xiPlayers = mapIds(xiIds);
+        const benchPlayers = mapIds(benchIds);
 
-        const squadPlayers = idsToPlayersInOrder(poolIds, playersById);
+        // If old data has no squadIds, derive from xi+bench (15)
+        const derived = uniqIdsFromPlayers([...xiPlayers, ...benchPlayers]);
+        const derivedPlayers = derived.map(getById).filter(Boolean) as Player[];
 
-        setSquad(squadPlayers);
+        setSquad(squadPlayers.length ? squadPlayers : derivedPlayers);
         setStartingXI(xiPlayers);
         setBench(benchPlayers);
-      } catch {
-        // ignore
       } finally {
         if (!cancelled) setLoadingSaved(false);
       }
     }
 
     if (isLoggedIn && players.length > 0) run();
+
     return () => {
       cancelled = true;
     };
-  }, [isLoggedIn, players, playersById]);
+  }, [isLoggedIn, players]);
 
   function handleLoginSuccess(userId: number, userName: string, isAdmin: boolean) {
     setUserId(userId);
@@ -306,7 +306,7 @@ export default function App() {
   async function handleLogout() {
     try {
       await apiCall("/auth/logout", { method: "POST" });
-    } catch {}
+    } catch { }
 
     setIsLoggedIn(false);
     setUserId(null);
@@ -333,21 +333,68 @@ export default function App() {
       return next;
     });
   }
+  useEffect(() => {
+    let cancelled = false;
 
+    async function run() {
+      setLoadingSaved(true);
+      try {
+        const data = await loadSavedTeam();
+        if (cancelled) return;
+
+        const formation = (data?.formation ?? "4-4-2") as FormationKey;
+        setSavedFormation(formation);
+
+        const squadIds = data?.squadIds ?? [];
+        const xiIds = data?.startingXIIds ?? [];
+        const benchIds = data?.benchIds ?? [];
+
+        const getById = (id: number) => players.find((p) => p.id === id) ?? null;
+        const mapIds = (ids: number[]) => ids.map(getById).filter(Boolean) as Player[];
+
+        const squadPlayers = mapIds(squadIds);
+        const xiPlayers = mapIds(xiIds);
+        const benchPlayers = mapIds(benchIds);
+
+        // If old data has no squadIds, derive from xi+bench (15)
+        const derived = uniqIdsFromPlayers([...xiPlayers, ...benchPlayers]);
+        const derivedPlayers = derived.map(getById).filter(Boolean) as Player[];
+
+        setSquad(squadPlayers.length ? squadPlayers : derivedPlayers);
+        setStartingXI(xiPlayers);
+        setBench(benchPlayers);
+      } finally {
+        if (!cancelled) setLoadingSaved(false);
+      }
+    }
+
+    if (isLoggedIn && players.length > 0) run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoggedIn, players]);
   // ✅ SAVE: StartingXI (always also save squadIds as union of xi+bench)
   const saveXI = async (payload: { startingXI: Player[]; bench: Player[]; formation?: FormationKey }) => {
     const xi = payload.startingXI;
     const b = payload.bench;
     const nextFormation = payload.formation ?? savedFormation;
 
-    // Always derive squad from XI+bench; this fixes missing strikers permanently
-    const squadIds = uniqIdsFromPlayers([...xi, ...b]);
-    const squadPlayers = idsToPlayersInOrder(squadIds, playersById);
+    const squadIds =
+      squad.length === 15
+        ? squad.map((p) => p.id) // keep existing squad order stable
+        : uniqIdsFromPlayers([...xi, ...b]);
 
     setStartingXI(xi);
     setBench(b);
-    setSquad(squadPlayers);
     setSavedFormation(nextFormation);
+
+    // if squad was missing, rebuild it from xi+bench
+    if (squad.length !== 15) {
+      const ids = new Set(squadIds);
+      const nextSquadPlayers = players.filter((p) => ids.has(p.id));
+      setSquad(nextSquadPlayers);
+    }
 
     await saveStartingXI({
       squadIds,
@@ -360,10 +407,7 @@ export default function App() {
   // ✅ SAVE: TransfersPage (squad only)
   const saveSquad = async (nextSquad: Player[]) => {
     setSquad(nextSquad);
-
-    await saveStartingXI({
-      squadIds: nextSquad.map((p) => p.id),
-    });
+    await saveStartingXI({ squadIds: nextSquad.map((p) => p.id) });
   };
 
   // -------------------- RENDER --------------------
