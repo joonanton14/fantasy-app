@@ -1,43 +1,29 @@
 import React from "react";
-import StartingXI, { type Player, type Team } from "./StartingXI";
+import SquadBuilder from "./squadBuilder";
+import type { Player, Team } from "./squadBuilder";
 
-type Props = {
+export default function TransfersPage(props: {
   players: Player[];
   teams: Team[];
   squad: Player[];
   budget: number;
   onCancel: () => void;
-  onSave: (payload: { squad: Player[] }) => Promise<void> | void;
-};
-
-export default function TransfersPage({
-  players,
-  teams,
-  squad,
-  budget,
-  onCancel,
-  onSave,
-}: Props) {
+  onSave: (payload: { squad: Player[] }) => void | Promise<void>;
+}) {
   return (
     <div className="app-card">
       <div className="app-actions" style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-        <button className="app-btn" onClick={onCancel}>
+        <button className="app-btn" onClick={props.onCancel}>
           Takaisin
         </button>
       </div>
 
-      <StartingXI
-        players={players}
-        teams={teams}
-        layout="squad15"
-        hideFormation
-        transfersSquad={squad}
-        budget={budget}
-        readOnly={false}
-        onSave={(payload) => {
-          if (payload.mode !== "squad15") return;
-          onSave({ squad: payload.squad });
-        }}
+      <SquadBuilder
+        players={props.players}
+        teams={props.teams}
+        initialSquad={props.squad}
+        budget={props.budget}
+        onSave={(squad) => props.onSave({ squad })}
       />
     </div>
   );

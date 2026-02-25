@@ -1,36 +1,40 @@
 // client/src/App.tsx
-import { useEffect, useState, useMemo, JSX } from "react";
+import { useEffect, useMemo, useState, JSX } from "react";
 import Login from "./login";
 import AdminPortal from "./adminPortal";
-import StartingXI, { type FormationKey, type Player, type Team } from "./StartingXI";
+import StartingXI, { type FormationKey } from "./StartingXI";
 import { apiCall } from "./api";
 import "./styles.css";
 import { loadSavedTeam, saveStartingXI } from "./userTeam";
 import TransfersPage from "./transferPage";
 
+interface Player {
+  id: number;
+  name: string;
+  position: "GK" | "DEF" | "MID" | "FWD";
+  teamId: number;
+  value: number;
+}
+
+interface Team {
+  id: number;
+  name: string;
+}
+
+type SavedTeamData = {
+  formation?: FormationKey;
+  squadIds?: number[];
+  startingXIIds?: number[];
+  benchIds?: number[];
+};
+
 const INITIAL_BUDGET = 100;
 
-type Fixture = { id: number; homeTeamId: number; awayTeamId: number; date: string; round?: number };
-type LeaderboardRow = { username: string; total: number; last: number };
-
-function idsToPlayersInOrder(ids: number[], playersById: Map<number, Player>): Player[] {
-  const out: Player[] = [];
-  for (const id of ids) {
-    const p = playersById.get(id);
-    if (p) out.push(p);
-  }
-  return out;
-}
-
-function uniqIdsFromPlayers(list: Player[]): number[] {
-  const set = new Set<number>();
-  for (const p of list) set.add(p.id);
-  return Array.from(set);
-}
-
 export default function App() {
+  // -------------------- STATE --------------------
   const [authChecked, setAuthChecked] = useState(false);
 
+  type LeaderboardRow = { username: string; total: number; last: number };
   const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
   const [loadingLb, setLoadingLb] = useState(false);
 
@@ -38,15 +42,17 @@ export default function App() {
   const [userId, setUserId] = useState<number | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+
   const [page, setPage] = useState<"builder" | "admin">("builder");
 
   const [players, setPlayers] = useState<Player[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
-
-  const playersById = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
   const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
 
-  // saved team pieces
+  // OLD “players tab selection” (kept because you have a players tab UI)
+  const [selected, setSelected] = useState<Player[]>([]);
+
+  // ✅ NEW: squad + saved formation (source of truth across pages)
   const [squad, setSquad] = useState<Player[]>([]);
   const [startingXI, setStartingXI] = useState<Player[]>([]);
   const [bench, setBench] = useState<Player[]>([]);
@@ -54,6 +60,7 @@ export default function App() {
 
   const [error, setError] = useState<string | null>(null);
 
+  type Fixture = { id: number; homeTeamId: number; awayTeamId: number; date: string; round?: number };
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
   const [fixturesErr, setFixturesErr] = useState<string | null>(null);
   const [loadingFixtures, setLoadingFixtures] = useState(false);
@@ -62,7 +69,7 @@ export default function App() {
     useState<"startingXI" | "players" | "leaderboard" | "fixtures" | "transfers">("startingXI");
 
   const [filterTeamId, setFilterTeamId] = useState<number | null>(null);
-  const [filterPositions, setFilterPositions] = useState<Set<Player["position"]>>(
+  const [filterPositions, setFilterPositions] = useState<Set<"GK" | "DEF" | "MID" | "FWD">>(
     new Set(["GK", "DEF", "MID", "FWD"])
   );
 
@@ -81,6 +88,7 @@ export default function App() {
 
   const [playerSort, setPlayerSort] = useState<PlayerSort>("value_desc");
 
+  // -------------------- MEMOS --------------------
   const filteredPlayers = useMemo(() => {
     const arr = players.filter((p) => {
       if (filterTeamId !== null && p.teamId !== filterTeamId) return false;
@@ -96,20 +104,25 @@ export default function App() {
           return a.name.localeCompare(b.name);
         case "name_desc":
           return b.name.localeCompare(a.name);
+
         case "team_asc":
           return teamName(a.teamId).localeCompare(teamName(b.teamId)) || a.name.localeCompare(b.name);
         case "team_desc":
           return teamName(b.teamId).localeCompare(teamName(a.teamId)) || a.name.localeCompare(b.name);
+
         case "pos_asc":
           return a.position.localeCompare(b.position) || a.name.localeCompare(b.name);
+
         case "value_desc":
           return b.value - a.value || a.name.localeCompare(b.name);
         case "value_asc":
           return a.value - b.value || a.name.localeCompare(b.name);
+
         case "id_desc":
           return b.id - a.id;
         case "id_asc":
           return a.id - b.id;
+
         default:
           return 0;
       }
@@ -118,13 +131,14 @@ export default function App() {
     return arr;
   }, [players, filterTeamId, filterPositions, playerSort, teamsById]);
 
-  // -------------------- AUTH RESTORE --------------------
+  // -------------------- AUTH RESTORE (cookie) --------------------
   useEffect(() => {
     let cancelled = false;
 
     async function restore() {
       setError(null);
 
+      // 1) Fast UI restore from localStorage (optional)
       const saved = localStorage.getItem("session");
       if (saved) {
         try {
@@ -143,6 +157,7 @@ export default function App() {
         }
       }
 
+      // 2) Source of truth: cookie session
       try {
         const res = await apiCall("/auth/me", { method: "GET" });
         if (!res.ok) {
@@ -202,6 +217,61 @@ export default function App() {
     };
   }, [isLoggedIn]);
 
+  // -------------------- LOAD SAVED TEAM (squad + xi + bench + formation) --------------------
+  useEffect(() => {
+    let cancelled = false;
+
+    async function run() {
+      setLoadingSaved(true);
+      try {
+        const data = (await loadSavedTeam()) as SavedTeamData | null;
+        if (cancelled) return;
+
+        const byId = new Map(players.map((p) => [p.id, p]));
+        const mapIds = (ids: number[]) => ids.map((id) => byId.get(id)).filter(Boolean) as Player[];
+
+        const formation = (data?.formation ?? "4-4-2") as FormationKey;
+        setSavedFormation(formation);
+
+        const squadIds = data?.squadIds ?? [];
+        const xiIds = data?.startingXIIds ?? [];
+        const benchIds = data?.benchIds ?? [];
+
+        const squadPlayers = mapIds(squadIds);
+        const xiPlayers = mapIds(xiIds);
+        const benchPlayers = mapIds(benchIds);
+
+        // Backward compat: if squad missing, derive from xi+bench
+        const derivedIds = Array.from(new Set([...xiIds, ...benchIds]));
+        const derivedPlayers = mapIds(derivedIds);
+
+        setSquad(squadPlayers.length ? squadPlayers : derivedPlayers);
+        setStartingXI(xiPlayers);
+        setBench(benchPlayers);
+
+        // keep “selected” used in Players tab (optional)
+        setSelected((prev) => {
+          const existing = new Set(prev.map((p) => p.id));
+          const merged = [...prev];
+          for (const p of [...(squadPlayers.length ? squadPlayers : derivedPlayers)]) {
+            if (!existing.has(p.id)) merged.push(p);
+          }
+          return merged;
+        });
+      } catch {
+        // optional
+      } finally {
+        if (!cancelled) setLoadingSaved(false);
+      }
+    }
+
+    if (isLoggedIn && players.length > 0) run();
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoggedIn, players]);
+
+  // -------------------- FIXTURES --------------------
   async function loadFixtures() {
     setLoadingFixtures(true);
     setFixturesErr(null);
@@ -224,7 +294,9 @@ export default function App() {
       const res = await apiCall("/leaderboard", { method: "GET" });
       if (!res.ok) return;
       const data = await res.json();
-      setLeaderboard((data?.rows ?? []) as LeaderboardRow[]);
+      const rows = (data?.rows ?? []) as LeaderboardRow[];
+      setLeaderboard(rows);
+      saveCurrentRanks(rows);
     } finally {
       setLoadingLb(false);
     }
@@ -251,49 +323,7 @@ export default function App() {
     };
   }, [isLoggedIn]);
 
-  // -------------------- LOAD SAVED TEAM AFTER PLAYERS --------------------
-  useEffect(() => {
-    let cancelled = false;
-
-    async function run() {
-      setLoadingSaved(true);
-      try {
-        const data = await loadSavedTeam();
-        if (cancelled) return;
-
-        const formation = (data?.formation ?? "4-4-2") as FormationKey;
-        setSavedFormation(formation);
-
-        const squadIds = data?.squadIds ?? [];
-        const xiIds = data?.startingXIIds ?? [];
-        const benchIds = data?.benchIds ?? [];
-
-        const getById = (id: number) => players.find((p) => p.id === id) ?? null;
-        const mapIds = (ids: number[]) => ids.map(getById).filter(Boolean) as Player[];
-
-        const squadPlayers = mapIds(squadIds);
-        const xiPlayers = mapIds(xiIds);
-        const benchPlayers = mapIds(benchIds);
-
-        // If old data has no squadIds, derive from xi+bench (15)
-        const derived = uniqIdsFromPlayers([...xiPlayers, ...benchPlayers]);
-        const derivedPlayers = derived.map(getById).filter(Boolean) as Player[];
-
-        setSquad(squadPlayers.length ? squadPlayers : derivedPlayers);
-        setStartingXI(xiPlayers);
-        setBench(benchPlayers);
-      } finally {
-        if (!cancelled) setLoadingSaved(false);
-      }
-    }
-
-    if (isLoggedIn && players.length > 0) run();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isLoggedIn, players]);
-
+  // -------------------- HELPERS --------------------
   function handleLoginSuccess(userId: number, userName: string, isAdmin: boolean) {
     setUserId(userId);
     setUserName(userName);
@@ -306,13 +336,14 @@ export default function App() {
   async function handleLogout() {
     try {
       await apiCall("/auth/logout", { method: "POST" });
-    } catch { }
+    } catch {}
 
     setIsLoggedIn(false);
     setUserId(null);
     setUserName(null);
     setIsAdmin(false);
 
+    setSelected([]);
     setSquad([]);
     setStartingXI([]);
     setBench([]);
@@ -325,7 +356,30 @@ export default function App() {
     localStorage.removeItem("session");
   }
 
-  function togglePositionFilter(pos: Player["position"]) {
+  function rankDiffSymbol(username: string, currentRank: number): "up" | "down" | "same" | "new" {
+    const key = "lb_prev_ranks";
+    let prev: Record<string, number> = {};
+    try {
+      prev = JSON.parse(localStorage.getItem(key) || "{}");
+    } catch {
+      prev = {};
+    }
+
+    const prevRank = prev[username];
+    if (typeof prevRank !== "number") return "new";
+    if (currentRank < prevRank) return "up";
+    if (currentRank > prevRank) return "down";
+    return "same";
+  }
+
+  function saveCurrentRanks(rows: Array<{ username: string }>) {
+    const key = "lb_prev_ranks";
+    const next: Record<string, number> = {};
+    rows.forEach((r, i) => (next[r.username] = i + 1));
+    localStorage.setItem(key, JSON.stringify(next));
+  }
+
+  function togglePositionFilter(pos: "GK" | "DEF" | "MID" | "FWD") {
     setFilterPositions((prev) => {
       const next = new Set(prev);
       if (next.has(pos)) next.delete(pos);
@@ -333,81 +387,35 @@ export default function App() {
       return next;
     });
   }
-  useEffect(() => {
-    let cancelled = false;
 
-    async function run() {
-      setLoadingSaved(true);
-      try {
-        const data = await loadSavedTeam();
-        if (cancelled) return;
+  // ✅ Save only squadIds from TransfersPage
+  async function saveSquad(nextSquad: Player[]) {
+    setSquad(nextSquad);
+    await saveStartingXI({
+      squadIds: nextSquad.map((p) => p.id),
+    } as any);
+  }
 
-        const formation = (data?.formation ?? "4-4-2") as FormationKey;
-        setSavedFormation(formation);
-
-        const squadIds = data?.squadIds ?? [];
-        const xiIds = data?.startingXIIds ?? [];
-        const benchIds = data?.benchIds ?? [];
-
-        const getById = (id: number) => players.find((p) => p.id === id) ?? null;
-        const mapIds = (ids: number[]) => ids.map(getById).filter(Boolean) as Player[];
-
-        const squadPlayers = mapIds(squadIds);
-        const xiPlayers = mapIds(xiIds);
-        const benchPlayers = mapIds(benchIds);
-
-        // If old data has no squadIds, derive from xi+bench (15)
-        const derived = uniqIdsFromPlayers([...xiPlayers, ...benchPlayers]);
-        const derivedPlayers = derived.map(getById).filter(Boolean) as Player[];
-
-        setSquad(squadPlayers.length ? squadPlayers : derivedPlayers);
-        setStartingXI(xiPlayers);
-        setBench(benchPlayers);
-      } finally {
-        if (!cancelled) setLoadingSaved(false);
-      }
-    }
-
-    if (isLoggedIn && players.length > 0) run();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isLoggedIn, players]);
-  // ✅ SAVE: StartingXI (always also save squadIds as union of xi+bench)
-  const saveXI = async (payload: { startingXI: Player[]; bench: Player[]; formation?: FormationKey }) => {
+  // ✅ Save formation + XI + bench (and keep squadIds if present)
+  const saveXI = async (payload: { startingXI: Player[]; bench: Player[]; formation: FormationKey }) => {
     const xi = payload.startingXI;
     const b = payload.bench;
-    const nextFormation = payload.formation ?? savedFormation;
-
-    const squadIds =
-      squad.length === 15
-        ? squad.map((p) => p.id) // keep existing squad order stable
-        : uniqIdsFromPlayers([...xi, ...b]);
 
     setStartingXI(xi);
     setBench(b);
-    setSavedFormation(nextFormation);
+    setSavedFormation(payload.formation);
 
-    // if squad was missing, rebuild it from xi+bench
-    if (squad.length !== 15) {
-      const ids = new Set(squadIds);
-      const nextSquadPlayers = players.filter((p) => ids.has(p.id));
-      setSquad(nextSquadPlayers);
-    }
+    const squadIds =
+      squad.length === 15
+        ? squad.map((p) => p.id)
+        : Array.from(new Set([...xi.map((p) => p.id), ...b.map((p) => p.id)]));
 
     await saveStartingXI({
+      formation: payload.formation,
       squadIds,
       startingXIIds: xi.map((p) => p.id),
       benchIds: b.map((p) => p.id),
-      formation: nextFormation,
-    });
-  };
-
-  // ✅ SAVE: TransfersPage (squad only)
-  const saveSquad = async (nextSquad: Player[]) => {
-    setSquad(nextSquad);
-    await saveStartingXI({ squadIds: nextSquad.map((p) => p.id) });
+    } as any);
   };
 
   // -------------------- RENDER --------------------
@@ -419,8 +427,11 @@ export default function App() {
     );
   }
 
-  if (!isLoggedIn) return <Login onLoginSuccess={handleLoginSuccess} />;
+  if (!isLoggedIn) {
+    return <Login onLoginSuccess={handleLoginSuccess} />;
+  }
 
+  // -------------------- USER VIEW --------------------
   if (!isAdmin) {
     return (
       <div className="app-shell">
@@ -475,12 +486,16 @@ export default function App() {
                     Ottelut
                   </button>
 
-                  <button className="app-btn app-btn-primary" onClick={() => setTeamViewTab("transfers")}>
+                  <button
+                    className="app-btn app-btn-primary"
+                    onClick={() => setTeamViewTab("transfers")}
+                  >
                     Vaihdot
                   </button>
                 </div>
               </div>
 
+              {/* ===== TAB CONTENT ===== */}
               {teamViewTab === "transfers" ? (
                 <TransfersPage
                   players={players}
@@ -498,28 +513,24 @@ export default function App() {
                   {loadingSaved && <div className="app-muted">Ladataan tallennettu joukkue…</div>}
 
                   <StartingXI
-                    players={players}
                     teams={teams}
-                    initial={startingXI}
+                    squad={squad}
+                    initialXI={startingXI}
                     initialBench={bench}
-                    initialSquad={squad}             // ✅ pool locked to squad
                     initialFormation={savedFormation}
                     budget={INITIAL_BUDGET}
                     readOnly={false}
-                    onSave={(payload) => {
-                      if (payload.mode !== "standard") return;
-                      saveXI({
-                        startingXI: payload.startingXI,
-                        bench: payload.bench,
-                        formation: payload.formation,
-                      });
+                    onSave={async (p) => {
+                      await saveXI({ formation: p.formation, startingXI: p.startingXI, bench: p.bench });
                     }}
                   />
                 </div>
               ) : teamViewTab === "fixtures" ? (
                 <div>
                   <h2 className="app-h2">Ottelut</h2>
+
                   {fixturesErr && <div className="app-alert">{fixturesErr}</div>}
+
                   {loadingFixtures ? (
                     <div className="app-muted">Ladataan…</div>
                   ) : fixtures.length === 0 ? (
@@ -580,6 +591,7 @@ export default function App() {
               ) : teamViewTab === "leaderboard" ? (
                 <div>
                   <h2 className="app-h2">Tulostaulu</h2>
+
                   {loadingLb ? (
                     <div className="app-muted">Ladataan…</div>
                   ) : leaderboard.length === 0 ? (
@@ -588,6 +600,7 @@ export default function App() {
                     <table className="app-table">
                       <thead>
                         <tr>
+                          <th></th>
                           <th>#</th>
                           <th>Käyttäjä</th>
                           <th style={{ textAlign: "right" }}>Viime kierros</th>
@@ -595,21 +608,97 @@ export default function App() {
                         </tr>
                       </thead>
                       <tbody>
-                        {leaderboard.map((r, idx) => (
-                          <tr key={r.username}>
-                            <td>{idx + 1}</td>
-                            <td>{r.username}</td>
-                            <td style={{ textAlign: "right" }}>{r.last ?? 0}</td>
-                            <td style={{ textAlign: "right" }}>{r.total ?? 0}</td>
-                          </tr>
-                        ))}
+                        {leaderboard.map((r, idx) => {
+                          const rank = idx + 1;
+                          const trend = rankDiffSymbol(r.username, rank);
+
+                          const icon =
+                            trend === "up" ? "▲" : trend === "down" ? "▼" : trend === "same" ? "•" : "★";
+
+                          const title =
+                            trend === "up"
+                              ? "Noussut"
+                              : trend === "down"
+                              ? "Laskenut"
+                              : trend === "same"
+                              ? "Ei muutosta"
+                              : "Uusi";
+
+                          return (
+                            <tr key={r.username}>
+                              <td title={title} style={{ width: 28, textAlign: "center", opacity: 0.85 }}>
+                                {icon}
+                              </td>
+                              <td>{rank}</td>
+                              <td>{r.username}</td>
+                              <td style={{ textAlign: "right" }}>{r.last ?? 0}</td>
+                              <td style={{ textAlign: "right" }}>{r.total ?? 0}</td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   )}
                 </div>
               ) : (
                 <>
-                  {/* Players tab (unchanged, trimmed) */}
+                  {/* PLAYERS TAB (unchanged) */}
+                  <div className="app-section" style={{ marginBottom: 12 }}>
+                    <h2 className="app-h2">Suodattimet</h2>
+
+                    <div className="filter-group">
+                      <div className="filter-row">
+                        <label>Joukkue:</label>
+                        <select
+                          value={filterTeamId ?? ""}
+                          onChange={(e) => setFilterTeamId(e.target.value ? Number(e.target.value) : null)}
+                          className="app-btn"
+                        >
+                          <option value="">Kaikki joukkueet</option>
+                          {teams.map((t) => (
+                            <option key={t.id} value={t.id}>
+                              {t.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="filter-row">
+                        <label>Lajittelu:</label>
+                        <select
+                          value={playerSort}
+                          onChange={(e) => setPlayerSort(e.target.value as PlayerSort)}
+                          className="app-btn"
+                        >
+                          <option value="value_desc">Arvo (korkein → alin)</option>
+                          <option value="value_asc">Arvo (alin → korkein)</option>
+                          <option value="name_asc">Nimi (A → Ö)</option>
+                          <option value="name_desc">Nimi (Ö → A)</option>
+                          <option value="team_asc">Joukkue (A → Ö)</option>
+                          <option value="team_desc">Joukkue (Ö → A)</option>
+                          <option value="pos_asc">Pelipaikka</option>
+                          <option value="id_desc">Uusimmat (ID ↓)</option>
+                          <option value="id_asc">Vanhimmat (ID ↑)</option>
+                        </select>
+                      </div>
+
+                      <div className="filter-row">
+                        <label>Pelipaikat:</label>
+                        <div className="position-buttons">
+                          {(["GK", "DEF", "MID", "FWD"] as const).map((pos) => (
+                            <button
+                              key={pos}
+                              className={`app-btn ${filterPositions.has(pos) ? "app-btn-active" : ""}`}
+                              onClick={() => togglePositionFilter(pos)}
+                            >
+                              {pos}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="app-table-wrap">
                     <table className="app-table">
                       <thead>
@@ -617,18 +706,21 @@ export default function App() {
                           <th>Nimi</th>
                           <th>Pelipaikka</th>
                           <th>Joukkue</th>
-                          <th>Arvo</th>
+                          <th>Arvo (M)</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredPlayers.map((p) => (
-                          <tr key={p.id}>
-                            <td>{p.name}</td>
-                            <td>{p.position}</td>
-                            <td>{teamsById.get(p.teamId)?.name ?? p.teamId}</td>
-                            <td>{p.value.toFixed(1)} M</td>
-                          </tr>
-                        ))}
+                        {filteredPlayers.map((p) => {
+                          const teamName = teamsById.get(p.teamId)?.name ?? "";
+                          return (
+                            <tr key={p.id}>
+                              <td>{p.name}</td>
+                              <td>{p.position}</td>
+                              <td>{teamName}</td>
+                              <td>{p.value.toFixed(1)}</td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -641,7 +733,7 @@ export default function App() {
     );
   }
 
-  // ADMIN VIEW
+  // -------------------- ADMIN VIEW --------------------
   return (
     <div className="app-shell">
       <nav>
@@ -659,7 +751,14 @@ export default function App() {
       </nav>
 
       <main className="app-main">
-        <div className="app-card">{page === "admin" && <AdminPortal />}</div>
+        <div className="app-card">
+          {page === "admin" && <AdminPortal />}
+          {page === "builder" && (
+            <>
+              <h1 className="app-h1">Veikkauliigapörssi admin</h1>
+            </>
+          )}
+        </div>
       </main>
     </div>
   );
