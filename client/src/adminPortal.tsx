@@ -1,4 +1,3 @@
-// client/src/adminPortal.tsx
 import React, { JSX, useEffect, useMemo, useState } from "react";
 import { apiCall } from "./api";
 
@@ -51,7 +50,6 @@ const DEFAULT_EVENT: PlayerEventInput = {
   ownGoals: 0,
 };
 
-// same as api/lib/scoring.ts so admin sees the same points preview
 function calcPoints(pos: Position, ev: PlayerEventInput): number {
   let pts = 0;
 
@@ -123,7 +121,7 @@ export default function AdminPortal() {
     Array<{ username: string; points: number; subsUsed: number[] }>
   >([]);
 
-  // ✅ Round finalize (server returns totals)
+  // ✅ Round finalize
   const [finalizeRoundStatus, setFinalizeRoundStatus] = useState<string | null>(null);
   const [finalizeRoundResults, setFinalizeRoundResults] = useState<Array<{ username: string; points: number }>>([]);
 
@@ -563,12 +561,10 @@ export default function AdminPortal() {
               style={{ minWidth: 190 }}
               title="Järjestä"
             >
-              <option value="name_asc">Nimi A → Ö</option>
-              <option value="name_desc">Nimi Ö → A</option>
+              <option value="name_asc">Nimi A →</option>
+              <option value="name_desc">Nimi Ö →</option>
               <option value="value_desc">Arvo (korkein → matalin)</option>
               <option value="value_asc">Arvo (matalin → korkein)</option>
-              <option value="newest">Uusimmat ensin</option>
-              <option value="oldest">Vanhimmat ensin</option>
             </select>
           </div>
 
@@ -637,7 +633,6 @@ export default function AdminPortal() {
 
                       out.push(
                         <tr key={f.id}>
-                          <td>{f.round ?? "-"}</td>
                           <td>{f.id}</td>
                           <td>
                             {teamsById.get(f.homeTeamId)?.name ?? f.homeTeamId} vs{" "}

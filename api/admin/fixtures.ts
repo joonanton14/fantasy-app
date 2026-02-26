@@ -1,4 +1,3 @@
-// api/fixtures.ts
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getSessionFromReq } from "../../lib/session";
 import { fixtures } from "../../server/src/data";

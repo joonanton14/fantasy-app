@@ -8,7 +8,6 @@ import "./styles.css";
 import { loadSavedTeam, saveStartingXI } from "./userTeam";
 import TransfersPage from "./transferPage";
 
-// Timetraveled back to yesterday 
 interface Player {
   id: number;
   name: string;

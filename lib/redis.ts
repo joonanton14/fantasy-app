@@ -5,13 +5,8 @@ function clean(v: string | undefined) {
   return v.trim().replace(/^"+|"+$/g, "").replace(/^'+|'+$/g, "");
 }
 
-// ✅ Using Vercel KV env vars:
 const rawUrl = process.env.KV_REST_API_URL;
 const rawToken = process.env.KV_REST_API_TOKEN;
-
-// If you want Upstash names instead, swap to:
-// const rawUrl = process.env.UPSTASH_REDIS_REST_URL;
-// const rawToken = process.env.UPSTASH_REDIS_REST_TOKEN;
 
 const url = clean(rawUrl);
 const token = clean(rawToken);

@@ -1,4 +1,3 @@
-// api/admin/finalize-round.ts
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { redis, PREFIX } from "../../lib/redis";
 import { getSessionFromReq } from "../../lib/session";

@@ -68,8 +68,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: `Missing env: ${missing.join(", ")}` });
     }
 
-    // Match typed name to env username (case-sensitive or insensitive - choose one)
-    // I recommend case-insensitive:
     const match = users.find((u) => u.username!.toLowerCase() === inputName.toLowerCase());
 
     if (!match) return res.status(401).json({ error: "Invalid credentials" });

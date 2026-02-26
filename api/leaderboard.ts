@@ -1,4 +1,3 @@
-// api/leaderboard.ts
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { redis, PREFIX } from "../lib/redis";
 import { getSessionFromReq } from "../lib/session";
@@ -47,11 +46,6 @@ function parseHashTeam(teamHash: Record<string, string> | null) {
   return { startingXIIds: toArr(s), benchIds: toArr(b) };
 }
 
-/**
- * Points keys might be stored using lowercase usernames (joona),
- * while team keys may be stored with original casing (Joona).
- * This tries both and returns the first that exists.
- */
 async function getPoints(username: string, gameId: number): Promise<number> {
   const key1 = `${PREFIX}:user:${username}:game:${gameId}:points`;
   const v1 = await redis.get<number>(key1);
@@ -91,7 +85,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     for (const username of users) {
       const teamKey = `${PREFIX}:team:${username}`;
 
-      // team exists? (supports GET object OR hash)
       const teamGet = await redis.get<any>(teamKey);
       let teamExists = !!teamGet;
 

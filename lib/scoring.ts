@@ -1,11 +1,10 @@
-// api/lib/scoring.ts
 export type Position = "GK" | "DEF" | "MID" | "FWD";
 
 export type PlayerLite = { id: number; position: Position };
 
 export type TeamData = {
-  startingXIIds: number[]; // 11
-  benchIds: number[]; // 4: [GK, out1, out2, out3] (order matters)
+  startingXIIds: number[];
+  benchIds: number[];
 };
 
 export type MinutesBucket = "0" | "1_59" | "60+";
@@ -16,7 +15,7 @@ export type PlayerEventInput = {
   assists: number;
   cleanSheet: boolean;
   penMissed: number;
-  penSaved: number; // only GK typically
+  penSaved: number;
   yellow: number;
   red: number;
   ownGoals: number;
@@ -111,15 +110,14 @@ export function scoreTeamForGameWithAutosub(args: {
   const { team, playersById, eventsById } = args;
 
   const starters = team.startingXIIds ?? [];
-  const bench = team.benchIds ?? []; // [GK, out1, out2, out3] order matters
+  const bench = team.benchIds ?? [];
 
-  const usedSubs = new Set<number>();     // bench players promoted in
-  const subsOut = new Set<number>();      // starters replaced (DNP)
+  const usedSubs = new Set<number>()
+  const subsOut = new Set<number>();
   let total = 0;
 
-  // We'll build these explicitly
   const finalXI: number[] = [];
-  const finalBench: number[] = [...bench]; // start as original bench, then update when subs happen
+  const finalBench: number[] = [...bench];
 
   const counts = emptyCounts();
 
@@ -255,8 +253,8 @@ export function scoreTeamForGameWithAutosub(args: {
 
   return {
     total,
-    subsUsed: Array.from(usedSubs),    // bench player IDs promoted in
-    subsOut: Array.from(subsOut),      // starter IDs replaced (DNP)
+    subsUsed: Array.from(usedSubs),
+    subsOut: Array.from(subsOut),
     finalStartingXIIds,
     finalBenchIds,
     counts,

@@ -1,4 +1,3 @@
-// api/user-team.ts
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { redis, PREFIX } from "../lib/redis";
 import { getSessionFromReq } from "../lib/session";
@@ -6,10 +5,10 @@ import { getSessionFromReq } from "../lib/session";
 type FormationKey = "3-5-2" | "3-4-3" | "4-4-2" | "4-3-3" | "4-5-1" | "5-3-2" | "5-4-1";
 
 type SavedTeam = {
-  squadIds?: number[];        // ✅ 15-man squad saved from TransfersPage
-  startingXIIds?: number[];   // ✅ saved from StartingXI page
-  benchIds?: number[];        // ✅ order matters, saved from StartingXI page
-  formation?: FormationKey;   // ✅ saved from StartingXI page
+  squadIds?: number[];
+  startingXIIds?: number[];
+  benchIds?: number[];
+  formation?: FormationKey;
 };
 
 function isInt(n: unknown): n is number {
@@ -43,14 +42,12 @@ function validateTeamPayload(body: any): { ok: true; data: SavedTeam } | { ok: f
   const benchIds = data.benchIds;
   const formation = data.formation;
 
-  // must include at least one of these
   const hasAnything =
     squadIds !== undefined || startingXIIds !== undefined || benchIds !== undefined || formation !== undefined;
   if (!hasAnything) return { ok: false, error: "Nothing to save" };
 
   const out: SavedTeam = {};
 
-  // ---- squadIds validation (TransfersPage) ----
   if (squadIds !== undefined) {
     if (!Array.isArray(squadIds)) return { ok: false, error: "squadIds must be an array" };
 
@@ -71,7 +68,6 @@ function validateTeamPayload(body: any): { ok: true; data: SavedTeam } | { ok: f
     out.formation = formation;
   }
 
-  // ---- startingXIIds / benchIds validation (StartingXI page) ----
   // allow partial saves, but if one exists, validate shape
   if (startingXIIds !== undefined) {
     if (!Array.isArray(startingXIIds)) return { ok: false, error: "startingXIIds must be an array" };
