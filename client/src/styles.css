@@ -1196,3 +1196,178 @@ select option {
     border-radius: 7px !important;
   }
 }
+
+/* =============================================================
+   MOBILE FIX (StartingXI looks like desktop formation, but tiny)
+   Paste at END of styles.css
+   ============================================================= */
+
+@media (max-width: 520px) {
+  /* ---------- TOPBAR: stop collisions ---------- */
+  .app-topbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 10px 10px;
+  }
+
+  .app-title {
+    text-align: center;
+    font-size: 15px;
+    line-height: 1.1;
+  }
+
+  .app-user {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .app-user-name {
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.1;
+  }
+
+  .app-btn-danger {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  /* ---------- StartingXI header compact ---------- */
+  .starting-xi-header {
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  .starting-xi-header h2 {
+    font-size: 16px;
+    line-height: 1.1;
+  }
+
+  .meta-pill {
+    padding: 6px 10px;
+    font-size: 11px;
+    gap: 8px;
+  }
+
+  .formation-select {
+    padding: 6px 28px 6px 10px;
+    font-size: 11px;
+  }
+
+  /* ---------- PITCH: reduce padding + spacing ---------- */
+  .pitch {
+    padding: 8px;
+    margin: 10px 0;
+  }
+
+  .pitch::before {
+    inset: 8px;
+  }
+
+  .pitch-row {
+    margin: 6px 0;
+    gap: 6px;
+    justify-content: center;
+    width: 100%;
+  }
+
+  /* IMPORTANT:
+     On mobile use the REAL number of columns (1..5),
+     not forced 2 columns. This keeps formation structure. */
+  .pitch-row.pitch-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)) !important; }
+  .pitch-row.pitch-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .pitch-row.pitch-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+  .pitch-row.pitch-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+  .pitch-row.pitch-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
+
+  /* ---------- PLAYER CARD: tiny but tappable ---------- */
+  .slot {
+    min-height: 44px !important;
+    padding: 6px !important;
+    border-radius: 12px;
+    min-width: 0;
+  }
+
+  .player-chip {
+    gap: 2px;
+    min-width: 0;
+  }
+
+  /* Name line: 1 line */
+  .player-name {
+    font-size: 10.5px !important;
+    line-height: 1.05 !important;
+    font-weight: 900;
+
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+
+    padding-right: 20px; /* room for swap icon */
+  }
+
+  /* Team line: 1 line */
+  .player-team {
+    font-size: 9px !important;
+    line-height: 1.05 !important;
+    opacity: 0.85;
+
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  /* Swap icon: smaller, sits in same area as the name */
+  .swap-slot {
+    position: absolute;
+    right: 6px;
+    top: 6px;
+    width: 18px !important;
+    height: 18px !important;
+    border-radius: 7px !important;
+    font-size: 11px;
+    padding: 0;
+    line-height: 1;
+  }
+
+  /* ---------- BENCH: keep in ONE row (4 cols) ---------- */
+  .bench {
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+
+  .bench .app-h2 {
+    margin-top: 6px !important;
+    font-size: 13px;
+  }
+
+  .bench-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    justify-content: center;
+  }
+
+  /* ---------- SAVE BUTTON: smaller ---------- */
+  .starting-xi-controls {
+    margin-top: 10px;
+  }
+
+  .starting-xi-controls .xi-save {
+    width: 100%;
+    min-height: 40px;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+}
+
+/* Extra tiny phones */
+@media (max-width: 380px) {
+  .slot { min-height: 42px !important; padding: 5px !important; }
+  .player-name { font-size: 10px !important; }
+  .player-team { font-size: 8.5px !important; }
+  .bench-row { gap: 5px !important; }
+}
