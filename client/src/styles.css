@@ -1,8 +1,10 @@
 /* =======================================================================
-   Veikkausliigapörssi — consolidated styles.css (duplicates removed)
-   - Fixes broken selectors (slot -> .slot, slot-empty -> .slot-empty, etc.)
-   - Keeps your “modern dark glass” app look
-   - Mobile improvements: sticky topbar, scrollable tab row, bench 2x2, etc.
+   Veikkausliigapörssi — CLEAN consolidated styles.css (duplicates removed)
+   - One pitch system (desktop + mobile) using CSS variables
+   - Tabs row scrolls on mobile (no squishing)
+   - No horizontal overflow on phones
+   - StartingXI cards are fixed-size + centered (Fantasy-like structure)
+   - Bench can be normal OR inside pitch if you add .pitch-with-bench + .bench-overlay in JSX
    ======================================================================= */
 
 /* -------------------- GLOBAL -------------------- */
@@ -29,6 +31,9 @@
 html,
 body {
   height: 100%;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden; /* prevents “goes over sides” */
 }
 
 body {
@@ -482,6 +487,7 @@ nav button.active {
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 16px 50px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(10px);
+  overflow-x: hidden; /* avoid weird horizontal bleed */
 }
 
 .app-h1 {
@@ -628,7 +634,8 @@ nav button.active {
 /* Table */
 .app-table-wrap {
   width: 100%;
-  overflow: auto;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
@@ -889,6 +896,11 @@ nav button.active {
 /* Pitch */
 .pitch {
   position: relative;
+
+  /* ONE sizing system (desktop default) */
+  --card-w: 160px;
+  --card-h: 74px;
+
   border-radius: 18px;
   padding: 16px;
   background:
@@ -917,28 +929,18 @@ nav button.active {
 }
 
 /* Dynamic row columns (TSX uses pitch-cols-N) */
-.pitch-row.pitch-cols-1 {
-  grid-template-columns: repeat(1, minmax(0, 160px));
-}
-.pitch-row.pitch-cols-2 {
-  grid-template-columns: repeat(2, minmax(0, 160px));
-}
-.pitch-row.pitch-cols-3 {
-  grid-template-columns: repeat(3, minmax(0, 160px));
-}
-.pitch-row.pitch-cols-4 {
-  grid-template-columns: repeat(4, minmax(0, 160px));
-}
-.pitch-row.pitch-cols-5 {
-  grid-template-columns: repeat(5, minmax(0, 160px));
-}
+.pitch-row.pitch-cols-1 { grid-template-columns: repeat(1, minmax(0, var(--card-w))); }
+.pitch-row.pitch-cols-2 { grid-template-columns: repeat(2, minmax(0, var(--card-w))); }
+.pitch-row.pitch-cols-3 { grid-template-columns: repeat(3, minmax(0, var(--card-w))); }
+.pitch-row.pitch-cols-4 { grid-template-columns: repeat(4, minmax(0, var(--card-w))); }
+.pitch-row.pitch-cols-5 { grid-template-columns: repeat(5, minmax(0, var(--card-w))); }
 
 /* Slot */
 .slot {
   position: relative;
   border-radius: 16px;
   padding: 12px 10px;
-  min-height: 74px;
+  min-height: var(--card-h);
   cursor: pointer;
 
   background: rgba(3, 7, 18, 0.55);
@@ -1183,16 +1185,22 @@ nav button.active {
   background: rgba(255, 255, 255, 0.05);
 }
 
-/* Bench */
+/* Bench (default below pitch) */
 .bench {
   margin-top: 14px;
   padding-top: 12px;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
+.bench-title {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+}
+
 .bench-row {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, var(--card-w)));
+  justify-content: center;
   gap: 10px;
 }
 
@@ -1310,7 +1318,8 @@ nav button.active {
 
 .admin-table-wrap {
   width: 100%;
-  overflow: auto;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
@@ -1421,16 +1430,20 @@ select:focus {
   }
 }
 
+/* Tablet: reduce super-wide 4/5 columns to 2 columns (still centered) */
 @media (max-width: 920px) {
-  /* Reduce very wide pitch rows on tablets */
+  .pitch {
+    --card-w: 150px;
+  }
+
   .pitch-row.pitch-cols-4,
   .pitch-row.pitch-cols-5 {
-    grid-template-columns: repeat(2, minmax(0, 160px));
+    grid-template-columns: repeat(2, minmax(0, var(--card-w)));
   }
 }
 
 @media (max-width: 768px) {
-  /* Sticky topbar + safe area */
+  /* Sticky topbar */
   .app-topbar {
     position: sticky;
     top: 0;
@@ -1469,14 +1482,15 @@ select:focus {
     gap: 10px;
   }
 
-  /* Tabs row: horizontal scroll instead of tiny buttons */
+  /* Tabs row: horizontal scroll pills */
   .app-actions {
     width: 100%;
-    justify-content: flex-start;
     flex-wrap: nowrap;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    padding-bottom: 6px;
+    justify-content: flex-start;
+    gap: 8px;
+    padding: 4px 2px 8px;
     scrollbar-width: none;
   }
 
@@ -1488,6 +1502,10 @@ select:focus {
   .app-actions .app-btn {
     flex: 0 0 auto;
     white-space: nowrap;
+    border-radius: 999px;
+    padding: 8px 10px;
+    font-size: 12px;
+    min-height: 36px;
   }
 
   .pitch {
@@ -1528,8 +1546,9 @@ select:focus {
     min-height: 40px;
   }
 
+  /* Tables: smaller minimum width so wrapper scroll feels normal */
   .app-table {
-    min-width: 560px;
+    min-width: 520px;
   }
 
   .app-table th,
@@ -1538,184 +1557,54 @@ select:focus {
     font-size: 12px;
   }
 
-  /* Pitch: always 2 columns max on phones */
-  .pitch-row.pitch-cols-1,
-  .pitch-row.pitch-cols-2,
-  .pitch-row.pitch-cols-3,
-  .pitch-row.pitch-cols-4,
-  .pitch-row.pitch-cols-5 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  /* Bench becomes 2x2 */
-  .bench-row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  /* Slot + chip readable on phone */
-  .slot {
-    min-height: 66px;
+  /* Pitch cards shrink smoothly, stay centered, keep “fantasy structure” */
+  .pitch {
     padding: 10px;
+    --card-w: clamp(110px, 38vw, 148px);
+    --card-h: clamp(58px, 10vw, 70px);
   }
 
-  .player-name {
-    font-size: 12px;
-    line-height: 1.15;
+  .pitch::before {
+    inset: 10px;
   }
 
-  .player-team {
-    font-size: 11px;
-  }
-
-  .swap-slot {
-    width: 36px;
-    height: 36px;
-  }
-
-  .starting-xi-controls .xi-save {
-    width: 100%;
-    min-height: 44px;
-  }
-}
-/* ======================================================================
-   MOBILE FIX PACK (paste at the very end of styles.css)
-   Fixes: horizontal overflow, hidden containers, janky scrolling
-   ====================================================================== */
-
-/* ======================================================================
-   MOBILE FIX PACK (single clean version)
-   Paste ONCE at the very end of styles.css
-   ====================================================================== */
-
-/* 1) Stop any element from pushing the page wider than the viewport */
-html,
-body {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
-}
-
-/* 2) Make main layout containers safe on small screens */
-.app-shell,
-.app-main,
-.app-card,
-.app-section,
-.starting-xi-root,
-.starting-xi-card,
-.pitch,
-.app-table-wrap,
-.admin-table-wrap {
-  max-width: 100%;
-}
-
-/* Prevent “child causes card to overflow” */
-.app-card {
-  overflow: hidden;
-}
-
-/* 3) Tables: keep scroll inside wrapper, reduce min-width on phones */
-@media (max-width: 520px) {
-  .app-table-wrap {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .app-table {
-    min-width: 520px; /* was 720px */
-  }
-
-  .admin-table {
-    min-width: 520px;
-  }
-}
-
-/* 4) Tabs row: horizontal scroll pills */
-@media (max-width: 768px) {
-  .app-section-header {
-    align-items: stretch;
-  }
-
-  .app-actions {
-    width: 100%;
-    flex-wrap: nowrap !important;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    justify-content: flex-start;
-    gap: 8px;
-    padding: 4px 2px 8px;
-    scrollbar-width: none;
-  }
-
-  .app-actions::-webkit-scrollbar {
-    display: none;
-  }
-
-  .app-actions .app-btn,
-  .app-actions button {
-    flex: 0 0 auto !important;
-    white-space: nowrap;
-
-    border-radius: 999px;
-    padding: 8px 10px;
-    font-size: 12px;
-    min-height: 36px;
-  }
-
-  .app-actions .app-btn-primary {
-    padding: 8px 10px;
-  }
-
-  /* Optional: avoid “sticky header jump” on iOS */
-  .app-topbar {
-    position: sticky;
-    top: 0;
-    z-index: 50;
-  }
-}
-
-/* 5) StartingXI + Bench: fix overflow + smaller slots + clamped text */
-/* ===== StartingXI: narrow + centered on mobile (desktop structure preserved) ===== */
-@media (max-width: 520px) {
-  /* Center the grid rows and use fixed-ish card width */
-  .pitch-row {
-    justify-content: center !important;
-  }
-
-  /* 2 columns, narrow boxes, centered */
+  /* Phones: max 2 columns always (formation still readable) */
   .pitch-row.pitch-cols-1,
   .pitch-row.pitch-cols-2,
   .pitch-row.pitch-cols-3,
   .pitch-row.pitch-cols-4,
   .pitch-row.pitch-cols-5 {
-    grid-template-columns: repeat(2, minmax(0, 148px)) !important;
-    justify-content: center !important;
+    grid-template-columns: repeat(2, minmax(0, var(--card-w)));
+    justify-content: center;
   }
 
-  /* If the phone is very narrow, shrink box width a bit */
-  @media (max-width: 380px) {
-    .pitch-row.pitch-cols-1,
-    .pitch-row.pitch-cols-2,
-    .pitch-row.pitch-cols-3,
-    .pitch-row.pitch-cols-4,
-    .pitch-row.pitch-cols-5 {
-      grid-template-columns: repeat(2, minmax(0, 132px)) !important;
-    }
-  }
-
-  /* Make slots a bit tighter so text fits */
   .slot {
-    min-height: 58px;
-    padding: 7px;
+    padding: 8px;
   }
 
+  /* Clamp text so it never breaks layout */
   .player-name {
-    font-size: 11.5px;
+    font-size: 12px;
+    line-height: 1.1;
+    white-space: normal;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
   }
 
   .player-team {
-    font-size: 10px;
+    font-size: 10.5px;
+    line-height: 1.1;
+    white-space: normal;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    opacity: 0.9;
   }
-}
 
   .swap-slot {
     width: 30px;
@@ -1723,8 +1612,10 @@ body {
     border-radius: 10px;
   }
 
+  /* Bench default: 2x2 on phone (still centered) */
   .bench-row {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(2, minmax(0, var(--card-w)));
+    justify-content: center;
     gap: 8px;
   }
 
@@ -1733,8 +1624,7 @@ body {
     min-height: 44px;
   }
 
-/* 6) Smoothness: reduce expensive blur/shadows on small screens */
-@media (max-width: 520px) {
+  /* Performance: remove expensive blur on mobile */
   .app-topbar,
   .app-card,
   .auth-card,
@@ -1749,73 +1639,29 @@ body {
   }
 }
 
-/* 7) Prevent long text from breaking layout elsewhere (tables/header) */
-.player-name,
-.player-team,
-.app-title,
-.app-user-name,
-.app-table td,
-.app-table th {
-  max-width: 100%;
-  overflow: hidden;
+@media (max-width: 380px) {
+  .pitch {
+    --card-w: clamp(98px, 42vw, 132px);
+  }
 }
 
-/* ===== Pitch like Fantasy: fixed-size centered cards ===== */
-.pitch-with-bench {
+/* ============================================================= */
+/* ===== Bench overlay support (only if you change JSX) ========= */
+/* ============================================================= */
+/*
+  If you move Bench inside pitch, wrap it like:
+  <div className="pitch pitch-with-bench">
+    ...
+    <div className="bench-overlay"><Bench /></div>
+  </div>
+*/
+
+.pitch.pitch-with-bench {
   position: relative;
-  padding-bottom: 150px; /* space for bench overlay inside pitch */
+  padding-bottom: 170px; /* space reserved for overlay inside pitch */
 }
 
-/* Card width scales smoothly with screen size */
-.pitch-with-bench {
-  --card-w: clamp(105px, 22vw, 150px);
-  --card-h-min: clamp(58px, 9vw, 78px);
-}
-
-/* Center rows */
-.pitch-row {
-  justify-content: center;
-}
-
-/* Use fixed-size columns (NOT 1fr). Keeps “desktop structure” feel. */
-.pitch-row.pitch-cols-1 { grid-template-columns: repeat(1, minmax(0, var(--card-w))); }
-.pitch-row.pitch-cols-2 { grid-template-columns: repeat(2, minmax(0, var(--card-w))); }
-.pitch-row.pitch-cols-3 { grid-template-columns: repeat(3, minmax(0, var(--card-w))); }
-.pitch-row.pitch-cols-4 { grid-template-columns: repeat(4, minmax(0, var(--card-w))); }
-.pitch-row.pitch-cols-5 { grid-template-columns: repeat(5, minmax(0, var(--card-w))); }
-
-/* Slot sizing (narrow + consistent) */
-.slot {
-  min-height: var(--card-h-min);
-  padding: 8px;
-}
-
-/* Clamp text so it never forces width/height explosions */
-.player-name {
-  white-space: normal;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  line-height: 1.1;
-  font-size: 12px;
-}
-
-.player-team {
-  white-space: normal;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 1;
-  line-clamp: 1;
-  line-height: 1.1;
-  font-size: 10.5px;
-  opacity: 0.9;
-}
-
-/* ===== Bench INSIDE pitch (like screenshot) ===== */
-.bench-overlay {
+.pitch .bench-overlay {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
@@ -1830,34 +1676,8 @@ body {
   backdrop-filter: blur(8px);
 }
 
-/* Bench title tighter */
-.bench-title {
-  margin: 0 0 8px 0;
-  font-size: 14px;
-}
-
-/* Bench grid */
-.bench-row {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(4, minmax(0, var(--card-w)));
-  justify-content: center;
-}
-
-/* Phones: still “same structure” but practical sizing */
 @media (max-width: 520px) {
-  .pitch-with-bench {
-    padding-bottom: 170px; /* a bit more space on phone */
-    --card-w: clamp(96px, 36vw, 132px);
-  }
-
-  /* Bench becomes 2x2 but still centered and same style */
-  .bench-row {
-    grid-template-columns: repeat(2, minmax(0, var(--card-w)));
-  }
-
-  /* Performance: blur is expensive on mobile */
-  .bench-overlay {
+  .pitch .bench-overlay {
     backdrop-filter: none;
   }
 }
