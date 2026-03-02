@@ -1674,64 +1674,48 @@ body {
 }
 
 /* 5) StartingXI + Bench: fix overflow + smaller slots + clamped text */
+/* ===== StartingXI: narrow + centered on mobile (desktop structure preserved) ===== */
 @media (max-width: 520px) {
-  .pitch {
-    padding: 10px;
+  /* Center the grid rows and use fixed-ish card width */
+  .pitch-row {
+    justify-content: center !important;
   }
 
-  .pitch::before {
-    inset: 10px;
-  }
-
-  /* Override fixed 160px columns */
+  /* 2 columns, narrow boxes, centered */
   .pitch-row.pitch-cols-1,
   .pitch-row.pitch-cols-2,
   .pitch-row.pitch-cols-3,
   .pitch-row.pitch-cols-4,
   .pitch-row.pitch-cols-5 {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    justify-content: stretch;
+    grid-template-columns: repeat(2, minmax(0, 148px)) !important;
+    justify-content: center !important;
   }
 
-  .pitch-row {
-    gap: 8px;
-    margin: 10px 0;
+  /* If the phone is very narrow, shrink box width a bit */
+  @media (max-width: 380px) {
+    .pitch-row.pitch-cols-1,
+    .pitch-row.pitch-cols-2,
+    .pitch-row.pitch-cols-3,
+    .pitch-row.pitch-cols-4,
+    .pitch-row.pitch-cols-5 {
+      grid-template-columns: repeat(2, minmax(0, 132px)) !important;
+    }
   }
 
+  /* Make slots a bit tighter so text fits */
   .slot {
-    min-height: 60px;
-    padding: 8px;
+    min-height: 58px;
+    padding: 7px;
   }
 
-  .player-chip {
-    gap: 2px;
-  }
-
-  /* Clamp name/team so they don't push layout */
   .player-name {
-    font-size: 12px;
-    line-height: 1.1;
-    white-space: normal;
-
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2; /* standard property for compatibility hints */
+    font-size: 11.5px;
   }
 
   .player-team {
-    font-size: 10.5px;
-    line-height: 1.1;
-    white-space: normal;
-    opacity: 0.9;
-
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 1;
-    line-clamp: 1;
+    font-size: 10px;
   }
+}
 
   .swap-slot {
     width: 30px;
@@ -1748,7 +1732,6 @@ body {
     width: 100%;
     min-height: 44px;
   }
-}
 
 /* 6) Smoothness: reduce expensive blur/shadows on small screens */
 @media (max-width: 520px) {
