@@ -633,6 +633,7 @@ export default function AdminPortal() {
 
                       out.push(
                         <tr key={f.id}>
+                          <td>{""}</td>
                           <td>{f.id}</td>
                           <td>
                             {teamsById.get(f.homeTeamId)?.name ?? f.homeTeamId} vs{" "}
@@ -664,7 +665,7 @@ export default function AdminPortal() {
         <div className="app-card" style={{ padding: 12 }}>
           <h2 className="app-h2">Pisteet</h2>
           <div className="app-muted" style={{ marginBottom: 10 }}>
-            Tallenna ottelun tapahtumat ja päätä peli. Voit myös päättää koko kierroksen (yksi kutsu: finalize-game {`{ round, gameIds }`} ).
+            Tallenna ottelun tapahtumat ja päätä peli. Voit myös päättää koko kierroksen.
           </div>
 
           <div style={{ display: "grid", gap: 8, marginBottom: 12 }}>
@@ -867,7 +868,7 @@ export default function AdminPortal() {
                 </table>
               </div>
               <div className="app-muted" style={{ marginTop: 6 }}>
-                Kierroksen pisteet tulevat suoraan /admin/finalize-game vastauksesta (summa kaikista kierroksen otteluista).
+                Kierroksen pisteet tulevat kaikista kierroksen otteluista.
               </div>
             </div>
           )}

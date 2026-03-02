@@ -1,4 +1,3 @@
-// client/src/App.tsx
 import { useEffect, useMemo, useState, JSX } from "react";
 import Login from "./login";
 import AdminPortal from "./adminPortal";
