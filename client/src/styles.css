@@ -1032,3 +1032,167 @@ select option {
     width: 100%;
   }
 }
+
+/* =============================================================
+   ULTRA-COMPACT MOBILE STARTING XI (fits on one screen)
+   Paste at the VERY END of styles.css
+   ============================================================= */
+
+@media (max-width: 520px) {
+  /* Make the whole StartingXI block tighter */
+  .starting-xi-header {
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .starting-xi-header h2 {
+    font-size: 16px;
+    line-height: 1.1;
+  }
+
+  .meta-pill {
+    padding: 6px 10px;
+    font-size: 11px;
+    gap: 8px;
+  }
+
+  .formation-select {
+    padding: 6px 28px 6px 10px;
+    font-size: 11px;
+  }
+
+  /* Pitch: smaller padding & spacing */
+  .pitch {
+    padding: 8px;
+    margin: 10px 0;
+    --row-gap: 6px;
+    --card-h: 46px;
+
+    /* cards must be SMALL. two cols must always fit. */
+    --card-w: min(108px, calc((100% - var(--row-gap)) / 2));
+  }
+
+  .pitch::before {
+    inset: 8px;
+  }
+
+  .pitch-row {
+    margin: 6px 0;
+    gap: var(--row-gap);
+  }
+
+  /* Force 2 columns always on phone, centered */
+  .pitch-row.pitch-cols-1,
+  .pitch-row.pitch-cols-2,
+  .pitch-row.pitch-cols-3,
+  .pitch-row.pitch-cols-4,
+  .pitch-row.pitch-cols-5 {
+    grid-template-columns: repeat(2, minmax(0, var(--card-w))) !important;
+    justify-content: center !important;
+  }
+
+  /* Slot: smaller padding/height */
+  .slot {
+    min-height: var(--card-h) !important;
+    padding: 6px !important;
+    border-radius: 12px;
+  }
+
+  /* Player chip becomes 2-row layout:
+     Row1: name + swap icon
+     Row2: team (or empty) */
+  .player-chip {
+    width: 100%;
+    gap: 2px;
+    justify-items: stretch;
+  }
+
+  /* Make name + swap sit on same row */
+  .player-chip {
+    display: grid;
+    grid-template-rows: auto auto;
+    align-items: center;
+  }
+
+  /* We'll turn the name into a flex row container by using inline layout tricks */
+  .player-name {
+    font-size: 10.5px !important;
+    line-height: 1.05 !important;
+
+    /* clamp to 1 line */
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+
+    /* leave space for the swap button on the right */
+    padding-right: 28px;
+  }
+
+  /* Team text small and on one line */
+  .player-team {
+    font-size: 9px !important;
+    line-height: 1.05 !important;
+    opacity: 0.85;
+
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  /* Swap icon: smaller and overlayed to the right inside the card
+     so it effectively shares the same row as name */
+  .swap-slot {
+    position: absolute;
+    right: 6px;
+    top: 6px;
+
+    width: 20px !important;
+    height: 20px !important;
+    border-radius: 8px !important;
+    font-size: 12px;
+    line-height: 1;
+    padding: 0;
+  }
+
+  /* Bench: compact 2x2 and tight */
+  .bench {
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+
+  .bench .app-h2 {
+    font-size: 13px;
+    margin-top: 6px !important;
+  }
+
+  .bench-row {
+    grid-template-columns: repeat(2, minmax(0, var(--card-w))) !important;
+    justify-content: center !important;
+    gap: 6px !important;
+  }
+
+  /* Save button compact */
+  .starting-xi-controls {
+    margin-top: 10px;
+  }
+  .starting-xi-controls .xi-save {
+    width: 100%;
+    min-height: 40px;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+}
+
+/* Extra tiny phones */
+@media (max-width: 380px) {
+  .pitch {
+    --card-w: min(96px, calc((100% - 6px) / 2));
+    --card-h: 44px;
+  }
+  .player-name { font-size: 10px !important; }
+  .player-team { font-size: 8.5px !important; }
+  .swap-slot {
+    width: 18px !important;
+    height: 18px !important;
+    border-radius: 7px !important;
+  }
+}
