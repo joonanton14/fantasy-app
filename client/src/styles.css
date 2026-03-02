@@ -1582,16 +1582,18 @@ select:focus {
    Fixes: horizontal overflow, hidden containers, janky scrolling
    ====================================================================== */
 
+/* ======================================================================
+   MOBILE FIX PACK (single clean version)
+   Paste ONCE at the very end of styles.css
+   ====================================================================== */
+
 /* 1) Stop any element from pushing the page wider than the viewport */
-html, body {
+html,
+body {
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden; /* key */
+  overflow-x: hidden;
 }
-
-/* If something still overflows, this helps identify the culprit:
-   uncomment temporarily to debug */
-/* * { outline: 1px solid rgba(255,0,0,0.2); } */
 
 /* 2) Make main layout containers safe on small screens */
 .app-shell,
@@ -1606,13 +1608,12 @@ html, body {
   max-width: 100%;
 }
 
-/* This prevents “child causes card to overflow” */
+/* Prevent “child causes card to overflow” */
 .app-card {
-  overflow: hidden; /* key */
+  overflow: hidden;
 }
 
-/* 3) Tables: your min-width creates a lot of side overflow.
-      Keep scroll INSIDE wrapper, but reduce min-width on phones. */
+/* 3) Tables: keep scroll inside wrapper, reduce min-width on phones */
 @media (max-width: 520px) {
   .app-table-wrap {
     overflow-x: auto;
@@ -1620,46 +1621,69 @@ html, body {
   }
 
   .app-table {
-    min-width: 520px; /* was 720px; much friendlier */
+    min-width: 520px; /* was 720px */
   }
 
   .admin-table {
-    min-width: 520px; /* keep */
+    min-width: 520px;
   }
 }
 
-/* 4) Tabs row: force horizontal scroll (no shrinking/wrapping weirdly) */
+/* 4) Tabs row: horizontal scroll pills */
 @media (max-width: 768px) {
+  .app-section-header {
+    align-items: stretch;
+  }
+
   .app-actions {
+    width: 100%;
     flex-wrap: nowrap !important;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     justify-content: flex-start;
-    padding-bottom: 6px;
+    gap: 8px;
+    padding: 4px 2px 8px;
     scrollbar-width: none;
   }
-  .app-actions::-webkit-scrollbar { display: none; }
+
+  .app-actions::-webkit-scrollbar {
+    display: none;
+  }
 
   .app-actions .app-btn,
   .app-actions button {
     flex: 0 0 auto !important;
     white-space: nowrap;
+
+    border-radius: 999px;
+    padding: 8px 10px;
+    font-size: 12px;
+    min-height: 36px;
+  }
+
+  .app-actions .app-btn-primary {
+    padding: 8px 10px;
+  }
+
+  /* Optional: avoid “sticky header jump” on iOS */
+  .app-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
   }
 }
 
-/* 5) StartingXI pitch: your pitch rows use fixed 160px columns.
-      On some phones (esp. with padding) 2*160 + gaps can overflow.
-      Use flexible columns on small screens. */
+/* 5) StartingXI + Bench: fix overflow + smaller slots + clamped text */
 @media (max-width: 520px) {
   .pitch {
-    padding: 12px;
+    padding: 10px;
   }
 
   .pitch::before {
-    inset: 10px; /* reduces risk of edge clipping */
+    inset: 10px;
   }
 
-  /* Override the fixed 160px columns */
+  /* Override fixed 160px columns */
   .pitch-row.pitch-cols-1,
   .pitch-row.pitch-cols-2,
   .pitch-row.pitch-cols-3,
@@ -1670,40 +1694,79 @@ html, body {
   }
 
   .pitch-row {
-    gap: 10px;
+    gap: 8px;
+    margin: 10px 0;
   }
 
   .slot {
-    min-height: 66px;
-    padding: 10px;
+    min-height: 60px;
+    padding: 8px;
   }
-}
 
-/* 6) Bench: 4 columns on phone often squeezes & causes overflow */
-@media (max-width: 520px) {
+  .player-chip {
+    gap: 2px;
+  }
+
+  /* Clamp name/team so they don't push layout */
+  .player-name {
+    font-size: 12px;
+    line-height: 1.1;
+    white-space: normal;
+
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2; /* standard property for compatibility hints */
+  }
+
+  .player-team {
+    font-size: 10.5px;
+    line-height: 1.1;
+    white-space: normal;
+    opacity: 0.9;
+
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+  }
+
+  .swap-slot {
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
+  }
+
   .bench-row {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px;
+  }
+
+  .starting-xi-controls .xi-save {
+    width: 100%;
+    min-height: 44px;
   }
 }
 
-/* 7) Smoothness: backdrop-filter + big shadows are expensive on mobile.
-      Reduce them only on small screens for much smoother scroll. */
+/* 6) Smoothness: reduce expensive blur/shadows on small screens */
 @media (max-width: 520px) {
   .app-topbar,
   .app-card,
   .auth-card,
   .app-modal-inner {
-    backdrop-filter: none !important; /* BIG performance win */
+    backdrop-filter: none !important;
   }
 
   .app-card,
   .auth-card,
   .app-modal-inner {
-    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35); /* lighter shadow */
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
   }
 }
 
-/* 8) Prevent long names from breaking layout (chips + header) */
+/* 7) Prevent long text from breaking layout elsewhere (tables/header) */
 .player-name,
 .player-team,
 .app-title,
@@ -1712,20 +1775,4 @@ html, body {
 .app-table th {
   max-width: 100%;
   overflow: hidden;
-}
-
-/* Allow chip text to wrap nicely */
-.player-name,
-.player-team {
-  white-space: normal;
-  word-break: break-word;
-}
-
-/* 9) Optional: avoid “sticky header jump” on iOS */
-@media (max-width: 768px) {
-  .app-topbar {
-    position: sticky;
-    top: 0;
-    z-index: 50;
-  }
 }
