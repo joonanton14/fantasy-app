@@ -1371,3 +1371,31 @@ select option {
   .player-team { font-size: 8.5px !important; }
   .bench-row { gap: 5px !important; }
 }
+
+.slot:active {
+  transform: scale(0.97);
+}
+
+/* Mobile: keep 2–4 player rows compact + centered.
+   Let 5-player rows use full width. */
+@media (max-width: 520px) {
+  /* 1 player: compact */
+  .pitch-row.pitch-cols-1 {
+    grid-template-columns: minmax(0, 45%) !important;
+    justify-content: center !important;
+  }
+
+  /* 2–4 players: auto-size cards, centered (NOT full width) */
+  .pitch-row.pitch-cols-2,
+  .pitch-row.pitch-cols-3,
+  .pitch-row.pitch-cols-4 {
+    grid-template-columns: repeat(auto-fit, minmax(0, var(--card-w))) !important;
+    justify-content: center !important;
+  }
+
+  /* 5 players: use full width (your current behavior) */
+  .pitch-row.pitch-cols-5 {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    justify-content: stretch !important;
+  }
+}
