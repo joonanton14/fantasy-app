@@ -845,52 +845,70 @@ select option {
   }
 }
 
-/* Phone: tiny cards, KEEP formation columns 1..5 (no wrapping to 2 rows) */
 @media (max-width: 520px) {
-  .app-card { border-radius: 14px; padding: 10px; }
-  .app-table { min-width: 520px; }
-
-  /* compact topbar to avoid collisions */
-  .app-title { font-size: 15px; text-align: center; }
-  .app-user { flex-direction: column; align-items: stretch; gap: 6px; }
-  .app-user-name { text-align: center; font-size: 13px; }
-  .app-btn-danger { width: 100%; padding: 8px 10px; font-size: 13px; }
-
-  /* pitch scales from container */
   .pitch {
     padding: 8px;
     margin: 10px 0;
-
     --row-gap: 6px;
     --card-h: 44px;
-
-    /* cards computed so 5 cols can fit (small but works) */
-    --card-w: min(68px, calc((100% - (4 * var(--row-gap))) / 5));
   }
 
   .pitch::before { inset: 8px; }
 
-  .pitch-row { margin: 6px 0; gap: var(--row-gap); }
+  .pitch-row {
+    margin: 6px 0;
+    gap: var(--row-gap);
+    justify-content: center;
+  }
 
-  /* formation locked */
-  .pitch-row.pitch-cols-1 { grid-template-columns: repeat(1, minmax(0, 0.55fr)); }
-  .pitch-row.pitch-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .pitch-row.pitch-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .pitch-row.pitch-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); } /* <- 4 stays one row */
-  .pitch-row.pitch-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  /* Generic rule: each row sets --cols, we compute width from it */
+  .pitch-row {
+    --cols: 5; /* default */
+    --card-w: calc(
+      (100% - ((var(--cols) - 1) * var(--row-gap))) / var(--cols)
+    );
+  }
 
-  /* tiny slot */
-  .slot { min-height: var(--card-h); padding: 6px; border-radius: 12px; }
-  .player-chip { gap: 2px; }
+  /* Per-row column count */
+  .pitch-row.pitch-cols-1 { --cols: 1; }
+  .pitch-row.pitch-cols-2 { --cols: 2; }
+  .pitch-row.pitch-cols-3 { --cols: 3; }
+  .pitch-row.pitch-cols-4 { --cols: 4; }
+  .pitch-row.pitch-cols-5 { --cols: 5; }
 
-  /* name/team single line */
+  /* IMPORTANT: clamp per-row so 3-cols is visibly bigger than 4-cols */
+  .pitch-row.pitch-cols-1 { --card-w: min(140px, calc((100% - 0 * var(--row-gap)) / 1)); }
+  .pitch-row.pitch-cols-2 { --card-w: min(128px, calc((100% - 1 * var(--row-gap)) / 2)); }
+  .pitch-row.pitch-cols-3 { --card-w: min(118px, calc((100% - 2 * var(--row-gap)) / 3)); } /* bigger */
+  .pitch-row.pitch-cols-4 { --card-w: min(92px,  calc((100% - 3 * var(--row-gap)) / 4)); } /* smaller */
+  .pitch-row.pitch-cols-5 { --card-w: min(70px,  calc((100% - 4 * var(--row-gap)) / 5)); } /* smallest */
+
+  /* Use computed widths */
+  .pitch-row.pitch-cols-1 { grid-template-columns: repeat(1, minmax(0, var(--card-w))); }
+  .pitch-row.pitch-cols-2 { grid-template-columns: repeat(2, minmax(0, var(--card-w))); }
+  .pitch-row.pitch-cols-3 { grid-template-columns: repeat(3, minmax(0, var(--card-w))); }
+  .pitch-row.pitch-cols-4 { grid-template-columns: repeat(4, minmax(0, var(--card-w))); }
+  .pitch-row.pitch-cols-5 { grid-template-columns: repeat(5, minmax(0, var(--card-w))); }
+
+  /* GK centered but not full width */
+  .pitch-row.pitch-cols-1 {
+    justify-content: center;
+  }
+
+  .slot {
+    min-height: var(--card-h);
+    padding: 6px;
+    border-radius: 12px;
+    min-width: 0;
+  }
+
   .player-name {
     font-size: 10px;
     line-height: 1.05;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    padding-right: 20px; /* space for swap icon */
+    padding-right: 20px;
   }
 
   .player-team {
@@ -902,7 +920,6 @@ select option {
     opacity: 0.85;
   }
 
-  /* swap icon small and top-right */
   .swap-slot {
     position: absolute;
     right: 6px;
@@ -914,22 +931,7 @@ select option {
     padding: 0;
     line-height: 1;
   }
-
-  /* bench: keep 4 in one row (also uses the small card sizing) */
-  .bench-row {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: var(--row-gap);
-    justify-content: center;
-  }
-
-  /* performance */
-  .app-topbar,
-  .app-card,
-  .auth-card {
-    backdrop-filter: none !important;
-  }
 }
-
 /* Extra tiny phones */
 @media (max-width: 380px) {
   .pitch { --card-h: 42px; --row-gap: 5px; }
