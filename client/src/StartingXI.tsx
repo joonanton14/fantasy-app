@@ -346,10 +346,6 @@ export const StartingXI: FC<{
   const Bench = () => {
     return (
       <div className="bench">
-        <h3 className="app-h2" style={{ marginTop: 16 }}>
-          Penkki
-        </h3>
-
         <div className="bench-row">
           {BENCH_SLOTS.map((s) => {
             const assigned = benchAssign[s.id] ?? null;
@@ -455,9 +451,10 @@ export const StartingXI: FC<{
           <Row position="DEF" />
           <Row position="MID" />
           <Row position="FWD" />
+          <div className="bench-overlay">
+            <Bench />
+          </div>
         </div>
-
-        <Bench />
 
         <div className="starting-xi-controls">
           {!readOnly && (
