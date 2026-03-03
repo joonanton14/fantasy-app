@@ -398,7 +398,7 @@ nav button.active {
 }
 
 .app-section {
-  display: flex;
+  display: grid;
   gap: 12px;
   min-width: 0;
 }
