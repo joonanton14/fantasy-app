@@ -868,7 +868,7 @@ select option {
     --slotW: clamp(56px, 18vw, 86px);
     --slotH: 56px;                 /* <- stable height */
     --gap: clamp(6px, 2vw, 10px);
-
+    overflow: hidden; 
     width: 100%;
     max-width: 520px;
     margin: 10px auto;
