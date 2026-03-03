@@ -866,10 +866,9 @@ select option {
   .pitch {
     /* width chosen to fit 5 columns on ~360px screens */
     --slotW: clamp(56px, 18vw, 86px);
-    --slotH: 56px;                 /* stable height */
+    --slotH: 56px;                 /* <- stable height */
     --gap: clamp(6px, 2vw, 10px);
-    overflow: hidden;
-
+    overflow: hidden; 
     width: 100%;
     max-width: 520px;
     margin: 10px auto;
@@ -886,21 +885,16 @@ select option {
     align-content: center;
   }
 
-  /* declare columns per row */
-  .pitch-row.pitch-cols-1 { --cols: 1; grid-template-columns: repeat(1, var(--slotW)); }
-  .pitch-row.pitch-cols-2 { --cols: 2; grid-template-columns: repeat(2, var(--slotW)); }
-  .pitch-row.pitch-cols-3 { --cols: 3; grid-template-columns: repeat(3, var(--slotW)); }
-  .pitch-row.pitch-cols-4 { --cols: 4; grid-template-columns: repeat(4, var(--slotW)); }
-  .pitch-row.pitch-cols-5 { --cols: 5; grid-template-columns: repeat(5, var(--slotW)); }
-
-  /* compute max slot width that fits (prevents right overflow) */
-  .pitch-row {
-    --slotFit: calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols));
-  }
+  /* fixed columns; NO 1fr */
+  .pitch-row.pitch-cols-1 { grid-template-columns: repeat(1, var(--slotW)); }
+  .pitch-row.pitch-cols-2 { grid-template-columns: repeat(2, var(--slotW)); }
+  .pitch-row.pitch-cols-3 { grid-template-columns: repeat(3, var(--slotW)); }
+  .pitch-row.pitch-cols-4 { grid-template-columns: repeat(4, var(--slotW)); }
+  .pitch-row.pitch-cols-5 { grid-template-columns: repeat(5, var(--slotW)); }
 
   .slot {
-    width: min(var(--slotW), var(--slotFit)); /* <-- key fix */
-    height: var(--slotH);
+    width: var(--slotW);
+    height: var(--slotH);          /* <- fixed */
     min-height: 0;
     padding: 6px;
     border-radius: 12px;
@@ -942,18 +936,10 @@ select option {
   }
 
   .pitch .bench-overlay { width: 100%; margin: 0 auto; }
-
   .bench-row {
-    --cols: 4;
-    --slotFit: calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols));
-
     gap: var(--gap);
     justify-content: center;
     grid-template-columns: repeat(4, var(--slotW));
-  }
-
-  .bench-row .slot {
-    width: min(var(--slotW), var(--slotFit)); /* <-- bench overflow fix too */
   }
 }
 
@@ -964,8 +950,79 @@ select option {
     --slotH: 52px;
     --gap: 6px;
   }
-
   .player-name { font-size: 10px; }
   .player-team { font-size: 8.6px; }
   .swap-slot { width: 15px; height: 15px; font-size: 9px; }
+}
+
+/* =========================================================
+   LEADERBOARD (Tulostaulu) — responsive table
+   ========================================================= */
+
+.app-table-wrap--lb {
+  border-radius: 18px;
+}
+
+/* Tablet: tighter padding + readable */
+@media (max-width: 768px) {
+  .app-table--lb {
+    min-width: 560px; /* allow scroll if needed, but not crazy wide */
+  }
+
+  .app-table--lb th,
+  .app-table--lb td {
+    padding: 10px;
+    font-size: 12.5px;
+  }
+}
+
+/* Mobile: "phone-first" leaderboard */
+@media (max-width: 520px) {
+  .app-table-wrap--lb {
+    border-radius: 16px;
+  }
+
+  .app-table--lb {
+    min-width: 520px; /* keeps columns intact; container scrolls */
+  }
+
+  .app-table--lb th,
+  .app-table--lb td {
+    padding: 9px;
+    font-size: 12px;
+  }
+
+  /* Make username column behave nicely */
+  .app-table--lb td:nth-child(3),
+  .app-table--lb th:nth-child(3) {
+    max-width: 180px;
+  }
+
+  /* Keep numbers compact */
+  .app-table--lb td:nth-child(4),
+  .app-table--lb td:nth-child(5),
+  .app-table--lb th:nth-child(4),
+  .app-table--lb th:nth-child(5) {
+    width: 110px;
+  }
+
+  /* Sticky header is nice on scroll */
+  .app-table--lb thead th {
+    position: sticky;
+    top: 0;
+    background: rgba(3, 7, 18, 0.88);
+    backdrop-filter: blur(10px);
+    z-index: 1;
+  }
+}
+
+/* Extra tiny phones: a bit more compact */
+@media (max-width: 380px) {
+  .app-table--lb { min-width: 500px; }
+
+  .app-table--lb th,
+  .app-table--lb td {
+    padding: 8px;
+    font-size: 11.5px;
+  }
 }
