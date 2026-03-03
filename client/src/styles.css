@@ -1,9 +1,9 @@
-/* -------------------- GLOBAL -------------------- */
+/* =======================
+   GLOBAL RESET + TOKENS
+   ======================= */
 *,
 *::before,
-*::after {
-  box-sizing: border-box;
-}
+*::after { box-sizing: border-box; }
 
 :root {
   --bg0: #070a12;
@@ -18,50 +18,51 @@
   --success: rgba(16, 185, 129, 1);
 }
 
-html,
-body {
-  height: 100%;
+/* Prevent “mystery” horizontal scroll everywhere */
+html, body, #root {
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden; /* hard stop for right overflow */
+  overflow-x: hidden;
 }
 
 body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  min-height: 100%;
   margin: 0;
   padding: 0;
-  background: #f5f5f5; /* fallback */
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  background: #f5f5f5;
   color: var(--text);
 }
 
 /* Make media never push layout wider */
-img,
-svg,
-canvas,
-video {
-  max-width: 100%;
-  height: auto;
-}
+img, svg, canvas, video { max-width: 100%; height: auto; }
 
 /* Prevent iOS input zoom */
-input,
-select,
-textarea,
-button {
-  font-size: 16px;
+input, select, textarea, button { font-size: 16px; }
+
+/* Allow flex/grid children to actually shrink (critical for mobile) */
+.app-shell,
+.app-main,
+.app-card,
+.app-section,
+.app-section-header,
+.app-actions,
+.starting-xi-root,
+.starting-xi-card,
+.pitch,
+.pitch-row,
+.bench-row,
+.app-table-wrap,
+.admin-two-col,
+.admin-row {
+  min-width: 0;
 }
 
-/* -------------------- BASIC FORMS (non-auth) -------------------- */
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.form-row {
-  display: flex;
-  flex-direction: column;
-}
+/* =======================
+   BASIC FORMS
+   ======================= */
+.form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+.form-row { display: flex; flex-direction: column; }
 
 input[type="text"],
 input[type="number"],
@@ -74,7 +75,9 @@ select {
   color: inherit;
 }
 
-/* -------------------- NAV (admin) -------------------- */
+/* =======================
+   NAV (admin)
+   ======================= */
 nav {
   background-color: #004080;
   color: white;
@@ -85,21 +88,10 @@ nav {
   gap: 1rem;
 }
 
-.nav-left {
-  display: flex;
-  gap: 1rem;
-}
+.nav-left { display: flex; gap: 1rem; }
+.nav-right { display: flex; align-items: center; gap: 1rem; }
 
-.nav-right {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.user-info {
-  font-size: 0.95rem;
-  white-space: nowrap;
-}
+.user-info { font-size: 0.95rem; white-space: nowrap; }
 
 nav button {
   background: none;
@@ -110,29 +102,19 @@ nav button {
   padding: 0.5rem 0.75rem;
   transition: background-color 0.2s;
 }
-
-nav button:hover {
-  background-color: #003366;
-}
-
-nav button.active {
-  background-color: #0066cc;
-}
+nav button:hover { background-color: #003366; }
+nav button.active { background-color: #0066cc; }
 
 .logout-button {
   background-color: #cc0000 !important;
   padding: 0.5rem 1rem !important;
   border-radius: 3px;
 }
+.logout-button:hover { background-color: #990000 !important; }
 
-.logout-button:hover {
-  background-color: #990000 !important;
-}
-
-/* ============================================================= */
-/* ======================= AUTH (modern) ======================= */
-/* ============================================================= */
-
+/* =======================
+   AUTH
+   ======================= */
 .auth-wrap {
   min-height: 100vh;
   display: grid;
@@ -158,17 +140,8 @@ nav button.active {
   text-align: center;
 }
 
-.auth-header {
-  display: grid;
-  gap: 14px;
-  margin-bottom: 14px;
-}
-
-.brand {
-  display: grid;
-  justify-items: center;
-  gap: 10px;
-}
+.auth-header { display: grid; gap: 14px; margin-bottom: 14px; }
+.brand { display: grid; justify-items: center; gap: 10px; }
 
 .logo {
   width: 46px;
@@ -186,12 +159,7 @@ nav button.active {
   letter-spacing: 0.2px;
   color: #ffffff;
 }
-
-.subtitle {
-  margin: 6px 0 0;
-  font-size: 13px;
-  color: rgba(229, 231, 235, 0.72);
-}
+.subtitle { margin: 6px 0 0; font-size: 13px; color: rgba(229, 231, 235, 0.72); }
 
 .auth-tabs {
   display: grid;
@@ -212,20 +180,9 @@ nav button.active {
   cursor: pointer;
   font-weight: 700;
 }
-
-.tab:active {
-  transform: scale(0.98);
-}
-
-.tab.active {
-  background: rgba(255, 255, 255, 0.14);
-  color: #ffffff;
-}
-
-.tab:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
+.tab:active { transform: scale(0.98); }
+.tab.active { background: rgba(255, 255, 255, 0.14); color: #ffffff; }
+.tab:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .auth-error {
   display: inline-flex;
@@ -241,11 +198,7 @@ nav button.active {
   font-size: 13px;
 }
 
-.auth-form {
-  display: grid;
-  gap: 12px;
-  margin-top: 10px;
-}
+.auth-form { display: grid; gap: 12px; margin-top: 10px; }
 
 .field label {
   display: block;
@@ -266,20 +219,13 @@ nav button.active {
   outline: none;
   text-align: center;
 }
-
 .auth-form input:focus {
   border-color: rgba(99, 102, 241, 0.55);
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18);
 }
 
-.input-wrap {
-  position: relative;
-  width: 100%;
-}
-
-.input-wrap input {
-  padding-right: 52px;
-}
+.input-wrap { position: relative; width: 100%; }
+.input-wrap input { padding-right: 52px; }
 
 .pw-toggle {
   position: absolute;
@@ -309,16 +255,11 @@ nav button.active {
   background: linear-gradient(135deg, rgba(99, 102, 241, 1), rgba(16, 185, 129, 1));
   cursor: pointer;
 }
+.auth-submit:disabled { opacity: 0.55; cursor: not-allowed; }
 
-.auth-submit:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-/* ============================================================= */
-/* =================== APP SHELL (user view) =================== */
-/* ============================================================= */
-
+/* =======================
+   APP SHELL
+   ======================= */
 .app-shell {
   min-height: 100vh;
   background:
@@ -326,8 +267,10 @@ nav button.active {
     radial-gradient(900px 500px at 80% 20%, rgba(16, 185, 129, 0.08), transparent 55%),
     linear-gradient(180deg, #0b1220 0%, #070a12 100%);
   color: var(--text);
+  overflow-x: clip;
 }
 
+/* Topbar */
 .app-topbar {
   display: flex;
   justify-content: space-between;
@@ -338,26 +281,15 @@ nav button.active {
   backdrop-filter: blur(10px);
 }
 
-.app-title {
-  font-weight: 900;
-  letter-spacing: 0.2px;
-}
+.app-title { font-weight: 900; letter-spacing: 0.2px; }
+.app-user { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.app-user-name { color: rgba(229, 231, 235, 0.85); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.app-user {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.app-user-name {
-  color: rgba(229, 231, 235, 0.85);
-}
-
+/* Main */
 .app-main {
   padding: 18px;
   display: grid;
   place-items: start center;
-  min-width: 0;
 }
 
 .app-card {
@@ -368,8 +300,7 @@ nav button.active {
   border: 1px solid var(--border);
   box-shadow: 0 16px 50px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(10px);
-  overflow: hidden; /* prevents right overflow from children */
-  min-width: 0;
+  overflow-x: clip; /* IMPORTANT: prevent children forcing width */
 }
 
 .app-h1 {
@@ -380,26 +311,15 @@ nav button.active {
   color: #fff;
 }
 
-.app-h2 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 800;
-  color: #fff;
-}
+.app-h2 { margin: 0; font-size: 16px; font-weight: 800; color: #fff; }
 
-.app-section {
-  display: grid;
-  gap: 12px;
-  min-width: 0;
-}
-
+.app-section { display: grid; gap: 12px; }
 .app-section-header {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
   justify-content: space-between;
-  min-width: 0;
 }
 
 .app-actions {
@@ -407,13 +327,9 @@ nav button.active {
   flex-wrap: wrap;
   gap: 10px;
   justify-content: center;
-  min-width: 0;
 }
 
-.app-muted {
-  text-align: center;
-  color: rgba(229, 231, 235, 0.60);
-}
+.app-muted { text-align: center; color: rgba(229, 231, 235, 0.60); }
 
 /* Buttons */
 .app-btn {
@@ -425,29 +341,24 @@ nav button.active {
   cursor: pointer;
   font-weight: 800;
 }
-
 .app-btn-primary {
   border: 0;
   color: #061018;
   background: linear-gradient(135deg, rgba(99, 102, 241, 1), rgba(16, 185, 129, 1));
 }
-
 .app-btn-danger {
   border: 1px solid rgba(239, 68, 68, 0.22);
   background: rgba(239, 68, 68, 0.12);
   color: rgba(254, 226, 226, 0.95);
 }
+.app-btn-active { background: rgba(255, 255, 255, 0.14); }
 
-.app-btn-active {
-  background: rgba(255, 255, 255, 0.14);
-}
-
-/* ============================================================= */
-/* ========================= TABLES ============================ */
-/* ============================================================= */
-
+/* =======================
+   TABLES
+   ======================= */
 .app-table-wrap {
   width: 100%;
+  max-width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   border-radius: 18px;
@@ -457,7 +368,7 @@ nav button.active {
 .app-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 720px;
+  min-width: 720px; /* desktop default */
   background: rgba(3, 7, 18, 0.35);
 }
 
@@ -471,7 +382,6 @@ nav button.active {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 .app-table th {
   color: rgba(229, 231, 235, 0.72);
   font-size: 12px;
@@ -479,22 +389,16 @@ nav button.active {
   text-transform: uppercase;
 }
 
-/* ============================================================= */
-/* ======================= STARTING XI ========================= */
-/* ============================================================= */
-
-.starting-xi-root {
-  width: 100%;
-  min-width: 0;
-}
-
+/* =======================
+   STARTING XI
+   ======================= */
+.starting-xi-root { width: 100%; }
 .starting-xi-card {
   width: 100%;
   max-width: 980px;
   margin: 0 auto;
   padding: 0;
   text-align: center;
-  min-width: 0;
 }
 
 .starting-xi-header {
@@ -547,19 +451,12 @@ nav button.active {
 }
 
 /* Formation dropdown */
-.meta-formation {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
+.meta-formation { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 10px; }
 
 .formation-select {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-
   border-radius: 999px;
   padding: 8px 34px 8px 12px;
   border: 1px solid rgba(255, 255, 255, 0.10);
@@ -569,11 +466,9 @@ nav button.active {
   font-size: 12px;
   cursor: pointer;
   outline: none;
-
   text-align: center;
   text-align-last: center;
 }
-
 .meta-formation::after {
   content: "▾";
   position: absolute;
@@ -585,10 +480,9 @@ nav button.active {
   font-size: 12px;
 }
 
-/* =========================
-   PITCH — DESKTOP/TABLET (your existing look)
-   ========================= */
-
+/* =======================
+   PITCH (desktop/tablet)
+   ======================= */
 .pitch {
   position: relative;
   border-radius: 18px;
@@ -599,9 +493,8 @@ nav button.active {
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
   margin: 16px 0;
-  min-width: 0;
+  max-width: 100%;
 
-  /* sizing tokens */
   --slot: 160px;
   --gap: 12px;
 }
@@ -620,10 +513,9 @@ nav button.active {
   gap: var(--gap);
   justify-content: center;
   margin: 14px 0;
-  min-width: 0;
 }
 
-/* Desktop: fixed-ish cards, centered */
+/* Desktop columns */
 .pitch-row.pitch-cols-1 { grid-template-columns: repeat(1, minmax(0, var(--slot))); }
 .pitch-row.pitch-cols-2 { grid-template-columns: repeat(2, minmax(0, var(--slot))); }
 .pitch-row.pitch-cols-3 { grid-template-columns: repeat(3, minmax(0, var(--slot))); }
@@ -637,48 +529,32 @@ nav button.active {
   padding: 12px 10px;
   min-height: 74px;
   cursor: pointer;
-
   background: rgba(3, 7, 18, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.10);
   user-select: none;
-
   display: grid;
   place-items: center;
   text-align: center;
-  min-width: 0;
 }
+.slot:active { transform: scale(0.97); }
+.slot-filled { border-color: rgba(99, 102, 241, 0.60); background: rgba(99, 102, 241, 0.12); }
+.slot-empty { font-weight: 900; letter-spacing: 0.4px; color: rgba(229, 231, 235, 0.75); pointer-events: none; }
 
-.slot:active {
-  transform: scale(0.97);
-}
-
-.slot-filled {
-  border-color: rgba(99, 102, 241, 0.60);
-  background: rgba(99, 102, 241, 0.12);
-}
-
-.slot-empty {
-  font-weight: 900;
-  letter-spacing: 0.4px;
-  color: rgba(229, 231, 235, 0.75);
-  pointer-events: none;
-}
-
-/* Player chip */
 .player-chip {
   width: 100%;
-  min-width: 0;
   display: grid;
   gap: 4px;
   justify-items: center;
   text-align: center;
-  position: relative; /* for top-right swap button */
+  position: relative;
 }
 
 .player-name,
 .player-team {
   max-width: 100%;
   overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .player-name {
@@ -686,68 +562,34 @@ nav button.active {
   color: #fff;
   font-size: 13px;
   line-height: 1.1;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  padding-right: 26px; /* room for top-right icon */
+  padding-right: 26px;
 }
+.player-team { font-size: 12px; color: rgba(229, 231, 235, 0.65); }
 
-.player-team {
-  font-size: 12px;
-  color: rgba(229, 231, 235, 0.65);
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-/* Swap icon ALWAYS top-right */
 .swap-slot {
   position: absolute;
   top: 6px;
   right: 6px;
-
   border: 1px solid rgba(255, 255, 255, 0.10);
   background: rgba(255, 255, 255, 0.06);
   color: rgba(255, 255, 255, 0.92);
-
   width: 26px;
   height: 26px;
   border-radius: 9px;
-
   cursor: pointer;
   display: grid;
   place-items: center;
-
   line-height: 1;
   padding: 0;
 }
 
 /* Bench */
-.pitch .bench-overlay {
-  width: min(92%, 760px);
-  margin: 0 auto;
-}
-
-.bench {
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.bench-row {
-  display: grid;
-  gap: 10px;
-  justify-content: center;
-  grid-template-columns: repeat(4, minmax(0, var(--slot)));
-}
+.pitch .bench-overlay { width: min(92%, 760px); margin: 0 auto; }
+.bench { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.12); }
+.bench-row { display: grid; gap: 10px; justify-content: center; grid-template-columns: repeat(4, minmax(0, var(--slot))); }
 
 /* Controls */
-.starting-xi-controls {
-  display: grid;
-  gap: 10px;
-  justify-items: center;
-  margin-top: 16px;
-  text-align: center;
-}
-
+.starting-xi-controls { display: grid; gap: 10px; justify-items: center; margin-top: 16px; text-align: center; }
 .xi-save {
   border: 0;
   border-radius: 14px;
@@ -757,44 +599,11 @@ nav button.active {
   background: linear-gradient(135deg, rgba(99, 102, 241, 1), rgba(16, 185, 129, 1));
   cursor: pointer;
 }
+.xi-save:disabled { opacity: 0.55; cursor: not-allowed; }
 
-.xi-save:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-/* ============================================================= */
-/* ======================== ADMIN PORTAL ======================= */
-/* ============================================================= */
-
-.admin-table-wrap {
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.admin-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 520px;
-  background: rgba(3, 7, 18, 0.35);
-}
-
-.admin-table th,
-.admin-table td {
-  padding: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  text-align: left;
-  color: rgba(229, 231, 235, 0.88);
-  font-size: 13px;
-}
-
-/* ============================================================= */
-/* ===================== SELECT READABILITY ==================== */
-/* ============================================================= */
-
+/* =======================
+   SELECT READABILITY
+   ======================= */
 select.app-btn,
 .app-btn select,
 select {
@@ -802,22 +611,17 @@ select {
   background-color: rgba(3, 7, 18, 0.75);
   border-color: rgba(255, 255, 255, 0.14);
 }
+select option { background-color: #0b1220; color: #e5e7eb; }
 
-select option {
-  background-color: #0b1220;
-  color: #e5e7eb;
-}
-
-/* ============================================================= */
-/* ===================== RESPONSIVE DESIGN ===================== */
-/* ============================================================= */
-
+/* =======================
+   RESPONSIVE
+   ======================= */
 @media (max-width: 1024px) {
   .app-main { padding: 12px; }
   .app-card { border-radius: 18px; padding: 14px; }
 }
 
-/* Mobile header + scroll tabs */
+/* Tablet/mobile topbar + scroll tabs */
 @media (max-width: 768px) {
   .app-topbar {
     position: sticky;
@@ -829,22 +633,16 @@ select option {
     padding: 12px;
   }
 
-  .app-user {
-    width: 100%;
-    justify-content: space-between;
-  }
+  .app-user { width: 100%; justify-content: space-between; }
 
-  .app-section-header {
-    flex-direction: column;
-    gap: 10px;
-  }
+  .app-section-header { flex-direction: column; gap: 10px; }
 
   .app-actions {
     width: 100%;
     flex-wrap: nowrap;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    justify-content: center; /* centered tabs */
+    justify-content: flex-start;
     gap: 8px;
     padding: 4px 2px 8px;
     scrollbar-width: none;
@@ -860,15 +658,21 @@ select option {
     font-size: 12px;
     min-height: 36px;
   }
+
+  /* Tables: allow more natural scroll widths on tablet */
+  .app-table { min-width: 640px; }
 }
 
+/* =======================
+   MOBILE PITCH (fixed height, and NO overflow)
+   + auto-fit slot width to prevent right overflow
+   ======================= */
 @media (max-width: 520px) {
   .pitch {
-    /* width chosen to fit 5 columns on ~360px screens */
-    --slotW: clamp(56px, 18vw, 86px);
-    --slotH: 56px;                 /* <- stable height */
+    --slotW: clamp(54px, 18vw, 84px);
+    --slotH: 56px;
     --gap: clamp(6px, 2vw, 10px);
-    overflow: hidden; 
+    overflow: hidden;
     width: 100%;
     max-width: 520px;
     margin: 10px auto;
@@ -885,232 +689,76 @@ select option {
     align-content: center;
   }
 
-  /* fixed columns; NO 1fr */
-  .pitch-row.pitch-cols-1 { grid-template-columns: repeat(1, var(--slotW)); }
-  .pitch-row.pitch-cols-2 { grid-template-columns: repeat(2, var(--slotW)); }
-  .pitch-row.pitch-cols-3 { grid-template-columns: repeat(3, var(--slotW)); }
-  .pitch-row.pitch-cols-4 { grid-template-columns: repeat(4, var(--slotW)); }
-  .pitch-row.pitch-cols-5 { grid-template-columns: repeat(5, var(--slotW)); }
+  /* column count vars */
+  .pitch-row.pitch-cols-1 { --cols: 1; grid-template-columns: repeat(1, var(--slotW)); }
+  .pitch-row.pitch-cols-2 { --cols: 2; grid-template-columns: repeat(2, var(--slotW)); }
+  .pitch-row.pitch-cols-3 { --cols: 3; grid-template-columns: repeat(3, var(--slotW)); }
+  .pitch-row.pitch-cols-4 { --cols: 4; grid-template-columns: repeat(4, var(--slotW)); }
+  .pitch-row.pitch-cols-5 { --cols: 5; grid-template-columns: repeat(5, var(--slotW)); }
+
+  /* compute a slot width that MUST fit */
+  .pitch-row { --slotFit: calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols)); }
 
   .slot {
-    width: var(--slotW);
-    height: var(--slotH);          /* <- fixed */
+    width: min(var(--slotW), var(--slotFit));
+    height: var(--slotH);
     min-height: 0;
     padding: 6px;
     border-radius: 12px;
-    display: grid;
-    place-items: center;
   }
 
-  .slot-empty {
-    font-size: 12px;
-    letter-spacing: 0.2px;
-  }
+  .slot-empty { font-size: 12px; letter-spacing: 0.2px; }
 
-  /* keep text from breaking layout */
-  .player-chip { width: 100%; min-width: 0; }
-  .player-name {
-    font-size: 10.5px;
-    line-height: 1.05;
-    padding-right: 18px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .player-team {
-    font-size: 9px;
-    line-height: 1.05;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    opacity: 0.85;
-  }
+  .player-name { font-size: 10.5px; line-height: 1.05; padding-right: 18px; }
+  .player-team { font-size: 9px; line-height: 1.05; opacity: 0.85; }
 
-  .swap-slot {
-    width: 16px;
-    height: 16px;
-    border-radius: 6px;
-    font-size: 10px;
-    top: 5px;
-    right: 5px;
-  }
+  .swap-slot { width: 16px; height: 16px; border-radius: 6px; font-size: 10px; top: 5px; right: 5px; }
 
   .pitch .bench-overlay { width: 100%; margin: 0 auto; }
+
   .bench-row {
+    --cols: 4;
+    --slotFit: calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols));
     gap: var(--gap);
     justify-content: center;
     grid-template-columns: repeat(4, var(--slotW));
   }
+  .bench-row .slot { width: min(var(--slotW), var(--slotFit)); }
+
+  /* Mobile card padding smaller (big source of “mess”) */
+  .app-main { padding: 10px; }
+  .app-card { padding: 12px; border-radius: 16px; }
+
+  /* Tables: don’t force huge min-widths on phones */
+  .app-table { min-width: 520px; }
 }
 
-/* extra tiny phones */
+/* Extra tiny phones */
 @media (max-width: 380px) {
-  .pitch {
-    --slotW: clamp(52px, 19vw, 78px);
-    --slotH: 52px;
-    --gap: 6px;
-  }
+  .pitch { --slotW: clamp(50px, 19vw, 76px); --slotH: 52px; --gap: 6px; }
   .player-name { font-size: 10px; }
   .player-team { font-size: 8.6px; }
   .swap-slot { width: 15px; height: 15px; font-size: 9px; }
+  .app-table { min-width: 500px; }
 }
 
-/* =========================================================
-   LEADERBOARD (Tulostaulu) — responsive table
-   ========================================================= */
-
-.app-table-wrap--lb {
-  border-radius: 18px;
-}
-
-/* Tablet: tighter padding + readable */
-@media (max-width: 768px) {
-  .app-table--lb {
-    min-width: 560px; /* allow scroll if needed, but not crazy wide */
-  }
-
-  .app-table--lb th,
-  .app-table--lb td {
-    padding: 10px;
-    font-size: 12.5px;
-  }
-}
-
-/* Mobile: "phone-first" leaderboard */
-@media (max-width: 520px) {
-  .app-table-wrap--lb {
-    border-radius: 16px;
-  }
-
-  .app-table--lb {
-    min-width: 520px; /* keeps columns intact; container scrolls */
-  }
-
-  .app-table--lb th,
-  .app-table--lb td {
-    padding: 9px;
-    font-size: 12px;
-  }
-
-  /* Make username column behave nicely */
-  .app-table--lb td:nth-child(3),
-  .app-table--lb th:nth-child(3) {
-    max-width: 180px;
-  }
-
-  /* Keep numbers compact */
-  .app-table--lb td:nth-child(4),
-  .app-table--lb td:nth-child(5),
-  .app-table--lb th:nth-child(4),
-  .app-table--lb th:nth-child(5) {
-    width: 110px;
-  }
-
-  /* Sticky header is nice on scroll */
-  .app-table--lb thead th {
-    position: sticky;
-    top: 0;
-    background: rgba(3, 7, 18, 0.88);
-    backdrop-filter: blur(10px);
-    z-index: 1;
-  }
-}
-
-/* Extra tiny phones: a bit more compact */
-@media (max-width: 380px) {
-  .app-table--lb { min-width: 500px; }
-
-  .app-table--lb th,
-  .app-table--lb td {
-    padding: 8px;
-    font-size: 11.5px;
-  }
-}
-
-/* =========================================================
-   GLOBAL LAYOUT HARDENING (prevents mobile overflow)
-   Put this at the VERY END of styles.css
-   ========================================================= */
-
-html, body {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
-}
-
-#root {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
-}
-
-/* Critical: allow flex/grid children to shrink instead of forcing overflow */
-.app-shell,
-.app-main,
-.app-card,
-.app-section,
-.app-section-header,
-.app-actions,
-.starting-xi-root,
-.starting-xi-card,
-.pitch,
-.pitch-row,
-.bench-row {
-  min-width: 0;
-}
-
-/* Flex + grid children often need this too */
-.app-section > *,
-.app-section-header > *,
-.app-actions > * {
-  min-width: 0;
-}
-
-/* Safer overflow handling on modern mobile browsers */
-.app-shell {
-  overflow-x: clip; /* better than hidden on some browsers */
-}
-
-/* Cards: avoid content forcing width */
-.app-card {
-  max-width: 1100px;
-  width: 100%;
-  overflow-x: clip; /* tables should scroll inside wraps instead */
-}
-
-/* =========================================================
-   TABLES — always scroll inside wrapper, never push page
-   ========================================================= */
-
-.app-table-wrap {
-  max-width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.app-table {
-  max-width: 100%;
-}
-
-/* =========================================================
-   LEADERBOARD (Tulostaulu) — responsive table
-   ========================================================= */
-
-.app-table-wrap--lb {
-  max-width: 100%;
-  border-radius: 18px;
-}
+/* =======================
+   LEADERBOARD (Tulostaulu)
+   ======================= */
+.app-table-wrap--lb { border-radius: 18px; }
 
 @media (max-width: 768px) {
   .app-table--lb { min-width: 560px; }
-  .app-table--lb th,
-  .app-table--lb td { padding: 10px; font-size: 12.5px; }
+  .app-table--lb th, .app-table--lb td { padding: 10px; font-size: 12.5px; }
 }
 
 @media (max-width: 520px) {
+  .app-table-wrap--lb { border-radius: 16px; }
   .app-table--lb { min-width: 520px; }
-  .app-table--lb th,
-  .app-table--lb td { padding: 9px; font-size: 12px; }
+  .app-table--lb th, .app-table--lb td { padding: 9px; font-size: 12px; }
+
+  .app-table--lb td:nth-child(3),
+  .app-table--lb th:nth-child(3) { max-width: 180px; }
 
   .app-table--lb thead th {
     position: sticky;
@@ -1121,72 +769,29 @@ html, body {
   }
 }
 
-/* =========================================================
-   ADMIN PORTAL — FIX MOBILE/TABLET OVERFLOW KILLERS
-   ========================================================= */
-
-/* scoring rows */
+/* =======================
+   ADMIN PORTAL RESPONSIVE
+   ======================= */
 .admin-row {
-  display: grid;
-  gap: 8px;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid rgba(0,0,0,0.08);
-
-  /* desktop default (matches your original intent) */
+  /* defaults already set via class above; keep here in case file order differs */
   grid-template-columns: minmax(100px, 170px) 70px 180px 100px;
 }
 
-/* tablet: simplify */
 @media (max-width: 920px) {
-  .admin-row {
-    grid-template-columns: 1fr 110px;
-    gap: 10px;
-  }
+  .admin-row { grid-template-columns: 1fr 110px; }
 }
 
-/* phone: stack everything */
 @media (max-width: 520px) {
-  .admin-row {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-
-  .admin-row input,
-  .admin-row select {
-    width: 100%;
-    max-width: 100%;
-  }
+  .admin-row { grid-template-columns: 1fr; }
 }
 
-/* home/away grid container */
+/* Home/away panels */
 .admin-two-col {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   margin-bottom: 12px;
 }
-
 @media (max-width: 768px) {
-  .admin-two-col {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* =========================================================
-   APP ACTIONS (tabs) — prevent hidden overflow weirdness
-   ========================================================= */
-@media (max-width: 768px) {
-  .app-actions {
-    min-width: 0;
-    max-width: 100%;
-    overflow-x: auto;
-  }
-}
-
-/* =========================================================
-   PITCH — ensure it can never push width
-   ========================================================= */
-.pitch {
-  max-width: 100%;
+  .admin-two-col { grid-template-columns: 1fr; }
 }
