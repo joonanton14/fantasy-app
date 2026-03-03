@@ -116,6 +116,7 @@ export const StartingXI: FC<{
 
   useEffect(() => {
     setFormation(initialFormation);
+
     const s = buildSlots(initialFormation);
     setSlots(s);
 
@@ -157,6 +158,7 @@ export const StartingXI: FC<{
       const idx = leftovers.findIndex((p) => p.position === "GK");
       if (idx >= 0) bMap["bench-gk"] = leftovers.splice(idx, 1)[0];
     }
+
     for (const bid of ["bench-1", "bench-2", "bench-3"] as const) {
       if (bMap[bid]) continue;
       const idx = leftovers.findIndex((p) => p.position !== "GK");
@@ -170,13 +172,18 @@ export const StartingXI: FC<{
   }, [poolSet, initialFormation, initialXI, initialBench, squad]);
 
   const xiPlayers = useMemo(() => Object.values(xiAssign).filter(Boolean) as Player[], [xiAssign]);
-  const benchPlayers = useMemo(() => (Object.values(benchAssign).filter(Boolean) as Player[]), [benchAssign]);
+  const benchPlayers = useMemo(() => Object.values(benchAssign).filter(Boolean) as Player[], [benchAssign]);
+
   const pickedIds = useMemo(() => new Set([...xiPlayers, ...benchPlayers].map((p) => p.id)), [xiPlayers, benchPlayers]);
 
-  const totalValue = useMemo(() => [...xiPlayers, ...benchPlayers].reduce((s, p) => s + p.value, 0), [xiPlayers, benchPlayers]);
-  const remainingBudget = budget - totalValue;
+  const totalValue = useMemo(
+    () => [...xiPlayers, ...benchPlayers].reduce((s, p) => s + p.value, 0),
+    [xiPlayers, benchPlayers]
+  );
 
+  const remainingBudget = budget - totalValue;
   const f = FORMATIONS[formation];
+
   const xiCounts = useMemo(() => {
     const c: Record<Position, number> = { GK: 0, DEF: 0, MID: 0, FWD: 0 };
     for (const p of xiPlayers) c[p.position] += 1;
@@ -195,13 +202,13 @@ export const StartingXI: FC<{
 
     const gk = benchAssign["bench-gk"];
     if (!gk || gk.position !== "GK") return false;
+
     for (const id of ["bench-1", "bench-2", "bench-3"] as const) {
       const p = benchAssign[id];
       if (!p || p.position === "GK") return false;
     }
 
     for (const p of [...xiPlayers, ...benchPlayers]) if (!poolSet.has(p.id)) return false;
-
     if (pickedIds.size !== 15) return false;
 
     return remainingBudget >= 0;
@@ -287,51 +294,78 @@ export const StartingXI: FC<{
 
   const saveDisabled = !isValid();
 
+  const PlayerSlot = ({
+    area,
+    slotId,
+    assigned,
+    emptyLabel,
+    onSlotClick,
+  }: {
+    area: "xi" | "bench";
+    slotId: string;
+    assigned: Player | null | undefined;
+    emptyLabel: string;
+    onSlotClick: () => void;
+  }) => {
+    const canSwap = !readOnly;
+
+    return (
+      <div
+        className={`slot ${assigned ? "slot-filled" : ""}`}
+        onClick={onSlotClick}
+        role="button"
+        tabIndex={0}
+      >
+        {assigned ? (
+          <>
+            {canSwap && (
+              <button
+                type="button"
+                className="swap-slot"
+                title="Vaihda pelaaja"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  beginSwap(area, slotId);
+                }}
+              >
+                ⇄
+              </button>
+            )}
+
+            <div className="player-chip">
+              <div className="player-name">{lastName(assigned.name)}</div>
+              <div className="player-team">{teamName(teams, assigned.teamId)}</div>
+            </div>
+          </>
+        ) : (
+          <div className="slot-empty">{emptyLabel}</div>
+        )}
+      </div>
+    );
+  };
+
   const Row = ({ position }: { position: Position }) => {
     const rowSlots = slots.filter((s) => s.position === position);
 
     return (
       <div className={`pitch-row pitch-cols-${rowSlots.length}`}>
         {rowSlots.map((s) => {
-          const assigned = xiAssign[s.id];
-          const canSwap = !readOnly;
+          const assigned = xiAssign[s.id] ?? null;
 
           return (
-            <div
+            <PlayerSlot
               key={s.id}
-              className={`slot ${assigned ? "slot-filled" : ""}`}
-              onClick={() => {
+              area="xi"
+              slotId={s.id}
+              assigned={assigned}
+              emptyLabel={s.label}
+              onSlotClick={() => {
                 if (readOnly) return;
                 if (swapSource && swapSource.area === "bench" && assigned) {
                   trySwap("xi", s.id);
                 }
               }}
-              role="button"
-              tabIndex={0}
-            >
-              {assigned ? (
-                <div className="player-chip">
-                  <div className="player-name">{lastName(assigned.name)}</div>
-                  <div className="player-team">{teamName(teams, assigned.teamId)}</div>
-
-                  {canSwap && (
-                    <button
-                      type="button"
-                      className="swap-slot"
-                      title="Vaihda pelaaja"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        beginSwap("xi", s.id);
-                      }}
-                    >
-                      ⇄
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div className="slot-empty">{s.label}</div>
-              )}
-            </div>
+            />
           );
         })}
       </div>
@@ -344,44 +378,21 @@ export const StartingXI: FC<{
         <div className="bench-row">
           {BENCH_SLOTS.map((s) => {
             const assigned = benchAssign[s.id] ?? null;
-            const canSwap = !readOnly;
 
             return (
-              <div
+              <PlayerSlot
                 key={s.id}
-                className={`slot ${assigned ? "slot-filled" : ""}`}
-                onClick={() => {
+                area="bench"
+                slotId={s.id}
+                assigned={assigned}
+                emptyLabel={s.label}
+                onSlotClick={() => {
                   if (readOnly) return;
                   if (swapSource && swapSource.area === "xi" && assigned) {
                     trySwap("bench", s.id);
                   }
                 }}
-                role="button"
-                tabIndex={0}
-              >
-                {assigned ? (
-                  <div className="player-chip">
-                    <div className="player-name">{lastName(assigned.name)}</div>
-                    <div className="player-team">{teamName(teams, assigned.teamId)}</div>
-
-                    {canSwap && (
-                      <button
-                        type="button"
-                        className="swap-slot"
-                        title="Vaihda pelaaja"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          beginSwap("bench", s.id);
-                        }}
-                      >
-                        ⇄
-                      </button>
-                    )}
-                  </div>
-                ) : (
-                  <div className="slot-empty">{s.label}</div>
-                )}
-              </div>
+              />
             );
           })}
         </div>
@@ -408,6 +419,7 @@ export const StartingXI: FC<{
       <div className="starting-xi-card">
         <header className="starting-xi-header">
           <h3>Avauskokoonpano</h3>
+
           <div className="starting-xi-meta">
             <div className="meta-pill meta-formation">
               <select
@@ -437,6 +449,8 @@ export const StartingXI: FC<{
           <Row position="DEF" />
           <Row position="MID" />
           <Row position="FWD" />
+
+          {/* Keep bench INSIDE pitch exactly like you want */}
           <div className="bench-overlay">
             <Bench />
           </div>

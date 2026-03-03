@@ -329,7 +329,7 @@ export default function App() {
     setStartingXI([]);
     setBench([]);
 
-    setSavedFormation("4-4-2"); // TODO Why reset formation on logout? Should we? Maybe keep it in localStorage?
+    // setSavedFormation("4-4-2"); // TODO Why reset formation on logout? Should we? Maybe keep it in localStorage?
 
     setPage("builder");
     setTeamViewTab("startingXI");
