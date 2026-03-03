@@ -953,3 +953,186 @@ select option {
   .swap-slot { width: 15px; height: 15px; font-size: 9px; }
   .bench-row { gap: 5px; }
 }
+
+/* =====================================================================
+   MOBILE HOTFIX (append at END)
+   Fixes: huge slots, GK full-width, tabs cut off, swap icon position
+   ===================================================================== */
+
+.swap-slot {
+  /* ALWAYS top-right (desktop + mobile) */
+  position: absolute !important;
+  top: 6px !important;
+  right: 6px !important;
+  margin: 0 !important;
+}
+
+/* Make sure the icon anchors correctly */
+.player-chip {
+  position: relative !important;
+}
+
+/* -------------------- Mobile (phones) -------------------- */
+@media (max-width: 520px) {
+  /* Topbar smaller */
+  .app-topbar {
+    padding: 10px !important;
+    gap: 8px !important;
+  }
+
+  .app-title {
+    font-size: 16px !important;
+    text-align: center !important;
+  }
+
+  .app-user {
+    width: 100% !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+  }
+
+  .app-user-name {
+    font-size: 13px !important;
+  }
+
+  .app-btn-danger {
+    padding: 8px 10px !important;
+    font-size: 13px !important;
+    border-radius: 14px !important;
+  }
+
+  /* Tabs: centered + scrollable (no cutting) */
+  .app-actions {
+    justify-content: flex-start !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 6px 4px 10px !important;
+    gap: 8px !important;
+    scrollbar-width: none;
+  }
+  .app-actions::-webkit-scrollbar { display: none; }
+
+  .app-actions .app-btn,
+  .app-actions button {
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+    font-size: 12px !important;
+    padding: 8px 10px !important;
+    min-height: 34px !important;
+    border-radius: 999px !important;
+  }
+
+  /* StartingXI header smaller */
+  .starting-xi-header {
+    gap: 8px !important;
+    margin-bottom: 10px !important;
+  }
+
+  .starting-xi-header h3 {
+    font-size: 16px !important;
+    line-height: 1.1 !important;
+    margin: 0 !important;
+  }
+
+  .meta-pill {
+    padding: 6px 10px !important;
+    font-size: 11px !important;
+  }
+
+  .formation-select {
+    font-size: 11px !important;
+    padding: 6px 28px 6px 10px !important;
+  }
+
+  /* ---------- KEY FIX: shrink the pitch itself on phones ---------- */
+  .pitch {
+    width: 100% !important;
+    max-width: 380px !important;     /* makes all rows/cards smaller naturally */
+    margin: 10px auto !important;
+    padding: 10px !important;
+  }
+
+  .pitch::before {
+    inset: 10px !important;
+  }
+
+  .pitch-row {
+    gap: 6px !important;
+    margin: 10px 0 !important;
+    justify-content: center !important;
+  }
+
+  /* Keep formation structure */
+  .pitch-row.pitch-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .pitch-row.pitch-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+  .pitch-row.pitch-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+  .pitch-row.pitch-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
+
+  /* GK: centered, NOT full width */
+  .pitch-row.pitch-cols-1 {
+    grid-template-columns: minmax(0, 62%) !important;
+    justify-content: center !important;
+  }
+
+  /* Slot size: compact (REMOVE the big-card behavior) */
+  .slot {
+    min-height: 46px !important;
+    padding: 6px !important;
+    border-radius: 12px !important;
+  }
+
+  .slot-empty {
+    font-size: 12px !important;
+    letter-spacing: 0.2px !important;
+  }
+
+  /* Text: readable & compact */
+  .player-name {
+    font-size: 10.5px !important;
+    line-height: 1.05 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    padding-right: 18px !important; /* room for icon */
+  }
+
+  .player-team {
+    font-size: 9px !important;
+    line-height: 1.05 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    opacity: 0.85 !important;
+  }
+
+  /* Icon smaller on phones */
+  .swap-slot {
+    width: 16px !important;
+    height: 16px !important;
+    border-radius: 6px !important;
+    font-size: 10px !important;
+    top: 5px !important;
+    right: 5px !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+  }
+
+  /* Bench stays as you have it (works for you) */
+  .pitch .bench-overlay {
+    width: 100% !important;
+    margin: 0 auto !important;
+  }
+
+  .bench-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+}
+
+/* Extra tiny phones */
+@media (max-width: 380px) {
+  .pitch { max-width: 350px !important; }
+  .slot { min-height: 44px !important; }
+  .player-name { font-size: 10px !important; }
+  .player-team { font-size: 8.5px !important; }
+}
