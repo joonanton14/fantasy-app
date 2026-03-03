@@ -666,7 +666,7 @@ nav button.active {
 
 /* Player chip */
 .player-chip {
-  width: 95%;
+  width: 100%;
   min-width: 0;
   display: grid;
   gap: 2px;
@@ -688,7 +688,7 @@ nav button.active {
   line-height: 1.1;
   white-space: nowrap;
   text-overflow: ellipsis;
-  padding-right: 26px; /* room for top-right icon */
+  padding-right: 20px; /* room for top-right icon */
 }
 
 .player-team {
@@ -877,8 +877,8 @@ select option {
 
 @media (max-width: 520px) {
   .pitch {
-    --slot: 86px;  /* <-- constant size on mobile */
-    --gap: 10px;
+    --slot: 80px;  /* <-- constant size on mobile */
+    --gap: 8px;
 
     width: 100%;
     max-width: 520px;
