@@ -666,10 +666,10 @@ nav button.active {
 
 /* Player chip */
 .player-chip {
-  width: 100%;
+  width: 95%;
   min-width: 0;
   display: grid;
-  gap: 4px;
+  gap: 2px;
   justify-items: center;
   text-align: center;
   position: relative; /* for top-right swap button */
