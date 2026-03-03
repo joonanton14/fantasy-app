@@ -48,6 +48,14 @@ function teamName(teams: Team[], teamId: number) {
   return teams.find((t) => t.id === teamId)?.name ?? "";
 }
 
+function lastName(full: string) {
+  const s = (full ?? "").trim();
+  if (!s) return "";
+  // handle multiple spaces + hyphens etc.
+  const parts = s.split(/\s+/);
+  return parts[parts.length - 1];
+}
+
 function uniqById(list: Player[]) {
   const seen = new Set<number>();
   const out: Player[] = [];
@@ -316,7 +324,7 @@ export const StartingXI: FC<{
             >
               {assigned ? (
                 <div className="player-chip">
-                  <div className="player-name">{assigned.name}</div>
+                  <div className="player-name">{lastName(assigned.name)}</div>
                   <div className="player-team">{teamName(teams, assigned.teamId)}</div>
 
                   {canSwap && (
@@ -366,7 +374,7 @@ export const StartingXI: FC<{
               >
                 {assigned ? (
                   <div className="player-chip">
-                    <div className="player-name">{assigned.name}</div>
+                    <div className="player-name">{lastName(assigned.name)}</div>
                     <div className="player-team">{teamName(teams, assigned.teamId)}</div>
 
                     {canSwap && (
