@@ -669,7 +669,7 @@ nav button.active {
   width: 100%;
   min-width: 0;
   display: grid;
-  gap: 2px;
+  gap: 4px;
   justify-items: center;
   text-align: center;
   position: relative; /* for top-right swap button */
@@ -688,7 +688,7 @@ nav button.active {
   line-height: 1.1;
   white-space: nowrap;
   text-overflow: ellipsis;
-  padding-right: 20px; /* room for top-right icon */
+  padding-right: 26px; /* room for top-right icon */
 }
 
 .player-team {
@@ -862,23 +862,12 @@ select option {
   }
 }
 
-/* =========================================================
-   MOBILE PITCH (single source of truth)
-   - cards have a real size (clamped), not "fill the row"
-   - rows center the cards
-   - GK uses normal card width (no full-width)
-   ========================================================= */
-
-/* =========================================================
-   MOBILE PITCH — fixed card size (constant)
-   - slot size is constant on phones
-   - rows just center N cards and distribute empty space as gaps
-   ========================================================= */
-
 @media (max-width: 520px) {
   .pitch {
-    --slot: 80px;  /* <-- constant size on mobile */
-    --gap: 8px;
+    /* width chosen to fit 5 columns on ~360px screens */
+    --slotW: clamp(56px, 18vw, 86px);
+    --slotH: 56px;                 /* <- stable height */
+    --gap: clamp(6px, 2vw, 10px);
 
     width: 100%;
     max-width: 520px;
@@ -892,37 +881,48 @@ select option {
     width: 100%;
     margin: 10px 0;
     gap: var(--gap);
-
-    /* center the fixed-width cards */
     justify-content: center;
-    justify-items: stretch;
+    align-content: center;
   }
 
-  /* IMPORTANT: fixed-size columns (NO 1fr, NO clamp) */
-  .pitch-row.pitch-cols-1 { grid-template-columns: repeat(1, var(--slot)); }
-  .pitch-row.pitch-cols-2 { grid-template-columns: repeat(2, var(--slot)); }
-  .pitch-row.pitch-cols-3 { grid-template-columns: repeat(3, var(--slot)); }
-  .pitch-row.pitch-cols-4 { grid-template-columns: repeat(4, var(--slot)); }
-  .pitch-row.pitch-cols-5 { grid-template-columns: repeat(5, var(--slot)); }
+  /* fixed columns; NO 1fr */
+  .pitch-row.pitch-cols-1 { grid-template-columns: repeat(1, var(--slotW)); }
+  .pitch-row.pitch-cols-2 { grid-template-columns: repeat(2, var(--slotW)); }
+  .pitch-row.pitch-cols-3 { grid-template-columns: repeat(3, var(--slotW)); }
+  .pitch-row.pitch-cols-4 { grid-template-columns: repeat(4, var(--slotW)); }
+  .pitch-row.pitch-cols-5 { grid-template-columns: repeat(5, var(--slotW)); }
 
-  /* slot never stretches */
   .slot {
-    width: var(--slot);
+    width: var(--slotW);
+    height: var(--slotH);          /* <- fixed */
     min-height: 0;
-    aspect-ratio: 4 / 3;
     padding: 6px;
     border-radius: 12px;
+    display: grid;
+    place-items: center;
   }
 
+  .slot-empty {
+    font-size: 12px;
+    letter-spacing: 0.2px;
+  }
+
+  /* keep text from breaking layout */
+  .player-chip { width: 100%; min-width: 0; }
   .player-name {
     font-size: 10.5px;
     line-height: 1.05;
     padding-right: 18px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-
   .player-team {
     font-size: 9px;
     line-height: 1.05;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     opacity: 0.85;
   }
 
@@ -936,18 +936,20 @@ select option {
   }
 
   .pitch .bench-overlay { width: 100%; margin: 0 auto; }
-
   .bench-row {
     gap: var(--gap);
     justify-content: center;
-    grid-template-columns: repeat(4, var(--slot));
+    grid-template-columns: repeat(4, var(--slotW));
   }
 }
 
-/* Extra tiny phones: still constant, just a smaller constant */
+/* extra tiny phones */
 @media (max-width: 380px) {
-  .pitch { --slot: 78px; --gap: 8px; }
-  .slot { aspect-ratio: 3 / 2; }
+  .pitch {
+    --slotW: clamp(52px, 19vw, 78px);
+    --slotH: 52px;
+    --gap: 6px;
+  }
   .player-name { font-size: 10px; }
   .player-team { font-size: 8.6px; }
   .swap-slot { width: 15px; height: 15px; font-size: 9px; }
