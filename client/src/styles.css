@@ -1,5 +1,8 @@
 /* =======================================================================
    Veikkausliigapörssi — CLEAN styles.css (single system, no duplicates)
+   - Desktop: fixed formation cards (160px)
+   - Mobile: same card size for ALL rows (computed from 5-wide)
+   - Formation structure preserved (1..5 columns)
    ======================================================================= */
 
 /* -------------------- GLOBAL -------------------- */
@@ -216,18 +219,9 @@ nav button.active {
   font-weight: 700;
 }
 
-.tab:active {
-  transform: scale(0.98);
-}
-
 .tab.active {
   background: rgba(255, 255, 255, 0.14);
   color: #ffffff;
-}
-
-.tab:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
 }
 
 .auth-error {
@@ -270,11 +264,6 @@ nav button.active {
   text-align: center;
 }
 
-.auth-form input:focus {
-  border-color: rgba(99, 102, 241, 0.55);
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18);
-}
-
 .input-wrap {
   position: relative;
   width: 100%;
@@ -311,11 +300,6 @@ nav button.active {
   color: #061018;
   background: linear-gradient(135deg, rgba(99, 102, 241, 1), rgba(16, 185, 129, 1));
   cursor: pointer;
-}
-
-.auth-submit:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
 }
 
 /* ============================================================= */
@@ -371,7 +355,7 @@ nav button.active {
   border: 1px solid var(--border);
   box-shadow: 0 16px 50px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(10px);
-  overflow: hidden; /* prevents right overflow */
+  overflow: hidden;
   min-width: 0;
 }
 
@@ -446,43 +430,6 @@ nav button.active {
 }
 
 /* ============================================================= */
-/* ========================= TABLES ============================ */
-/* ============================================================= */
-
-.app-table-wrap {
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.app-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 720px;
-  background: rgba(3, 7, 18, 0.35);
-}
-
-.app-table th,
-.app-table td {
-  padding: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  text-align: left;
-  color: rgba(229, 231, 235, 0.88);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.app-table th {
-  color: rgba(229, 231, 235, 0.72);
-  font-size: 12px;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
-}
-
-/* ============================================================= */
 /* ======================= STARTING XI ========================= */
 /* ============================================================= */
 
@@ -536,19 +483,6 @@ nav button.active {
   font-weight: 700;
 }
 
-.starting-xi-warning {
-  display: inline-flex;
-  gap: 10px;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 12px;
-  border-radius: 14px;
-  background: rgba(239, 68, 68, 0.12);
-  border: 1px solid rgba(239, 68, 68, 0.22);
-  color: rgba(254, 226, 226, 0.95);
-  font-size: 13px;
-}
-
 /* Formation dropdown */
 .meta-formation {
   position: relative;
@@ -562,7 +496,6 @@ nav button.active {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-
   border-radius: 999px;
   padding: 8px 34px 8px 12px;
   border: 1px solid rgba(255, 255, 255, 0.10);
@@ -572,7 +505,6 @@ nav button.active {
   font-size: 12px;
   cursor: pointer;
   outline: none;
-
   text-align: center;
   text-align-last: center;
 }
@@ -588,7 +520,7 @@ nav button.active {
   font-size: 12px;
 }
 
-/* Pitch (single sizing system) */
+/* Pitch (ONE sizing system) */
 .pitch {
   position: relative;
 
@@ -623,9 +555,10 @@ nav button.active {
   justify-content: center;
   margin: 14px 0;
   min-width: 0;
+  width: 100%;
 }
 
-/* Always keep formation structure (1..5) */
+/* Keep formation structure (1..5 columns) */
 .pitch-row.pitch-cols-1 { grid-template-columns: repeat(1, minmax(0, var(--card-w))); }
 .pitch-row.pitch-cols-2 { grid-template-columns: repeat(2, minmax(0, var(--card-w))); }
 .pitch-row.pitch-cols-3 { grid-template-columns: repeat(3, minmax(0, var(--card-w))); }
@@ -638,11 +571,9 @@ nav button.active {
   padding: 12px 10px;
   min-height: var(--card-h);
   cursor: pointer;
-
   background: rgba(3, 7, 18, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.10);
   user-select: none;
-
   display: grid;
   place-items: center;
   text-align: center;
@@ -651,18 +582,6 @@ nav button.active {
 
 .slot:active {
   transform: scale(0.97);
-}
-
-.slot-filled {
-  border-color: rgba(99, 102, 241, 0.60);
-  background: rgba(99, 102, 241, 0.12);
-}
-
-.slot-empty {
-  font-weight: 900;
-  letter-spacing: 0.4px;
-  color: rgba(229, 231, 235, 0.75);
-  pointer-events: none;
 }
 
 .player-chip {
@@ -679,6 +598,7 @@ nav button.active {
 .player-team {
   max-width: 100%;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .player-name {
@@ -686,13 +606,13 @@ nav button.active {
   color: #fff;
   font-size: 13px;
   line-height: 1.1;
-  word-break: break-word;
+  white-space: nowrap;
 }
 
 .player-team {
   font-size: 12px;
   color: rgba(229, 231, 235, 0.65);
-  word-break: break-word;
+  white-space: nowrap;
 }
 
 /* Swap button */
@@ -727,11 +647,6 @@ nav button.active {
   cursor: pointer;
 }
 
-.xi-save:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
 /* Bench (below pitch, safe) */
 .bench {
   margin-top: 14px;
@@ -744,34 +659,6 @@ nav button.active {
   grid-template-columns: repeat(4, minmax(0, var(--card-w)));
   justify-content: center;
   gap: 10px;
-}
-
-/* ============================================================= */
-/* ======================== ADMIN PORTAL ======================= */
-/* ============================================================= */
-
-.admin-table-wrap {
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.admin-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 520px;
-  background: rgba(3, 7, 18, 0.35);
-}
-
-.admin-table th,
-.admin-table td {
-  padding: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  text-align: left;
-  color: rgba(229, 231, 235, 0.88);
-  font-size: 13px;
 }
 
 /* ============================================================= */
@@ -845,64 +732,49 @@ select option {
   }
 }
 
-/* Mobile pitch sizing + smaller swap icon (top-right) */
+/* Mobile pitch sizing: SAME card size for ALL rows */
 @media (max-width: 520px) {
   .pitch {
     padding: 8px;
     margin: 10px 0;
 
-    /* ONE sizing system for all rows */
     --row-gap: 6px;
 
-    /* Card width is calculated for the WORST CASE (5 in a row) */
+    /* compute from 5-wide so it always fits */
     --card-w: calc((100% - (4 * var(--row-gap))) / 5);
-
-    /* clamp so it never becomes too wide or too tiny */
     --card-w: clamp(62px, var(--card-w), 78px);
 
     --card-h: 44px;
   }
 
+  .pitch::before { inset: 8px; }
+
   .pitch-row {
     margin: 6px 0;
     gap: var(--row-gap);
-    justify-content: center;  /* centers short rows (GK, 3 mids, etc.) */
+    justify-content: center;
   }
-
-  /* Every row uses the SAME card width */
-  .pitch-row.pitch-cols-1 { grid-template-columns: repeat(1, minmax(0, var(--card-w))); }
-  .pitch-row.pitch-cols-2 { grid-template-columns: repeat(2, minmax(0, var(--card-w))); }
-  .pitch-row.pitch-cols-3 { grid-template-columns: repeat(3, minmax(0, var(--card-w))); }
-  .pitch-row.pitch-cols-4 { grid-template-columns: repeat(4, minmax(0, var(--card-w))); }
-  .pitch-row.pitch-cols-5 { grid-template-columns: repeat(5, minmax(0, var(--card-w))); }
 
   .slot {
     min-height: var(--card-h);
     padding: 6px;
     border-radius: 12px;
-    min-width: 0;
   }
 
-  /* lastname-only fits nicely */
+  /* lastname-only compact */
   .player-name {
     font-size: 10px;
     line-height: 1.05;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    padding-right: 16px; /* room for icon */
+    padding-right: 14px;
   }
 
   .player-team {
     font-size: 8.8px;
     line-height: 1.05;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
     opacity: 0.85;
   }
 
-  /* smaller icon top-right */
+  /* tiny swap icon top-right */
   .swap-slot {
     position: absolute;
     right: 6px;
@@ -917,6 +789,7 @@ select option {
   }
 }
 
+/* Extra tiny phones 
 @media (max-width: 380px) {
   .pitch {
     --row-gap: 5px;
@@ -934,25 +807,4 @@ select option {
     border-radius: 6px;
     font-size: 9px;
   }
-}
-
-/* Extra tiny phones */
-@media (max-width: 380px) {
-  .pitch { --card-h: 42px; --row-gap: 5px; }
-
-  .pitch-row.pitch-cols-1 { --card-w: min(132px, calc((100% - 0 * var(--row-gap)) / 1)); }
-  .pitch-row.pitch-cols-2 { --card-w: min(120px, calc((100% - 1 * var(--row-gap)) / 2)); }
-  .pitch-row.pitch-cols-3 { --card-w: min(110px, calc((100% - 2 * var(--row-gap)) / 3)); }
-  .pitch-row.pitch-cols-4 { --card-w: min(86px,  calc((100% - 3 * var(--row-gap)) / 4)); }
-  .pitch-row.pitch-cols-5 { --card-w: min(66px,  calc((100% - 4 * var(--row-gap)) / 5)); }
-
-  .player-name { font-size: 9.5px; padding-right: 16px; }
-  .player-team { font-size: 8.2px; }
-
-  .swap-slot {
-    width: 15px;
-    height: 15px;
-    border-radius: 6px;
-    font-size: 9px;
-  }
-}
+}*/
