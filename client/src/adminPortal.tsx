@@ -1,3 +1,4 @@
+// adminPortal.tsx
 import React, { JSX, useEffect, useMemo, useState } from "react";
 import { apiCall } from "./api";
 
@@ -117,9 +118,9 @@ export default function AdminPortal() {
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
   const [finalizeStatus, setFinalizeStatus] = useState<string | null>(null);
-  const [finalizeResults, setFinalizeResults] = useState<
-    Array<{ username: string; points: number; subsUsed: number[] }>
-  >([]);
+  const [finalizeResults, setFinalizeResults] = useState<Array<{ username: string; points: number; subsUsed: number[] }>>(
+    []
+  );
 
   // ✅ Round finalize
   const [finalizeRoundStatus, setFinalizeRoundStatus] = useState<string | null>(null);
@@ -360,7 +361,6 @@ export default function AdminPortal() {
 
       const data = await res.json();
 
-      // my server returns: results: [{ username, points, perGame: [...] }]
       const rows = (data.results ?? []) as Array<{ username: string; points: number }>;
 
       setFinalizeRoundResults(
@@ -387,17 +387,7 @@ export default function AdminPortal() {
     const pts = calcPoints(p.position, ev);
 
     return (
-      <div
-        className="admin-row"
-        style={{
-          display: "grid",
-          gridTemplateColumns: "minmax(100px, 170px) 70px 180px 100px",
-          gap: 8,
-          alignItems: "center",
-          padding: "8px 0",
-          borderBottom: "1px solid rgba(0,0,0,0.08)",
-        }}
-      >
+      <div className="admin-row">
         <div style={{ minWidth: 0 }}>
           <div style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {p.name}
@@ -605,7 +595,9 @@ export default function AdminPortal() {
           {fixturesErr && <div className="app-alert">{fixturesErr}</div>}
 
           {fixtures.length === 0 ? (
-            <div className="app-muted">No fixtures loaded. You can still use the scoring tab and type a gameId manually.</div>
+            <div className="app-muted">
+              No fixtures loaded. You can still use the scoring tab and type a gameId manually.
+            </div>
           ) : (
             <div className="app-table-wrap">
               <table className="app-table">
@@ -760,7 +752,11 @@ export default function AdminPortal() {
                   placeholder="esim. 123"
                   style={{ flex: 1 }}
                 />
-                <button className="app-btn" disabled={!effectiveGameId} onClick={() => effectiveGameId && loadGameEvents(effectiveGameId)}>
+                <button
+                  className="app-btn"
+                  disabled={!effectiveGameId}
+                  onClick={() => effectiveGameId && loadGameEvents(effectiveGameId)}
+                >
                   Lataa
                 </button>
               </div>
@@ -771,7 +767,7 @@ export default function AdminPortal() {
           </div>
 
           {selectedFixture && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+            <div className="admin-two-col">
               <div style={{ border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: 10 }}>
                 <div style={{ fontWeight: 800, marginBottom: 8 }}>
                   Koti: {teamsById.get(selectedFixture.homeTeamId)?.name ?? selectedFixture.homeTeamId}
@@ -808,7 +804,11 @@ export default function AdminPortal() {
           )}
 
           <div>
-            <button className="app-btn app-btn-primary" disabled={!effectiveGameId} onClick={() => effectiveGameId && saveGameEvents(effectiveGameId)}>
+            <button
+              className="app-btn app-btn-primary"
+              disabled={!effectiveGameId}
+              onClick={() => effectiveGameId && saveGameEvents(effectiveGameId)}
+            >
               Tallenna
             </button>
 
@@ -837,7 +837,9 @@ export default function AdminPortal() {
                       <tr key={r.username}>
                         <td>{r.username}</td>
                         <td style={{ fontWeight: 800 }}>{r.points}</td>
-                        <td>{r.subsUsed?.length ? r.subsUsed.map((id) => playerNameById.get(id) ?? `#${id}`).join(", ") : "-"}</td>
+                        <td>
+                          {r.subsUsed?.length ? r.subsUsed.map((id) => playerNameById.get(id) ?? `#${id}`).join(", ") : "-"}
+                        </td>
                       </tr>
                     ))}
                   </tbody>

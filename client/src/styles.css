@@ -1026,3 +1026,167 @@ select option {
     font-size: 11.5px;
   }
 }
+
+/* =========================================================
+   GLOBAL LAYOUT HARDENING (prevents mobile overflow)
+   Put this at the VERY END of styles.css
+   ========================================================= */
+
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+#root {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Critical: allow flex/grid children to shrink instead of forcing overflow */
+.app-shell,
+.app-main,
+.app-card,
+.app-section,
+.app-section-header,
+.app-actions,
+.starting-xi-root,
+.starting-xi-card,
+.pitch,
+.pitch-row,
+.bench-row {
+  min-width: 0;
+}
+
+/* Flex + grid children often need this too */
+.app-section > *,
+.app-section-header > *,
+.app-actions > * {
+  min-width: 0;
+}
+
+/* Safer overflow handling on modern mobile browsers */
+.app-shell {
+  overflow-x: clip; /* better than hidden on some browsers */
+}
+
+/* Cards: avoid content forcing width */
+.app-card {
+  max-width: 1100px;
+  width: 100%;
+  overflow-x: clip; /* tables should scroll inside wraps instead */
+}
+
+/* =========================================================
+   TABLES — always scroll inside wrapper, never push page
+   ========================================================= */
+
+.app-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-table {
+  max-width: 100%;
+}
+
+/* =========================================================
+   LEADERBOARD (Tulostaulu) — responsive table
+   ========================================================= */
+
+.app-table-wrap--lb {
+  max-width: 100%;
+  border-radius: 18px;
+}
+
+@media (max-width: 768px) {
+  .app-table--lb { min-width: 560px; }
+  .app-table--lb th,
+  .app-table--lb td { padding: 10px; font-size: 12.5px; }
+}
+
+@media (max-width: 520px) {
+  .app-table--lb { min-width: 520px; }
+  .app-table--lb th,
+  .app-table--lb td { padding: 9px; font-size: 12px; }
+
+  .app-table--lb thead th {
+    position: sticky;
+    top: 0;
+    background: rgba(3, 7, 18, 0.88);
+    backdrop-filter: blur(10px);
+    z-index: 1;
+  }
+}
+
+/* =========================================================
+   ADMIN PORTAL — FIX MOBILE/TABLET OVERFLOW KILLERS
+   ========================================================= */
+
+/* scoring rows */
+.admin-row {
+  display: grid;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+
+  /* desktop default (matches your original intent) */
+  grid-template-columns: minmax(100px, 170px) 70px 180px 100px;
+}
+
+/* tablet: simplify */
+@media (max-width: 920px) {
+  .admin-row {
+    grid-template-columns: 1fr 110px;
+    gap: 10px;
+  }
+}
+
+/* phone: stack everything */
+@media (max-width: 520px) {
+  .admin-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .admin-row input,
+  .admin-row select {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+/* home/away grid container */
+.admin-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 768px) {
+  .admin-two-col {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================
+   APP ACTIONS (tabs) — prevent hidden overflow weirdness
+   ========================================================= */
+@media (max-width: 768px) {
+  .app-actions {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+}
+
+/* =========================================================
+   PITCH — ensure it can never push width
+   ========================================================= */
+.pitch {
+  max-width: 100%;
+}

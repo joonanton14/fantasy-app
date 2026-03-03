@@ -1,3 +1,4 @@
+// App.tsx
 import { useEffect, useMemo, useState, JSX } from "react";
 import Login from "./login";
 import AdminPortal from "./adminPortal";
@@ -317,7 +318,7 @@ export default function App() {
   async function handleLogout() {
     try {
       await apiCall("/auth/logout", { method: "POST" });
-    } catch { }
+    } catch {}
 
     setIsLoggedIn(false);
     setUserId(null);
@@ -328,8 +329,6 @@ export default function App() {
     setSquad([]);
     setStartingXI([]);
     setBench([]);
-
-    // setSavedFormation("4-4-2"); // TODO Why reset formation on logout? Should we? Maybe keep it in localStorage?
 
     setPage("builder");
     setTeamViewTab("startingXI");
@@ -464,10 +463,7 @@ export default function App() {
                     Ottelut
                   </button>
 
-                  <button
-                    className="app-btn app-btn-primary"
-                    onClick={() => setTeamViewTab("transfers")}
-                  >
+                  <button className="app-btn app-btn-primary" onClick={() => setTeamViewTab("transfers")}>
                     Vaihdot
                   </button>
                 </div>
