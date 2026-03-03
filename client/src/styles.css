@@ -850,33 +850,31 @@ select option {
   .pitch {
     padding: 8px;
     margin: 10px 0;
+
+    /* ONE sizing system for all rows */
     --row-gap: 6px;
+
+    /* Card width is calculated for the WORST CASE (5 in a row) */
+    --card-w: calc((100% - (4 * var(--row-gap))) / 5);
+
+    /* clamp so it never becomes too wide or too tiny */
+    --card-w: clamp(62px, var(--card-w), 78px);
+
     --card-h: 44px;
   }
-
-  .pitch::before { inset: 8px; }
 
   .pitch-row {
     margin: 6px 0;
     gap: var(--row-gap);
-    justify-content: center;
+    justify-content: center;  /* centers short rows (GK, 3 mids, etc.) */
   }
 
-  /* Per-row card widths so 3-cols is larger than 4-cols, etc. */
-  .pitch-row.pitch-cols-1 { --card-w: min(140px, calc((100% - 0 * var(--row-gap)) / 1)); }
-  .pitch-row.pitch-cols-2 { --card-w: min(128px, calc((100% - 1 * var(--row-gap)) / 2)); }
-  .pitch-row.pitch-cols-3 { --card-w: min(118px, calc((100% - 2 * var(--row-gap)) / 3)); }
-  .pitch-row.pitch-cols-4 { --card-w: min(92px,  calc((100% - 3 * var(--row-gap)) / 4)); }
-  .pitch-row.pitch-cols-5 { --card-w: min(70px,  calc((100% - 4 * var(--row-gap)) / 5)); }
-
+  /* Every row uses the SAME card width */
   .pitch-row.pitch-cols-1 { grid-template-columns: repeat(1, minmax(0, var(--card-w))); }
   .pitch-row.pitch-cols-2 { grid-template-columns: repeat(2, minmax(0, var(--card-w))); }
   .pitch-row.pitch-cols-3 { grid-template-columns: repeat(3, minmax(0, var(--card-w))); }
   .pitch-row.pitch-cols-4 { grid-template-columns: repeat(4, minmax(0, var(--card-w))); }
   .pitch-row.pitch-cols-5 { grid-template-columns: repeat(5, minmax(0, var(--card-w))); }
-
-  /* GK centered but not full width */
-  .pitch-row.pitch-cols-1 { justify-content: center; }
 
   .slot {
     min-height: var(--card-h);
@@ -885,14 +883,14 @@ select option {
     min-width: 0;
   }
 
-  /* With last-name-only, we can tighten this a bit */
+  /* lastname-only fits nicely */
   .player-name {
     font-size: 10px;
     line-height: 1.05;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    padding-right: 18px; /* room for smaller swap button */
+    padding-right: 16px; /* room for icon */
   }
 
   .player-team {
@@ -904,7 +902,7 @@ select option {
     opacity: 0.85;
   }
 
-  /* Smaller swap icon, top-right */
+  /* smaller icon top-right */
   .swap-slot {
     position: absolute;
     right: 6px;
@@ -916,6 +914,25 @@ select option {
     padding: 0;
     line-height: 1;
     box-shadow: none;
+  }
+}
+
+@media (max-width: 380px) {
+  .pitch {
+    --row-gap: 5px;
+    --card-w: calc((100% - (4 * var(--row-gap))) / 5);
+    --card-w: clamp(56px, var(--card-w), 70px);
+    --card-h: 42px;
+  }
+
+  .player-name { font-size: 9.5px; }
+  .player-team { font-size: 8.2px; }
+
+  .swap-slot {
+    width: 15px;
+    height: 15px;
+    border-radius: 6px;
+    font-size: 9px;
   }
 }
 
