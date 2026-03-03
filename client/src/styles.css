@@ -1,8 +1,11 @@
 /* =======================================================================
    Veikkausliigapörssi — CLEAN styles.css (single system, no duplicates)
-   - Desktop: fixed formation cards (160px)
-   - Mobile: same card size for ALL rows (computed from 5-wide)
-   - Formation structure preserved (1..5 columns)
+   Goals:
+   - Works on Desktop + iPad + iPhone 390x844 (no 1-player rows)
+   - No horizontal overflow
+   - Starting XI keeps formation rows (1..5) and stays centered
+   - Swap icon ALWAYS upper-right (desktop + mobile)
+   - Mobile uses constant small slot size so whole XI fits better
    ======================================================================= */
 
 /* -------------------- GLOBAL -------------------- */
@@ -15,11 +18,14 @@
 :root {
   --bg0: #070a12;
   --bg1: #0b1220;
+
   --glass: rgba(17, 24, 39, 0.62);
   --glass-strong: rgba(17, 24, 39, 0.95);
   --border: rgba(255, 255, 255, 0.08);
+
   --text: #e5e7eb;
   --text-dim: rgba(229, 231, 235, 0.65);
+
   --accent: rgba(99, 102, 241, 1);
   --danger: rgba(239, 68, 68, 1);
   --success: rgba(16, 185, 129, 1);
@@ -80,7 +86,7 @@ select {
   color: inherit;
 }
 
-/* -------------------- NAV (admin) -------------------- */
+/* -------------------- NAV (admin legacy) -------------------- */
 nav {
   background-color: #004080;
   color: white;
@@ -138,7 +144,6 @@ nav button.active {
 /* ============================================================= */
 /* ======================= AUTH (modern) ======================= */
 /* ============================================================= */
-
 .auth-wrap {
   min-height: 100vh;
   display: grid;
@@ -219,9 +224,18 @@ nav button.active {
   font-weight: 700;
 }
 
+.tab:active {
+  transform: scale(0.98);
+}
+
 .tab.active {
   background: rgba(255, 255, 255, 0.14);
   color: #ffffff;
+}
+
+.tab:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .auth-error {
@@ -264,6 +278,11 @@ nav button.active {
   text-align: center;
 }
 
+.auth-form input:focus {
+  border-color: rgba(99, 102, 241, 0.55);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18);
+}
+
 .input-wrap {
   position: relative;
   width: 100%;
@@ -302,10 +321,14 @@ nav button.active {
   cursor: pointer;
 }
 
+.auth-submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 /* ============================================================= */
 /* =================== APP SHELL (user view) =================== */
 /* ============================================================= */
-
 .app-shell {
   min-height: 100vh;
   background:
@@ -355,7 +378,7 @@ nav button.active {
   border: 1px solid var(--border);
   box-shadow: 0 16px 50px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(10px);
-  overflow: hidden;
+  overflow: hidden; /* prevents right overflow */
   min-width: 0;
 }
 
@@ -430,9 +453,44 @@ nav button.active {
 }
 
 /* ============================================================= */
+/* ========================= TABLES ============================ */
+/* ============================================================= */
+.app-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.app-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+  background: rgba(3, 7, 18, 0.35);
+}
+
+.app-table th,
+.app-table td {
+  padding: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: left;
+  color: rgba(229, 231, 235, 0.88);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-table th {
+  color: rgba(229, 231, 235, 0.72);
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+/* ============================================================= */
 /* ======================= STARTING XI ========================= */
 /* ============================================================= */
-
 .starting-xi-root {
   width: 100%;
   min-width: 0;
@@ -483,6 +541,19 @@ nav button.active {
   font-weight: 700;
 }
 
+.starting-xi-warning {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.22);
+  color: rgba(254, 226, 226, 0.95);
+  font-size: 13px;
+}
+
 /* Formation dropdown */
 .meta-formation {
   position: relative;
@@ -496,6 +567,7 @@ nav button.active {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
+
   border-radius: 999px;
   padding: 8px 34px 8px 12px;
   border: 1px solid rgba(255, 255, 255, 0.10);
@@ -505,6 +577,7 @@ nav button.active {
   font-size: 12px;
   cursor: pointer;
   outline: none;
+
   text-align: center;
   text-align-last: center;
 }
@@ -520,13 +593,16 @@ nav button.active {
   font-size: 12px;
 }
 
-/* Pitch (ONE sizing system) */
+/* ======================= PITCH SYSTEM (FIXED) ======================= */
+/* Key idea:
+   - Rows have 1..5 columns using 1fr so they NEVER collapse to 1-per-row on iPhone.
+   - Slot is centered inside its column via max-width. */
 .pitch {
   position: relative;
 
   /* desktop defaults */
   --row-gap: 12px;
-  --card-w: 160px;
+  --card-max: 160px;
   --card-h: 74px;
 
   border-radius: 18px;
@@ -552,28 +628,35 @@ nav button.active {
 .pitch-row {
   display: grid;
   gap: var(--row-gap);
-  justify-content: center;
+  justify-content: center; /* centers short rows like GK */
   margin: 14px 0;
-  min-width: 0;
   width: 100%;
+  min-width: 0;
 }
 
-/* Keep formation structure (1..5 columns) */
-.pitch-row.pitch-cols-1 { grid-template-columns: repeat(1, minmax(0, var(--card-w))); }
-.pitch-row.pitch-cols-2 { grid-template-columns: repeat(2, minmax(0, var(--card-w))); }
-.pitch-row.pitch-cols-3 { grid-template-columns: repeat(3, minmax(0, var(--card-w))); }
-.pitch-row.pitch-cols-4 { grid-template-columns: repeat(4, minmax(0, var(--card-w))); }
-.pitch-row.pitch-cols-5 { grid-template-columns: repeat(5, minmax(0, var(--card-w))); }
+/* Formation rows: ALWAYS keep columns */
+.pitch-row.pitch-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+.pitch-row.pitch-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.pitch-row.pitch-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.pitch-row.pitch-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.pitch-row.pitch-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 
+/* Slot: centered within each column, never full-width */
 .slot {
   position: relative;
+  width: 100%;
+  max-width: var(--card-max);
+  justify-self: center;
+
   border-radius: 16px;
   padding: 12px 10px;
   min-height: var(--card-h);
   cursor: pointer;
+
   background: rgba(3, 7, 18, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.10);
   user-select: none;
+
   display: grid;
   place-items: center;
   text-align: center;
@@ -584,13 +667,26 @@ nav button.active {
   transform: scale(0.97);
 }
 
+.slot-filled {
+  border-color: rgba(99, 102, 241, 0.60);
+  background: rgba(99, 102, 241, 0.12);
+}
+
+.slot-empty {
+  font-weight: 900;
+  letter-spacing: 0.4px;
+  color: rgba(229, 231, 235, 0.75);
+  pointer-events: none;
+}
+
+/* Player chip */
 .player-chip {
+  position: relative; /* for swap icon */
   display: grid;
   gap: 4px;
   justify-items: center;
   text-align: center;
   width: 100%;
-  position: relative;
   min-width: 0;
 }
 
@@ -598,34 +694,43 @@ nav button.active {
 .player-team {
   max-width: 100%;
   overflow: hidden;
+  white-space: nowrap;
   text-overflow: ellipsis;
 }
 
+/* Lastname-only styling */
 .player-name {
   font-weight: 900;
   color: #fff;
   font-size: 13px;
   line-height: 1.1;
-  white-space: nowrap;
+  padding-right: 24px; /* room for icon */
 }
 
 .player-team {
   font-size: 12px;
   color: rgba(229, 231, 235, 0.65);
-  white-space: nowrap;
 }
 
-/* Swap button */
+/* ✅ Swap icon ALWAYS top-right (desktop + mobile) */
 .swap-slot {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
+
   border: 1px solid rgba(255, 255, 255, 0.10);
   background: rgba(255, 255, 255, 0.06);
   color: rgba(255, 255, 255, 0.92);
-  border-radius: 12px;
-  width: 34px;
-  height: 34px;
+
   cursor: pointer;
   display: grid;
   place-items: center;
+  padding: 0;
+  line-height: 1;
 }
 
 /* Controls */
@@ -647,6 +752,11 @@ nav button.active {
   cursor: pointer;
 }
 
+.xi-save:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 /* Bench (below pitch, safe) */
 .bench {
   margin-top: 14px;
@@ -656,15 +766,45 @@ nav button.active {
 
 .bench-row {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, var(--card-w)));
-  justify-content: center;
   gap: 10px;
+  justify-content: center;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.bench .slot {
+  max-width: var(--card-max);
+}
+
+/* ============================================================= */
+/* ======================== ADMIN PORTAL ======================= */
+/* ============================================================= */
+.admin-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 520px;
+  background: rgba(3, 7, 18, 0.35);
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: left;
+  color: rgba(229, 231, 235, 0.88);
+  font-size: 13px;
 }
 
 /* ============================================================= */
 /* ===================== SELECT READABILITY ==================== */
 /* ============================================================= */
-
 select.app-btn,
 .app-btn select,
 select {
@@ -681,13 +821,12 @@ select option {
 /* ============================================================= */
 /* ===================== RESPONSIVE DESIGN ===================== */
 /* ============================================================= */
-
 @media (max-width: 1024px) {
   .app-main { padding: 12px; }
   .app-card { border-radius: 18px; padding: 14px; }
 }
 
-/* Mobile header + scroll tabs */
+/* iPad + mobile header + scroll tabs */
 @media (max-width: 768px) {
   .app-topbar {
     position: sticky;
@@ -732,18 +871,42 @@ select option {
   }
 }
 
-/* Mobile pitch sizing: SAME card size for ALL rows */
+/* ======================= iPhone / mobile 390 fix ======================= */
 @media (max-width: 520px) {
+  .app-card { border-radius: 14px; padding: 10px; }
+
+  /* tables */
+  .app-table { min-width: 520px; }
+
+  /* make StartingXI compact */
+  .starting-xi-header {
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .starting-xi-header h2 {
+    font-size: 16px;
+    line-height: 1.1;
+  }
+
+  .meta-pill {
+    padding: 6px 10px;
+    font-size: 11px;
+    gap: 8px;
+  }
+
+  .formation-select {
+    padding: 6px 28px 6px 10px;
+    font-size: 11px;
+  }
+
+  /* Pitch: constant small slot size for all formations */
   .pitch {
     padding: 8px;
     margin: 10px 0;
-
     --row-gap: 6px;
 
-    /* compute from 5-wide so it always fits */
-    --card-w: calc((100% - (4 * var(--row-gap))) / 5);
-    --card-w: clamp(62px, var(--card-w), 78px);
-
+    /* this is the key: constant max width ensures 5-in-a-row fits on 390px */
+    --card-max: 66px;
     --card-h: 44px;
   }
 
@@ -752,40 +915,55 @@ select option {
   .pitch-row {
     margin: 6px 0;
     gap: var(--row-gap);
-    justify-content: center;
   }
 
   .slot {
-    min-height: var(--card-h);
     padding: 6px;
     border-radius: 12px;
+    min-height: var(--card-h);
   }
 
-  /* lastname-only compact */
   .player-name {
     font-size: 10px;
-    line-height: 1.05;
-    padding-right: 14px;
+    padding-right: 18px;
   }
 
   .player-team {
     font-size: 8.8px;
-    line-height: 1.05;
     opacity: 0.85;
   }
 
-  /* tiny swap icon top-right */
+  /* smaller top-right icon */
   .swap-slot {
-    position: absolute;
     right: 6px;
     top: 6px;
     width: 16px;
     height: 16px;
     border-radius: 6px;
     font-size: 10px;
-    padding: 0;
-    line-height: 1;
-    box-shadow: none;
+  }
+
+  /* Bench stays neat */
+  .bench-row {
+    gap: 6px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .starting-xi-controls {
+    margin-top: 10px;
+  }
+  .starting-xi-controls .xi-save {
+    width: 100%;
+    min-height: 40px;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  /* Performance */
+  .app-topbar,
+  .app-card,
+  .auth-card {
+    backdrop-filter: none !important;
   }
 }
 
@@ -793,8 +971,7 @@ select option {
 @media (max-width: 380px) {
   .pitch {
     --row-gap: 5px;
-    --card-w: calc((100% - (4 * var(--row-gap))) / 5);
-    --card-w: clamp(56px, var(--card-w), 70px);
+    --card-max: 60px;
     --card-h: 42px;
   }
 
