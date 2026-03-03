@@ -1,12 +1,3 @@
-/* =======================================================================
-   Veikkausliigapörssi — styles.css (CLEAN + responsive that actually works)
-   Goals:
-   - Desktop looks “glass” + centered
-   - iPad OK
-   - Mobile (390x844 like iPhone 12): compact header/tabs, compact pitch,
-     correct formation rows (1..5), NO “1 player per row”, swap icon top-right
-   ======================================================================= */
-
 /* -------------------- GLOBAL -------------------- */
 *,
 *::before,
@@ -17,14 +8,11 @@
 :root {
   --bg0: #070a12;
   --bg1: #0b1220;
-
   --glass: rgba(17, 24, 39, 0.62);
   --glass-strong: rgba(17, 24, 39, 0.95);
   --border: rgba(255, 255, 255, 0.08);
-
   --text: #e5e7eb;
   --text-dim: rgba(229, 231, 235, 0.65);
-
   --accent: rgba(99, 102, 241, 1);
   --danger: rgba(239, 68, 68, 1);
   --success: rgba(16, 185, 129, 1);
@@ -35,7 +23,7 @@ body {
   height: 100%;
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden; /* hard stop */
+  overflow-x: hidden; /* hard stop for right overflow */
 }
 
 body {
@@ -46,7 +34,7 @@ body {
   color: var(--text);
 }
 
-/* Media never pushes layout wider */
+/* Make media never push layout wider */
 img,
 svg,
 canvas,
@@ -63,16 +51,13 @@ button {
   font-size: 16px;
 }
 
-button {
-  font-family: inherit;
-}
-
 /* -------------------- BASIC FORMS (non-auth) -------------------- */
 .form-group {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
+
 .form-row {
   display: flex;
   flex-direction: column;
@@ -383,7 +368,7 @@ nav button.active {
   border: 1px solid var(--border);
   box-shadow: 0 16px 50px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(10px);
-  overflow: hidden; /* prevents right overflow */
+  overflow: hidden; /* prevents right overflow from children */
   min-width: 0;
 }
 
@@ -453,6 +438,10 @@ nav button.active {
   color: rgba(254, 226, 226, 0.95);
 }
 
+.app-btn-active {
+  background: rgba(255, 255, 255, 0.14);
+}
+
 /* ============================================================= */
 /* ========================= TABLES ============================ */
 /* ============================================================= */
@@ -510,12 +499,12 @@ nav button.active {
 
 .starting-xi-header {
   display: grid;
-  gap: 10px;
-  margin-bottom: 14px;
+  gap: 12px;
+  margin-bottom: 16px;
   justify-items: center;
 }
 
-.starting-xi-header h2 {
+.starting-xi-header h3 {
   margin: 0;
   font-size: 22px;
   font-weight: 900;
@@ -527,7 +516,7 @@ nav button.active {
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .meta-pill {
@@ -542,6 +531,19 @@ nav button.active {
   justify-content: center;
   gap: 10px;
   font-weight: 700;
+}
+
+.starting-xi-warning {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.22);
+  color: rgba(254, 226, 226, 0.95);
+  font-size: 13px;
 }
 
 /* Formation dropdown */
@@ -583,14 +585,13 @@ nav button.active {
   font-size: 12px;
 }
 
-/* Pitch */
+/* =========================
+   PITCH — DESKTOP (keep your look)
+   Uses fixed max card width, centered (your current good desktop behavior)
+   ========================= */
+
 .pitch {
   position: relative;
-
-  /* Desktop defaults */
-  --row-gap: 12px;
-  --card-h: 74px;
-
   border-radius: 18px;
   padding: 16px;
   background:
@@ -611,28 +612,27 @@ nav button.active {
   pointer-events: none;
 }
 
-/* Rows */
 .pitch-row {
   display: grid;
-  gap: var(--row-gap);
+  gap: 12px;
   justify-content: center;
   margin: 14px 0;
   min-width: 0;
 }
 
-/* Desktop sizing: fixed-ish cards per row */
+/* Desktop: fixed-ish cards, centered */
 .pitch-row.pitch-cols-1 { grid-template-columns: repeat(1, minmax(0, 160px)); }
 .pitch-row.pitch-cols-2 { grid-template-columns: repeat(2, minmax(0, 160px)); }
 .pitch-row.pitch-cols-3 { grid-template-columns: repeat(3, minmax(0, 160px)); }
 .pitch-row.pitch-cols-4 { grid-template-columns: repeat(4, minmax(0, 160px)); }
 .pitch-row.pitch-cols-5 { grid-template-columns: repeat(5, minmax(0, 160px)); }
 
-/* Slot */
+/* Slot card */
 .slot {
-  position: relative; /* required for absolute swap icon */
+  position: relative;
   border-radius: 16px;
   padding: 12px 10px;
-  min-height: var(--card-h);
+  min-height: 74px;
   cursor: pointer;
 
   background: rgba(3, 7, 18, 0.55);
@@ -649,14 +649,27 @@ nav button.active {
   transform: scale(0.97);
 }
 
+.slot-filled {
+  border-color: rgba(99, 102, 241, 0.60);
+  background: rgba(99, 102, 241, 0.12);
+}
+
+.slot-empty {
+  font-weight: 900;
+  letter-spacing: 0.4px;
+  color: rgba(229, 231, 235, 0.75);
+  pointer-events: none;
+}
+
 /* Player chip */
 .player-chip {
   width: 100%;
+  min-width: 0;
   display: grid;
   gap: 4px;
   justify-items: center;
   text-align: center;
-  min-width: 0;
+  position: relative; /* for top-right swap button */
 }
 
 .player-name,
@@ -672,6 +685,7 @@ nav button.active {
   line-height: 1.1;
   white-space: nowrap;
   text-overflow: ellipsis;
+  padding-right: 26px; /* room for top-right icon */
 }
 
 .player-team {
@@ -681,19 +695,19 @@ nav button.active {
   text-overflow: ellipsis;
 }
 
-/* Swap icon — ALWAYS top-right, never under the name */
+/* Swap icon ALWAYS top-right */
 .swap-slot {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 6px;
+  right: 6px;
 
-  width: 22px;
-  height: 22px;
-  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.92);
 
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.95);
+  width: 26px;
+  height: 26px;
+  border-radius: 9px;
 
   cursor: pointer;
   display: grid;
@@ -701,6 +715,25 @@ nav button.active {
 
   line-height: 1;
   padding: 0;
+}
+
+/* Bench (your current structure: inside pitch via .bench-overlay, but safe) */
+.pitch .bench-overlay {
+  width: min(92%, 760px);
+  margin: 0 auto;
+}
+
+.bench {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.bench-row {
+  display: grid;
+  gap: 10px;
+  justify-content: center;
+  grid-template-columns: repeat(4, minmax(0, 160px));
 }
 
 /* Controls */
@@ -722,23 +755,15 @@ nav button.active {
   cursor: pointer;
 }
 
-/* Bench (below pitch, safe) */
-.bench {
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.bench-row {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 160px));
-  justify-content: center;
-  gap: 10px;
+.xi-save:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 /* ============================================================= */
-/* ======================== ADMIN TABLE ======================== */
+/* ======================== ADMIN PORTAL ======================= */
 /* ============================================================= */
+
 .admin-table-wrap {
   width: 100%;
   overflow-x: auto;
@@ -789,23 +814,16 @@ select option {
   .app-card { border-radius: 18px; padding: 14px; }
 }
 
-/* iPad / small screens: scrollable tabs */
+/* Mobile header + scroll tabs */
 @media (max-width: 768px) {
   .app-topbar {
     position: sticky;
     top: 0;
     z-index: 50;
-    padding-top: calc(10px + env(safe-area-inset-top, 0px));
+    padding-top: calc(12px + env(safe-area-inset-top, 0px));
     flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-    padding: 10px;
-  }
-
-  .app-title {
-    text-align: center;
-    font-size: 16px;
-    line-height: 1.1;
+    gap: 10px;
+    padding: 12px;
   }
 
   .app-user {
@@ -816,16 +834,14 @@ select option {
   .app-section-header {
     flex-direction: column;
     gap: 10px;
-    align-items: center;
   }
 
-  /* Tabs: centered, still scrolls if needed */
   .app-actions {
     width: 100%;
     flex-wrap: nowrap;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    justify-content: center;
+    justify-content: center; /* centered tabs */
     gap: 8px;
     padding: 4px 2px 8px;
     scrollbar-width: none;
@@ -839,128 +855,101 @@ select option {
     border-radius: 999px;
     padding: 8px 10px;
     font-size: 12px;
-    min-height: 34px;
+    min-height: 36px;
   }
 }
 
-/* MOBILE (iPhone 12 etc): compact header + correct rows + no “1 per row” */
+/* =========================
+   MOBILE PITCH — IMPORTANT FIX
+   - NO calc/clamp widths
+   - Use repeat(N, 1fr) so it CANNOT degrade to 1-per-row unless something else changes display
+   - Use aspect-ratio so height scales automatically
+   ========================= */
 @media (max-width: 520px) {
-  /* Make the whole screen breathe less */
-  .app-main { padding: 10px; }
-  .app-card { padding: 10px; border-radius: 16px; }
-
-  /* Headings smaller */
-  .app-h1 {
-    font-size: 18px;
-    margin-bottom: 10px;
-  }
-
-  /* StartingXI title smaller ("Avauskokoonpano") */
   .starting-xi-header {
     gap: 8px;
     margin-bottom: 10px;
   }
-  .starting-xi-header h2 {
+
+  .starting-xi-header h3 {
     font-size: 16px;
     line-height: 1.1;
   }
 
-  /* Formation pill smaller */
   .meta-pill {
-    padding: 7px 10px;
+    padding: 6px 10px;
     font-size: 11px;
     gap: 8px;
   }
+
   .formation-select {
     padding: 6px 28px 6px 10px;
     font-size: 11px;
   }
-  .meta-formation::after { right: 12px; }
 
-  /* Pitch: tighter + slightly taller so names show */
   .pitch {
-    padding: 10px;
+    padding: 8px;
     margin: 10px 0;
-
-    --row-gap: 6px;
-    --card-h: 50px; /* a bit taller so name + team show */
   }
-  .pitch::before { inset: 10px; }
 
-  /* Here is the IMPORTANT part:
-     on mobile we compute card width PER ROW so 5 fits,
-     and we still keep proper row counts (1..5).
-  */
-  .pitch-row { margin: 8px 0; gap: var(--row-gap); }
-
-  .pitch-row.pitch-cols-1 { --cols: 1; }
-  .pitch-row.pitch-cols-2 { --cols: 2; }
-  .pitch-row.pitch-cols-3 { --cols: 3; }
-  .pitch-row.pitch-cols-4 { --cols: 4; }
-  .pitch-row.pitch-cols-5 { --cols: 5; }
+  .pitch::before {
+    inset: 8px;
+  }
 
   .pitch-row {
-    /* fits exactly in container, never forces 1-per-row */
-    --card-w: calc((100% - ((var(--cols) - 1) * var(--row-gap))) / var(--cols));
-    /* clamp so cards don't become huge */
-    --card-w: clamp(62px, var(--card-w), 92px);
+    gap: 6px;
+    margin: 8px 0;
+    width: 100%;
   }
 
-  /* Use per-row width */
-  .pitch-row.pitch-cols-1 { grid-template-columns: repeat(1, minmax(0, var(--card-w))); }
-  .pitch-row.pitch-cols-2 { grid-template-columns: repeat(2, minmax(0, var(--card-w))); }
-  .pitch-row.pitch-cols-3 { grid-template-columns: repeat(3, minmax(0, var(--card-w))); }
-  .pitch-row.pitch-cols-4 { grid-template-columns: repeat(4, minmax(0, var(--card-w))); }
-  .pitch-row.pitch-cols-5 { grid-template-columns: repeat(5, minmax(0, var(--card-w))); }
+  /* Mobile: let parent width decide, grid divides evenly */
+  .pitch-row.pitch-cols-1 { grid-template-columns: repeat(1, 1fr); }
+  .pitch-row.pitch-cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .pitch-row.pitch-cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .pitch-row.pitch-cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .pitch-row.pitch-cols-5 { grid-template-columns: repeat(5, 1fr); }
 
-  /* Slot tighter */
+  /* Cards scale by grid cell, not by math */
   .slot {
-    min-height: var(--card-h);
+    width: 100%;
+    min-height: 0;
+    aspect-ratio: 1.6 / 1; /* keeps cards visible */
     padding: 6px;
     border-radius: 12px;
   }
 
-  /* Name/team: compact + readable */
   .player-name {
     font-size: 10px;
     line-height: 1.05;
-    padding-right: 16px; /* icon space */
+    padding-right: 18px;
   }
+
   .player-team {
     font-size: 8.8px;
     line-height: 1.05;
-    opacity: 0.85;
   }
 
-  /* Swap icon: smaller and TRUE top-right */
   .swap-slot {
-    top: 6px;
-    right: 6px;
     width: 16px;
     height: 16px;
     border-radius: 6px;
     font-size: 10px;
+    top: 4px;
+    right: 4px;
   }
 
-  /* Bench: compact */
-  .bench { margin-top: 10px; padding-top: 10px; }
+  /* Bench: 4 columns but small (still repeat(4, 1fr)) */
   .bench-row {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 6px;
-  }
-
-  /* Performance */
-  .app-topbar,
-  .app-card,
-  .auth-card {
-    backdrop-filter: none !important;
   }
 }
 
 /* Extra tiny phones */
 @media (max-width: 380px) {
-  .pitch { --row-gap: 5px; --card-h: 48px; }
+  .slot { aspect-ratio: 1.45 / 1; }
   .player-name { font-size: 9.5px; }
   .player-team { font-size: 8.2px; }
-  .swap-slot { width: 15px; height: 15px; border-radius: 6px; font-size: 9px; }
+  .swap-slot { width: 15px; height: 15px; font-size: 9px; }
+  .bench-row { gap: 5px; }
 }
