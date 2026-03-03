@@ -31,7 +31,7 @@ function teamName(teams: Team[], id: number) {
 export default function SquadBuilder(props: {
   players: Player[];
   teams: Team[];
-  initialSquad?: Player[]; // optional seed (15 or less)
+  initialSquad?: Player[];
   budget: number;
   onSave: (squad: Player[]) => void;
 }) {
@@ -46,7 +46,6 @@ export default function SquadBuilder(props: {
 
   const [openSlot, setOpenSlot] = useState<string | null>(null);
 
-  // seed
   useEffect(() => {
     const map: Record<string, Player | null> = {};
     for (const s of slots) map[s.id] = null;
@@ -54,8 +53,6 @@ export default function SquadBuilder(props: {
     const seed = props.initialSquad ?? [];
     const by: Record<Position, Player[]> = { GK: [], DEF: [], MID: [], FWD: [] };
     for (const p of seed) by[p.position].push(p);
-
-    // stable fill
     for (const pos of Object.keys(by) as Position[]) by[pos].sort((a, b) => a.id - b.id);
     for (const s of slots) map[s.id] = by[s.position].shift() ?? null;
 
@@ -63,8 +60,6 @@ export default function SquadBuilder(props: {
     setOpenSlot(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.initialSquad]);
-
-  // outside click closes
   useEffect(() => {
     function onDown(e: MouseEvent | TouchEvent) {
       if (!rootRef.current) return;
@@ -85,11 +80,7 @@ export default function SquadBuilder(props: {
 
   function assignTo(slotId: string, p: Player) {
     const current = assign[slotId];
-
-    // prevent duplicates elsewhere, allow replacing current
     if (pickedIds.has(p.id) && current?.id !== p.id) return;
-
-    // replacement-aware budget
     const nextTotal = totalValue - (current?.value ?? 0) + p.value;
     if (nextTotal > props.budget) return;
 
@@ -129,7 +120,7 @@ export default function SquadBuilder(props: {
                     className={`slot ${assigned ? "slot-filled" : ""} ${isOpen ? "slot-open" : ""}`}
                     role="button"
                     tabIndex={0}
-                    onClick={() => setOpenSlot(isOpen ? null : s.id)} // always open (replacement)
+                    onClick={() => setOpenSlot(isOpen ? null : s.id)}
                   >
                     {assigned ? (
                       <div className="player-chip">

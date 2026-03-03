@@ -508,7 +508,7 @@ nav button.active {
 .starting-xi-header {
   display: grid;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   justify-items: center;
 }
 
@@ -524,7 +524,7 @@ nav button.active {
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .meta-pill {

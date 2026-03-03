@@ -12,7 +12,7 @@ export default function TransfersPage(props: {
 }) {
   return (
     <div className="app-card">
-      <div className="app-actions" style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+      <div>
         <button className="app-btn" onClick={props.onCancel}>
           Takaisin
         </button>

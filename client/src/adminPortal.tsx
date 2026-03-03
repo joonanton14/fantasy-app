@@ -505,7 +505,7 @@ export default function AdminPortal() {
   };
 
   return (
-    <div style={{ display: "grid", gap: 12, justifyItems: "center" }}>
+    <div>
       <div className="app-actions">
         <button className={`app-btn ${tab === "players" ? "app-btn-active" : ""}`} onClick={() => setTab("players")}>
           Pelaajat
@@ -807,7 +807,7 @@ export default function AdminPortal() {
             </div>
           )}
 
-          <div className="app-actions" style={{ display: "flex", gap: 8, justifyItems: "center" }}>
+          <div>
             <button className="app-btn app-btn-primary" disabled={!effectiveGameId} onClick={() => effectiveGameId && saveGameEvents(effectiveGameId)}>
               Tallenna
             </button>

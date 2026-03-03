@@ -407,13 +407,9 @@ export const StartingXI: FC<{
     <div className="starting-xi-root" ref={rootRef}>
       <div className="starting-xi-card">
         <header className="starting-xi-header">
-          <h2>Avauskokoonpano</h2>
+          <h3>Avauskokoonpano</h3>
           <div className="starting-xi-meta">
             <div className="meta-pill meta-formation">
-              <span>
-                Formaatio: <b>{formation}</b>
-              </span>
-
               <select
                 className="formation-select"
                 value={formation}
