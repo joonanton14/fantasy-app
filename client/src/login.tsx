@@ -114,7 +114,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
             {loading ? (
               <>
                 <span className="spinner" aria-hidden="true" />
-                Loading…
+                Ladataan…
               </>
             ) : (
               'Kirjaudu'

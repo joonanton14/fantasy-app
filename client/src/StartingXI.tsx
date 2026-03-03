@@ -51,7 +51,6 @@ function teamName(teams: Team[], teamId: number) {
 function lastName(full: string) {
   const s = (full ?? "").trim();
   if (!s) return "";
-  // handle multiple spaces + hyphens etc.
   const parts = s.split(/\s+/);
   return parts[parts.length - 1];
 }
@@ -83,9 +82,9 @@ export type StartingXISavePayload = {
 
 export const StartingXI: FC<{
   teams: Team[];
-  squad: Player[]; // MUST be 15
-  initialXI: Player[]; // 11
-  initialBench: Player[]; // 4 (ordered)
+  squad: Player[];
+  initialXI: Player[];
+  initialBench: Player[];
   initialFormation: FormationKey;
   budget: number;
   readOnly?: boolean;
@@ -99,7 +98,6 @@ export const StartingXI: FC<{
   const [benchAssign, setBenchAssign] = useState<Record<string, Player | null>>({});
   const [swapSource, setSwapSource] = useState<SwapSource>(null);
 
-  // close popups on outside click
   useEffect(() => {
     function handlePointerDown(e: MouseEvent | TouchEvent) {
       if (!rootRef.current) return;
@@ -116,7 +114,6 @@ export const StartingXI: FC<{
   const pool = useMemo(() => uniqById(squad), [squad]);
   const poolSet = useMemo(() => new Set(pool.map((p) => p.id)), [pool]);
 
-  // init / sync
   useEffect(() => {
     setFormation(initialFormation);
     const s = buildSlots(initialFormation);
@@ -125,7 +122,6 @@ export const StartingXI: FC<{
     const xiMap: Record<string, Player | null> = {};
     s.forEach((sl) => (xiMap[sl.id] = null));
 
-    // fill XI by position in slot order
     const xiRem = initialXI.filter((p) => poolSet.has(p.id));
     const rem = [...xiRem];
     for (const sl of s) {
@@ -139,28 +135,24 @@ export const StartingXI: FC<{
     const bMap: Record<string, Player | null> = {};
     BENCH_SLOTS.forEach((b) => (bMap[b.id] = null));
 
-    // bench order EXACT (and filtered to pool)
     const b = initialBench.filter((p) => poolSet.has(p.id));
     bMap["bench-gk"] = b[0] ?? null;
     bMap["bench-1"] = b[1] ?? null;
     bMap["bench-2"] = b[2] ?? null;
     bMap["bench-3"] = b[3] ?? null;
 
-    // If missing players (because old data), rebuild from pool deterministically:
     const used = new Set<number>();
     for (const v of Object.values(xiMap)) if (v) used.add(v.id);
     for (const v of Object.values(bMap)) if (v) used.add(v.id);
 
     const leftovers = pool.filter((p) => !used.has(p.id));
 
-    // ensure XI has 11 by filling matching positions
     for (const sl of s) {
       if (xiMap[sl.id]) continue;
       const idx = leftovers.findIndex((p) => p.position === sl.position);
       if (idx >= 0) xiMap[sl.id] = leftovers.splice(idx, 1)[0];
     }
 
-    // ensure bench has 4 with correct kinds
     if (!bMap["bench-gk"]) {
       const idx = leftovers.findIndex((p) => p.position === "GK");
       if (idx >= 0) bMap["bench-gk"] = leftovers.splice(idx, 1)[0];
@@ -184,7 +176,6 @@ export const StartingXI: FC<{
   const totalValue = useMemo(() => [...xiPlayers, ...benchPlayers].reduce((s, p) => s + p.value, 0), [xiPlayers, benchPlayers]);
   const remainingBudget = budget - totalValue;
 
-  // validation
   const f = FORMATIONS[formation];
   const xiCounts = useMemo(() => {
     const c: Record<Position, number> = { GK: 0, DEF: 0, MID: 0, FWD: 0 };
@@ -209,15 +200,13 @@ export const StartingXI: FC<{
       if (!p || p.position === "GK") return false;
     }
 
-    // must be subset of squad
     for (const p of [...xiPlayers, ...benchPlayers]) if (!poolSet.has(p.id)) return false;
-    // no duplicates
+
     if (pickedIds.size !== 15) return false;
 
     return remainingBudget >= 0;
   }
 
-  // swap helpers
   function beginSwap(area: "xi" | "bench", slotId: string) {
     if (readOnly) return;
     const p = area === "xi" ? xiAssign[slotId] : benchAssign[slotId];
@@ -264,8 +253,6 @@ export const StartingXI: FC<{
 
     const nextSlots = buildSlots(next);
     const req = FORMATIONS[next];
-
-    // stable pool order: current XI then bench then rest
     const currentOrder = uniqById([...xiPlayers, ...benchPlayers, ...pool]);
     const by = groupByPos(currentOrder);
 
@@ -331,7 +318,7 @@ export const StartingXI: FC<{
                     <button
                       type="button"
                       className="swap-slot"
-                      title="Vaihda penkille / kentälle"
+                      title="Vaihda pelaaja"
                       onClick={(e) => {
                         e.stopPropagation();
                         beginSwap("xi", s.id);
@@ -381,7 +368,7 @@ export const StartingXI: FC<{
                       <button
                         type="button"
                         className="swap-slot"
-                        title="Vaihda penkille / kentälle"
+                        title="Vaihda pelaaja"
                         onClick={(e) => {
                           e.stopPropagation();
                           beginSwap("bench", s.id);
@@ -401,7 +388,7 @@ export const StartingXI: FC<{
 
         {swapSource && (
           <div className="starting-xi-warning" role="alert" style={{ marginTop: 8, opacity: 0.9 }}>
-            Vaihto valittu — klikkaa vastapuolen pelaajaa.
+            Vaihto valittu — klikkaa seuraavaksi pelaajaa kenet haluat vaihtaa.
             <button
               type="button"
               className="app-btn"
@@ -421,11 +408,6 @@ export const StartingXI: FC<{
       <div className="starting-xi-card">
         <header className="starting-xi-header">
           <h2>Avauskokoonpano</h2>
-
-          <div className="app-muted" style={{ marginBottom: 8 }}>
-            Budjetti jäljellä: <b>{remainingBudget.toFixed(1)} M</b>
-          </div>
-
           <div className="starting-xi-meta">
             <div className="meta-pill meta-formation">
               <span>
@@ -449,7 +431,7 @@ export const StartingXI: FC<{
 
           {!isValid() && (
             <div className="starting-xi-warning" role="alert">
-              Avaus / penkki ei ole kelvollinen.
+              Kokoonpano ei ole kelvollinen.
             </div>
           )}
         </header>

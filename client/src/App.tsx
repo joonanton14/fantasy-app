@@ -47,11 +47,7 @@ export default function App() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
-
-  // OLD “players tab selection” (kept because you have a players tab UI)
   const [selected, setSelected] = useState<Player[]>([]);
-
-  // ✅ NEW: squad + saved formation (source of truth across pages)
   const [squad, setSquad] = useState<Player[]>([]);
   const [startingXI, setStartingXI] = useState<Player[]>([]);
   const [bench, setBench] = useState<Player[]>([]);
@@ -87,7 +83,6 @@ export default function App() {
 
   const [playerSort, setPlayerSort] = useState<PlayerSort>("value_desc");
 
-  // -------------------- MEMOS --------------------
   const filteredPlayers = useMemo(() => {
     const arr = players.filter((p) => {
       if (filterTeamId !== null && p.teamId !== filterTeamId) return false;
@@ -130,14 +125,11 @@ export default function App() {
     return arr;
   }, [players, filterTeamId, filterPositions, playerSort, teamsById]);
 
-  // -------------------- AUTH RESTORE (cookie) --------------------
   useEffect(() => {
     let cancelled = false;
 
     async function restore() {
       setError(null);
-
-      // 1) Fast UI restore from localStorage (optional)
       const saved = localStorage.getItem("session");
       if (saved) {
         try {
@@ -156,7 +148,6 @@ export default function App() {
         }
       }
 
-      // 2) Source of truth: cookie session
       try {
         const res = await apiCall("/auth/me", { method: "GET" });
         if (!res.ok) {
@@ -180,7 +171,6 @@ export default function App() {
 
         localStorage.setItem("session", JSON.stringify({ userId: null, userName: me.name, isAdmin: !!me.isAdmin }));
       } catch {
-        // ignore
       } finally {
         if (!cancelled) setAuthChecked(true);
       }
@@ -192,7 +182,6 @@ export default function App() {
     };
   }, []);
 
-  // -------------------- LOAD PLAYERS + TEAMS AFTER LOGIN --------------------
   useEffect(() => {
     let cancelled = false;
 
@@ -216,7 +205,6 @@ export default function App() {
     };
   }, [isLoggedIn]);
 
-  // -------------------- LOAD SAVED TEAM (squad + xi + bench + formation) --------------------
   useEffect(() => {
     let cancelled = false;
 
@@ -240,7 +228,6 @@ export default function App() {
         const xiPlayers = mapIds(xiIds);
         const benchPlayers = mapIds(benchIds);
 
-        // Backward compat: if squad missing, derive from xi+bench
         const derivedIds = Array.from(new Set([...xiIds, ...benchIds]));
         const derivedPlayers = mapIds(derivedIds);
 
@@ -248,7 +235,6 @@ export default function App() {
         setStartingXI(xiPlayers);
         setBench(benchPlayers);
 
-        // keep “selected” used in Players tab (optional)
         setSelected((prev) => {
           const existing = new Set(prev.map((p) => p.id));
           const merged = [...prev];
@@ -258,7 +244,6 @@ export default function App() {
           return merged;
         });
       } catch {
-        // optional
       } finally {
         if (!cancelled) setLoadingSaved(false);
       }
@@ -270,7 +255,6 @@ export default function App() {
     };
   }, [isLoggedIn, players]);
 
-  // -------------------- FIXTURES --------------------
   async function loadFixtures() {
     setLoadingFixtures(true);
     setFixturesErr(null);
@@ -286,7 +270,6 @@ export default function App() {
     }
   }
 
-  // -------------------- LEADERBOARD --------------------
   async function loadLeaderboard() {
     setLoadingLb(true);
     try {
@@ -322,7 +305,6 @@ export default function App() {
     };
   }, [isLoggedIn]);
 
-  // -------------------- HELPERS --------------------
   function handleLoginSuccess(userId: number, userName: string, isAdmin: boolean) {
     setUserId(userId);
     setUserName(userName);
@@ -346,7 +328,8 @@ export default function App() {
     setSquad([]);
     setStartingXI([]);
     setBench([]);
-    setSavedFormation("4-4-2");
+
+    setSavedFormation("4-4-2"); // TODO Why reset formation on logout? Should we? Maybe keep it in localStorage?
 
     setPage("builder");
     setTeamViewTab("startingXI");
@@ -387,7 +370,6 @@ export default function App() {
     });
   }
 
-  // ✅ Save only squadIds from TransfersPage
   async function saveSquad(nextSquad: Player[]) {
     setSquad(nextSquad);
     await saveStartingXI({
@@ -395,7 +377,6 @@ export default function App() {
     } as any);
   }
 
-  // ✅ Save formation + XI + bench (and keep squadIds if present)
   const saveXI = async (payload: { startingXI: Player[]; bench: Player[]; formation: FormationKey }) => {
     const xi = payload.startingXI;
     const b = payload.bench;
@@ -417,11 +398,10 @@ export default function App() {
     } as any);
   };
 
-  // -------------------- RENDER --------------------
   if (!authChecked) {
     return (
       <div className="app-muted" style={{ padding: 16 }}>
-        Loading…
+        Ladataan…
       </div>
     );
   }
@@ -430,7 +410,6 @@ export default function App() {
     return <Login onLoginSuccess={handleLoginSuccess} />;
   }
 
-  // -------------------- USER VIEW --------------------
   if (!isAdmin) {
     return (
       <div className="app-shell">
@@ -494,7 +473,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* ===== TAB CONTENT ===== */}
               {teamViewTab === "transfers" ? (
                 <TransfersPage
                   players={players}
@@ -641,7 +619,6 @@ export default function App() {
                 </div>
               ) : (
                 <>
-                  {/* PLAYERS TAB (unchanged) */}
                   <div className="app-section" style={{ marginBottom: 12 }}>
                     <h2 className="app-h2">Suodattimet</h2>
 
@@ -669,15 +646,13 @@ export default function App() {
                           onChange={(e) => setPlayerSort(e.target.value as PlayerSort)}
                           className="app-btn"
                         >
-                          <option value="value_desc">Arvo (korkein → alin)</option>
-                          <option value="value_asc">Arvo (alin → korkein)</option>
-                          <option value="name_asc">Nimi (A → Ö)</option>
-                          <option value="name_desc">Nimi (Ö → A)</option>
-                          <option value="team_asc">Joukkue (A → Ö)</option>
-                          <option value="team_desc">Joukkue (Ö → A)</option>
+                          <option value="value_desc">Arvo (kallein→ halvin)</option>
+                          <option value="value_asc">Arvo (halvin → kallein)</option>
+                          <option value="name_asc">Nimi (A →)</option>
+                          <option value="team_asc">Joukkue (A →)</option>
                           <option value="pos_asc">Pelipaikka</option>
-                          <option value="id_desc">Uusimmat (ID ↓)</option>
-                          <option value="id_asc">Vanhimmat (ID ↑)</option>
+                          <option value="id_desc">Uusimmat</option>
+                          <option value="id_asc">Vanhimmat</option>
                         </select>
                       </div>
 
@@ -705,7 +680,7 @@ export default function App() {
                           <th>Nimi</th>
                           <th>Pelipaikka</th>
                           <th>Joukkue</th>
-                          <th>Arvo (M)</th>
+                          <th>Arvo</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -732,13 +707,12 @@ export default function App() {
     );
   }
 
-  // -------------------- ADMIN VIEW --------------------
   return (
     <div className="app-shell">
       <nav>
         <div className="nav-left">
           <button className={page === "admin" ? "active" : undefined} onClick={() => setPage("admin")}>
-            Admin hallintapaneeli
+            Hallintapaneeli
           </button>
         </div>
         <div className="nav-right">
