@@ -869,32 +869,16 @@ select option {
    - GK uses normal card width (no full-width)
    ========================================================= */
 
+/* =========================================================
+   MOBILE PITCH — fixed card size (constant)
+   - slot size is constant on phones
+   - rows just center N cards and distribute empty space as gaps
+   ========================================================= */
+
 @media (max-width: 520px) {
-  .starting-xi-header {
-    gap: 8px;
-    margin-bottom: 10px;
-  }
-
-  .starting-xi-header h3 {
-    font-size: 16px;
-    line-height: 1.1;
-  }
-
-  .meta-pill {
-    padding: 6px 10px;
-    font-size: 11px;
-    gap: 8px;
-  }
-
-  .formation-select {
-    padding: 6px 28px 6px 10px;
-    font-size: 11px;
-  }
-
   .pitch {
-    /* phone card size: scales with viewport but stays sane */
-    --slot: clamp(56px, 19vw, 92px);
-    --gap: clamp(6px, 2vw, 10px);
+    --slot: 86px;  /* <-- constant size on mobile */
+    --gap: 10px;
 
     width: 100%;
     max-width: 520px;
@@ -902,36 +886,32 @@ select option {
     padding: 10px;
   }
 
-  .pitch::before {
-    inset: 10px;
-  }
+  .pitch::before { inset: 10px; }
 
   .pitch-row {
-    gap: var(--gap);
-    margin: 10px 0;
     width: 100%;
+    margin: 10px 0;
+    gap: var(--gap);
+
+    /* center the fixed-width cards */
     justify-content: center;
+    justify-items: stretch;
   }
 
-  /* fixed-size columns, centered (NO 1fr) */
-  .pitch-row.pitch-cols-1 { grid-template-columns: repeat(1, minmax(0, var(--slot))); }
-  .pitch-row.pitch-cols-2 { grid-template-columns: repeat(2, minmax(0, var(--slot))); }
-  .pitch-row.pitch-cols-3 { grid-template-columns: repeat(3, minmax(0, var(--slot))); }
-  .pitch-row.pitch-cols-4 { grid-template-columns: repeat(4, minmax(0, var(--slot))); }
-  .pitch-row.pitch-cols-5 { grid-template-columns: repeat(5, minmax(0, var(--slot))); }
+  /* IMPORTANT: fixed-size columns (NO 1fr, NO clamp) */
+  .pitch-row.pitch-cols-1 { grid-template-columns: repeat(1, var(--slot)); }
+  .pitch-row.pitch-cols-2 { grid-template-columns: repeat(2, var(--slot)); }
+  .pitch-row.pitch-cols-3 { grid-template-columns: repeat(3, var(--slot)); }
+  .pitch-row.pitch-cols-4 { grid-template-columns: repeat(4, var(--slot)); }
+  .pitch-row.pitch-cols-5 { grid-template-columns: repeat(5, var(--slot)); }
 
-  /* Cards: stop "fill row" behavior */
+  /* slot never stretches */
   .slot {
-    width: auto;
+    width: var(--slot);
     min-height: 0;
     aspect-ratio: 4 / 3;
     padding: 6px;
     border-radius: 12px;
-  }
-
-  .slot-empty {
-    font-size: 12px;
-    letter-spacing: 0.2px;
   }
 
   .player-name {
@@ -953,28 +933,22 @@ select option {
     font-size: 10px;
     top: 5px;
     right: 5px;
-    padding: 0;
-    line-height: 1;
   }
 
-  .pitch .bench-overlay {
-    width: 100%;
-    margin: 0 auto;
-  }
+  .pitch .bench-overlay { width: 100%; margin: 0 auto; }
 
   .bench-row {
-    grid-template-columns: repeat(4, minmax(0, var(--slot)));
     gap: var(--gap);
     justify-content: center;
+    grid-template-columns: repeat(4, var(--slot));
   }
 }
 
-/* Extra tiny phones */
+/* Extra tiny phones: still constant, just a smaller constant */
 @media (max-width: 380px) {
-  .pitch { --slot: clamp(52px, 21vw, 84px); }
+  .pitch { --slot: 78px; --gap: 8px; }
   .slot { aspect-ratio: 3 / 2; }
   .player-name { font-size: 10px; }
   .player-team { font-size: 8.6px; }
   .swap-slot { width: 15px; height: 15px; font-size: 9px; }
-  .bench-row { gap: 6px; }
 }
