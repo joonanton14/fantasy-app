@@ -418,7 +418,8 @@ export const StartingXI: FC<{
     <div className="starting-xi-root" ref={rootRef}>
       <div className="starting-xi-card">
         <header className="starting-xi-header">
-          <h3>Avauskokoonpano</h3>
+          <div>
+          <h5>Avauskokoonpano</h5>
 
           <div className="starting-xi-meta">
             <div className="meta-pill meta-formation">
@@ -434,6 +435,7 @@ export const StartingXI: FC<{
                   </option>
                 ))}
               </select>
+            </div>
             </div>
           </div>
 
