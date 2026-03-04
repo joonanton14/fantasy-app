@@ -864,67 +864,67 @@ select option {
 
 @media (max-width: 520px) {
   .pitch {
-    /* width chosen to fit 5 columns on ~360px screens */
-    --slotW: clamp(56px, 18vw, 86px);
-    --slotH: 56px;                 /* <- stable height */
-    --gap: clamp(6px, 2vw, 10px);
-    overflow: hidden; 
+    /* Keep pitch padding small so 5 can fit */
+    padding: 8px;                /* was 10px */
+    margin: 10px auto;
     width: 100%;
     max-width: 520px;
-    margin: 10px auto;
-    padding: 10px;
+    overflow: hidden;
+
+    /* CONSTANT card size on mobile (same always) */
+    --slotW: 60px;               /* <- key: fixed */
+    --slotH: 56px;
+
+    /* default gap (overridden per row below) */
+    --gapRow: 10px;
   }
 
-  .pitch::before { inset: 10px; }
+  .pitch::before { inset: 8px; }
 
   .pitch-row {
     width: 100%;
     margin: 10px 0;
-    gap: var(--gap);
     justify-content: center;
     align-content: center;
+
+    /* gap is per-row via CSS var */
+    gap: var(--gapRow);
   }
 
-  /* fixed columns; NO 1fr */
-  .pitch-row.pitch-cols-1 { grid-template-columns: repeat(1, var(--slotW)); }
-  .pitch-row.pitch-cols-2 { grid-template-columns: repeat(2, var(--slotW)); }
-  .pitch-row.pitch-cols-3 { grid-template-columns: repeat(3, var(--slotW)); }
-  .pitch-row.pitch-cols-4 { grid-template-columns: repeat(4, var(--slotW)); }
-  .pitch-row.pitch-cols-5 { grid-template-columns: repeat(5, var(--slotW)); }
+  /* Keep your exact grid structure */
+  .pitch-row.pitch-cols-1 { grid-template-columns: repeat(1, var(--slotW)); --gapRow: 14px; }
+  .pitch-row.pitch-cols-2 { grid-template-columns: repeat(2, var(--slotW)); --gapRow: 14px; }
+  .pitch-row.pitch-cols-3 { grid-template-columns: repeat(3, var(--slotW)); --gapRow: 12px; }
+  .pitch-row.pitch-cols-4 { grid-template-columns: repeat(4, var(--slotW)); --gapRow: 10px; }
 
-  /* ONLY SIZE CHANGES (slot / slot-filled / player-chip) */
+  /* 5-wide: smallest gap so it fits, but slot size stays SAME */
+  .pitch-row.pitch-cols-5 { grid-template-columns: repeat(5, var(--slotW)); --gapRow: 6px; }
+
   .slot {
-    width: var(--slotW);
-    height: 52px;            /* was var(--slotH)=56px -> smaller so 5 fits easier */
+    width: var(--slotW);         /* constant */
+    height: var(--slotH);        /* constant */
     min-height: 0;
-    padding: 5px;            /* was 6px */
-    border-radius: 11px;     /* was 12px */
+    padding: 6px;
+    border-radius: 12px;
     display: grid;
     place-items: center;
   }
 
-  .slot-filled {
-    /* keep same style; no layout changes needed */
-  }
-
-  .player-chip {
-    width: 100%;
-    min-width: 0;
-    gap: 2px;                /* was 4px */
-  }
+  /* Only chip sizing (to prevent text clipping in small fixed cards) */
+  .player-chip { width: 100%; min-width: 0; gap: 2px; }
 
   .player-name {
-    font-size: 10px;         /* was 10.5px */
-    line-height: 1;          /* was 1.05 */
-    padding-right: 16px;     /* was 18px */
+    font-size: 10px;
+    line-height: 1.0;
+    padding-right: 16px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
   .player-team {
-    font-size: 8.6px;        /* was 9px */
-    line-height: 1;          /* was 1.05 */
+    font-size: 8.6px;
+    line-height: 1.0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -941,8 +941,10 @@ select option {
   }
 
   .pitch .bench-overlay { width: 100%; margin: 0 auto; }
+
+  /* Bench: 4 fixed cards */
   .bench-row {
-    gap: var(--gap);
+    gap: 8px;
     justify-content: center;
     grid-template-columns: repeat(4, var(--slotW));
   }
