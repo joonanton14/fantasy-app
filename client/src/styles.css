@@ -1688,3 +1688,41 @@ body {
     opacity: 0.95;
   }
 }
+
+/* SquadBuilder remove button (top-right like swap icon) */
+.remove-slot{
+  position: absolute;
+  top: 6px;
+  right: 6px;
+
+  width: 26px;
+  height: 26px;
+  border-radius: 9px;
+
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.92);
+
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+
+  line-height: 1;
+  padding: 0;
+}
+
+/* Make sure chip is the anchor */
+.slot .player-chip{
+  position: relative;
+}
+
+@media (max-width: 520px){
+  .remove-slot{
+    width: 16px;
+    height: 16px;
+    border-radius: 6px;
+    font-size: 10px;
+    top: 5px;
+    right: 5px;
+  }
+}
