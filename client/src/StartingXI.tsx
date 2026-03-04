@@ -435,7 +435,8 @@ export const StartingXI: FC<{
                   </option>
                 ))}
               </select>
-              <div className="starting-xi-controls">
+            </div>
+            <div className="starting-xi-controls">
                 {!readOnly && (
                   <button
                     type="button"
@@ -447,7 +448,6 @@ export const StartingXI: FC<{
                   </button>
                 )}
               </div>
-            </div>
           </div>
 
           {!isValid() && (
