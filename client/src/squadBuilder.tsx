@@ -37,7 +37,8 @@ export default function SquadBuilder(props: {
 }) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const slots = useMemo(() => buildSquad15Slots(), []);
-
+  const [lastRemoved, setLastRemoved] = useState<{ slotId: string; player: Player } | null>(null);
+  const undoTimerRef = useRef<number | null>(null);
   const [assign, setAssign] = useState<Record<string, Player | null>>(() => {
     const map: Record<string, Player | null> = {};
     for (const s of slots) map[s.id] = null;
@@ -45,6 +46,12 @@ export default function SquadBuilder(props: {
   });
 
   const [openSlot, setOpenSlot] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (undoTimerRef.current) window.clearTimeout(undoTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     const map: Record<string, Player | null> = {};
@@ -89,9 +96,30 @@ export default function SquadBuilder(props: {
   }
 
   function removeFrom(slotId: string) {
+    const removed = assign[slotId];
+    if (!removed) return;
+    setLastRemoved({ slotId, player: removed });
     setAssign((prev) => ({ ...prev, [slotId]: null }));
+    setOpenSlot(slotId);
+    if (undoTimerRef.current) window.clearTimeout(undoTimerRef.current);
+    undoTimerRef.current = window.setTimeout(() => setLastRemoved(null), 6000);
   }
 
+  function undoRemove() {
+    if (!lastRemoved) return;
+
+    const { slotId, player } = lastRemoved;
+
+    // only undo if slot is still empty, and player isn't already picked elsewhere
+    const stillEmpty = !assign[slotId];
+    const alreadyPicked = pickedIds.has(player.id);
+
+    if (stillEmpty && !alreadyPicked) {
+      setAssign((prev) => ({ ...prev, [slotId]: player }));
+    }
+
+    setLastRemoved(null);
+  }
   const canSave = picked.length === 15 && remainingBudget >= 0;
 
   return (
@@ -101,6 +129,17 @@ export default function SquadBuilder(props: {
       </div>
 
       <div className="pitch">
+        {lastRemoved && (
+          <div className="undo-toast" role="status" aria-live="polite">
+            <span className="undo-dot" aria-hidden="true" />
+            <span className="undo-text">
+              Pelaaja poistettu: <b>{lastRemoved.player.name}</b>
+            </span>
+            <button type="button" className="undo-btn" onClick={undoRemove}>
+              Kumoa
+            </button>
+          </div>
+        )}
         {(["GK", "DEF", "MID", "FWD"] as const).map((pos) => {
           const row = slots.filter((s) => s.position === pos);
           return (
@@ -145,6 +184,14 @@ export default function SquadBuilder(props: {
                     {isOpen && (
                       <div className="slot-pop" onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
                         <div className="slot-pop-title">Valitse pelaaja</div>
+                        <button
+                          type="button"
+                          className="slot-pop-close"
+                          onClick={() => setOpenSlot(null)}
+                          aria-label="Sulje"
+                        >
+                          ✕
+                        </button>
                         <div className="slot-pop-list">
                           {available.map((p) => (
                             <button
