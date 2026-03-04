@@ -92,7 +92,6 @@ export const StartingXI: FC<{
 }> = ({ teams, squad, initialXI, initialBench, initialFormation, budget, readOnly = false, onSave }) => {
   const rootRef = useRef<HTMLDivElement | null>(null);
 
-  const [justClicked, setJustClicked] = useState(false);
   const [formation, setFormation] = useState<FormationKey>(initialFormation);
   const [slots, setSlots] = useState<Slot[]>(() => buildSlots(initialFormation));
   const [xiAssign, setXiAssign] = useState<Record<string, Player | null>>({});
@@ -450,6 +449,8 @@ export const StartingXI: FC<{
           <Row position="DEF" />
           <Row position="MID" />
           <Row position="FWD" />
+
+          {/* Keep bench INSIDE pitch exactly like you want */}
           <div className="bench-overlay">
             <Bench />
           </div>
@@ -459,18 +460,11 @@ export const StartingXI: FC<{
           {!readOnly && (
             <button
               type="button"
-              className={`xi-save ${justClicked ? "xi-save-clicked" : ""}`}
-              onClick={() => {
-                if (saveDisabled) return;
-
-                setJustClicked(true);
-                window.setTimeout(() => setJustClicked(false), 600);
-
-                onSave({ formation, startingXI: xiPlayers, bench: benchPlayers });
-              }}
+              className="xi-save"
+              onClick={() => onSave({ formation, startingXI: xiPlayers, bench: benchPlayers })}
               disabled={saveDisabled}
             >
-              {justClicked ? "Tallennetaan…" : "Tallenna"}
+              Tallenna
             </button>
           )}
         </div>

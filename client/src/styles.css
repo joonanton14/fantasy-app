@@ -1300,8 +1300,3 @@ body {
 .pitch {
   max-width: 100%;
 }
-
-.xi-save-clicked {
-  opacity: 0.85;
-  transform: scale(0.98);
-}
