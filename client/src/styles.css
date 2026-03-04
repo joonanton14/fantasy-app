@@ -500,7 +500,7 @@ nav button.active {
 .starting-xi-header {
   display: grid;
   gap: 12px;
-  margin-bottom: 5px;
+  margin-bottom: 16px;
   justify-items: center;
 }
 
@@ -516,7 +516,7 @@ nav button.active {
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  gap: 5px;
+  gap: 12px;
 }
 
 .meta-pill {
@@ -669,7 +669,6 @@ nav button.active {
   width: 100%;
   min-width: 0;
   display: grid;
-  margin-top: 4px;
   gap: 4px;
   justify-items: center;
   text-align: center;
@@ -685,7 +684,7 @@ nav button.active {
 .player-name {
   font-weight: 900;
   color: #fff;
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.1;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -702,8 +701,8 @@ nav button.active {
 /* Swap icon ALWAYS top-right */
 .swap-slot {
   position: absolute;
-  top: 2px;
-  right: 2px;
+  top: 6px;
+  right: 6px;
 
   border: 1px solid rgba(255, 255, 255, 0.10);
   background: rgba(255, 255, 255, 0.06);
@@ -745,6 +744,7 @@ nav button.active {
   display: grid;
   gap: 10px;
   justify-items: center;
+  margin-top: 16px;
   text-align: center;
 }
 
@@ -812,65 +812,16 @@ select option {
 /* ===================== RESPONSIVE DESIGN ===================== */
 /* ============================================================= */
 
-@media (max-width: 1024px) {
-  .app-main { padding: 12px; }
-  .app-card { border-radius: 18px; padding: 14px; }
-}
-
-/* Mobile header + scroll tabs */
-@media (max-width: 768px) {
-  .app-topbar {
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    padding-top: calc(12px + env(safe-area-inset-top, 0px));
-    flex-direction: column;
-    gap: 10px;
-    padding: 12px;
-  }
-
-  .app-user {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .app-section-header {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .app-actions {
-    width: 100%;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    justify-content: center; /* centered tabs */
-    gap: 8px;
-    padding: 4px 2px 8px;
-    scrollbar-width: none;
-  }
-  .app-actions::-webkit-scrollbar { display: none; }
-
-  .app-actions button,
-  .app-actions .app-btn {
-    flex: 0 0 auto;
-    white-space: nowrap;
-    border-radius: 999px;
-    padding: 8px 10px;
-    font-size: 12px;
-    min-height: 36px;
-  }
-}
-
 @media (max-width: 520px) {
   .pitch {
-    /* width chosen to fit 5 columns on ~360px screens */
+    /* target size (4 columns looks great), will auto-shrink for 5 */
     --slotW: clamp(56px, 18vw, 86px);
-    --slotH: 56px;                 /* <- stable height */
+    --slotH: 56px;
     --gap: clamp(6px, 2vw, 10px);
-    overflow: hidden; 
+
+    overflow: hidden;
     width: 100%;
-    max-width: 480px;
+    max-width: 520px;
     margin: 10px auto;
     padding: 10px;
   }
@@ -885,16 +836,22 @@ select option {
     align-content: center;
   }
 
-  /* fixed columns; NO 1fr */
-  .pitch-row.pitch-cols-1 { grid-template-columns: repeat(1, var(--slotW)); }
-  .pitch-row.pitch-cols-2 { grid-template-columns: repeat(2, var(--slotW)); }
-  .pitch-row.pitch-cols-3 { grid-template-columns: repeat(3, var(--slotW)); }
-  .pitch-row.pitch-cols-4 { grid-template-columns: repeat(4, var(--slotW)); }
-  .pitch-row.pitch-cols-5 { grid-template-columns: repeat(5, var(--slotW)); }
+  /* Tell each row how many columns it has */
+  .pitch-row.pitch-cols-1 { --cols: 1; grid-template-columns: repeat(1, var(--slotW)); }
+  .pitch-row.pitch-cols-2 { --cols: 2; grid-template-columns: repeat(2, var(--slotW)); }
+  .pitch-row.pitch-cols-3 { --cols: 3; grid-template-columns: repeat(3, var(--slotW)); }
+  .pitch-row.pitch-cols-4 { --cols: 4; grid-template-columns: repeat(4, var(--slotW)); }
+  .pitch-row.pitch-cols-5 { --cols: 5; grid-template-columns: repeat(5, var(--slotW)); }
 
+  /* Compute the max slot width that can fit in THIS row */
+  .pitch-row {
+    --slotFit: calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols));
+  }
+
+  /* Use the smaller of: desired size OR what fits -> no overflow */
   .slot {
-    width: var(--slotW);
-    height: var(--slotH);          /* <- fixed */
+    width: min(var(--slotW), var(--slotFit));
+    height: var(--slotH);
     min-height: 0;
     padding: 6px;
     border-radius: 12px;
@@ -907,16 +864,17 @@ select option {
     letter-spacing: 0.2px;
   }
 
-  /* keep text from breaking layout */
-  .player-chip { width: 100%; min-width: 0; margin-top: 10px;}
+  .player-chip { width: 100%; min-width: 0; }
 
   .player-name {
     font-size: 10.5px;
     line-height: 1.05;
+    padding-right: 18px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
+
   .player-team {
     font-size: 9px;
     line-height: 1.05;
@@ -927,34 +885,29 @@ select option {
   }
 
   .swap-slot {
-    width: 10px;
-    height: 10px;
+    width: 16px;
+    height: 16px;
     border-radius: 6px;
-    font-size: 8px;
-    top: 4px;
-    right: 4px;
+    font-size: 10px;
+    top: 5px;
+    right: 5px;
   }
 
   .pitch .bench-overlay { width: 100%; margin: 0 auto; }
+
+  /* Bench is always 4 slots — apply same “fit” logic */
   .bench-row {
+    --cols: 4;
+    --slotFit: calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols));
     gap: var(--gap);
     justify-content: center;
     grid-template-columns: repeat(4, var(--slotW));
   }
-}
 
-/* extra tiny phones */
-@media (max-width: 380px) {
-  .pitch {
-    --slotW: clamp(52px, 19vw, 78px);
-    --slotH: 52px;
-    --gap: 6px;
+  .bench-row .slot {
+    width: min(var(--slotW), var(--slotFit));
   }
-  .player-name { font-size: 10px; }
-  .player-team { font-size: 8.6px; }
-  .swap-slot { width: 15px; height: 15px; font-size: 9px; }
 }
-
 /* =========================================================
    LEADERBOARD (Tulostaulu) — responsive table
    ========================================================= */
