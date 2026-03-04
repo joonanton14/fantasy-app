@@ -671,8 +671,8 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div className="app-table-wrap">
-                    <table className="app-table">
+                  <div className="app-table-wrap app-table-wrap--players">
+                    <table className="app-table app-table--players">
                       <thead>
                         <tr>
                           <th>Nimi</th>

@@ -1437,3 +1437,127 @@ body {
 @media (max-width: 520px) {
   .bench-tag { font-size: 10px; padding: 2px 8px; margin-bottom: 5px; }
 }
+
+/* =========================================================
+   PLAYERS LIST — mobile-friendly (cards), desktop stays table
+   ========================================================= */
+
+.filter-group{
+  display: grid;
+  gap: 10px;
+}
+
+.filter-row{
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  align-items: center;
+  gap: 10px;
+}
+
+.position-buttons{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Make selects not overflow */
+.filter-row select{
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Mobile: stack filters + make position buttons scrollable chips */
+@media (max-width: 520px){
+  .filter-row{
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 6px;
+  }
+
+  .filter-row label{
+    font-size: 12px;
+    opacity: 0.85;
+  }
+
+  .position-buttons{
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+  .position-buttons::-webkit-scrollbar{ display: none; }
+
+  .position-buttons .app-btn{
+    flex: 0 0 auto;
+    border-radius: 999px;
+    padding: 8px 10px;
+    font-size: 12px;
+    min-height: 34px;
+  }
+}
+
+/* ---------- Players table -> cards (mobile only) ---------- */
+@media (max-width: 520px){
+  .app-table-wrap--players{
+    border-radius: 16px;
+    overflow: visible;         /* cards don't need horizontal scroll */
+    border: 0;
+  }
+
+  .app-table--players{
+    min-width: 0;              /* kill the 720px minimum */
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 10px;    /* space between cards */
+    background: transparent;
+  }
+
+  .app-table--players thead{
+    display: none;             /* hide header on mobile */
+  }
+
+  .app-table--players tbody,
+  .app-table--players tr,
+  .app-table--players td{
+    display: block;
+    width: 100%;
+  }
+
+  .app-table--players tr{
+    background: rgba(3, 7, 18, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .app-table--players td{
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 10px;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    white-space: normal;       /* allow wrapping inside card */
+  }
+
+  .app-table--players td:last-child{
+    border-bottom: 0;
+  }
+
+  /* Labels via nth-child (no data-label changes needed) */
+  .app-table--players td:nth-child(1)::before{ content: "Nimi"; }
+  .app-table--players td:nth-child(2)::before{ content: "Pelipaikka"; }
+  .app-table--players td:nth-child(3)::before{ content: "Joukkue"; }
+  .app-table--players td:nth-child(4)::before{ content: "Arvo"; }
+
+  .app-table--players td::before{
+    color: rgba(229, 231, 235, 0.65);
+    font-weight: 800;
+    font-size: 12px;
+  }
+
+  /* Make the value pop a bit */
+  .app-table--players td:nth-child(4){
+    font-weight: 900;
+  }
+}
