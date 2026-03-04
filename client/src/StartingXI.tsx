@@ -326,6 +326,7 @@ export const StartingXI: FC<{
             )}
 
             <div className="player-chip">
+              {area === "bench" && <div className={`pos-badge pos-${assigned.position}`}>{assigned.position}</div>}
               <div className="player-name">{lastName(assigned.name)}</div>
               <div className="player-team">{teamName(teams, assigned.teamId)}</div>
             </div>
