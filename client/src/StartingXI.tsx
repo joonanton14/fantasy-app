@@ -422,7 +422,7 @@ export const StartingXI: FC<{
 
           <div className="starting-xi-meta">
             <div className="meta-pill meta-formation">
-              <h5>Avauskokoonpano</h5>
+              <h3>Avauskokoonpano</h3>
               <select
                 className="formation-select"
                 value={formation}
