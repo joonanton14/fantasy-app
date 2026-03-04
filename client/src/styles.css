@@ -1848,3 +1848,89 @@ body {
   .squad-builder .player-team{ font-size: 7.8px; }
   .squad-builder .remove-slot{ width: 13px; height: 13px; font-size: 8px; }
 }
+
+.picker-backdrop{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(6px);
+  display: grid;
+  align-items: end;
+  z-index: 999;
+}
+
+.picker-sheet{
+  background: rgba(17,24,39,0.95);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 18px 18px 0 0;
+  padding: 12px;
+  max-height: 72vh;
+  overflow: hidden;
+}
+
+.picker-head{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.picker-title{
+  font-weight: 900;
+  color: #fff;
+}
+
+.picker-close{
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.92);
+  cursor: pointer;
+}
+
+.picker-search{
+  width: 100%;
+  border-radius: 14px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(3,7,18,0.55);
+  color: #fff;
+  outline: none;
+  margin-bottom: 10px;
+}
+
+.picker-list{
+  overflow: auto;
+  max-height: calc(72vh - 120px);
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.picker-row{
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  padding: 12px;
+  text-align: left;
+  border: 0;
+  background: rgba(3,7,18,0.35);
+  color: rgba(229,231,235,0.92);
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.picker-row:active{ transform: scale(0.99); }
+
+.picker-name{ font-weight: 900; }
+.picker-team{ opacity: 0.75; font-size: 12px; grid-column: 1 / 2; }
+.picker-price{ font-weight: 900; opacity: 0.9; align-self: start; }
+
+.picker-empty{
+  padding: 14px;
+  text-align: center;
+  color: rgba(229,231,235,0.6);
+}
