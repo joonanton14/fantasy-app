@@ -326,7 +326,6 @@ export const StartingXI: FC<{
             )}
 
             <div className="player-chip">
-              {area === "bench" && <div className={`pos-badge pos-${assigned.position}`}>{assigned.position}</div>}
               <div className="player-name">{lastName(assigned.name)}</div>
               <div className="player-team">{teamName(teams, assigned.teamId)}</div>
             </div>
@@ -374,19 +373,26 @@ export const StartingXI: FC<{
             const assigned = benchAssign[s.id] ?? null;
 
             return (
-              <PlayerSlot
-                key={s.id}
-                area="bench"
-                slotId={s.id}
-                assigned={assigned}
-                emptyLabel={s.label}
-                onSlotClick={() => {
-                  if (readOnly) return;
-                  if (swapSource && swapSource.area === "xi" && assigned) {
-                    trySwap("bench", s.id);
-                  }
-                }}
-              />
+              <div key={s.id} className="bench-item">
+                {assigned && (
+                  <div className={`bench-tag bench-tag-${assigned.position}`}>
+                    {assigned.position === "FWD" ? "ST" : assigned.position}
+                  </div>
+                )}
+
+                <PlayerSlot
+                  area="bench"
+                  slotId={s.id}
+                  assigned={assigned}
+                  emptyLabel={s.label}
+                  onSlotClick={() => {
+                    if (readOnly) return;
+                    if (swapSource && swapSource.area === "xi" && assigned) {
+                      trySwap("bench", s.id);
+                    }
+                  }}
+                />
+              </div>
             );
           })}
         </div>

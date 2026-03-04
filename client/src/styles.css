@@ -1406,3 +1406,30 @@ body {
     padding: 1px 6px;
   }
 }
+
+.bench-item {
+  display: grid;
+  justify-items: center;
+}
+
+.bench-tag {
+  margin-bottom: 6px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.6px;
+  line-height: 1;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(3, 7, 18, 0.55);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.bench-tag-GK  { border-color: rgba(16,185,129,0.35); }
+.bench-tag-DEF { border-color: rgba(59,130,246,0.35); }
+.bench-tag-MID { border-color: rgba(234,179,8,0.35); }
+.bench-tag-FWD { border-color: rgba(239,68,68,0.35); }
+
+@media (max-width: 520px) {
+  .bench-tag { font-size: 10px; padding: 2px 8px; margin-bottom: 5px; }
+}
