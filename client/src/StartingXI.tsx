@@ -222,12 +222,59 @@ export const StartingXI: FC<{
   function trySwap(targetArea: "xi" | "bench", targetSlotId: string) {
     if (readOnly) return;
     if (!swapSource) return;
-    if (swapSource.area === targetArea) return;
+
+    // don't swap the slot with itself
+    if (swapSource.area === targetArea && swapSource.slotId === targetSlotId) return;
 
     const srcP = swapSource.area === "xi" ? xiAssign[swapSource.slotId] : benchAssign[swapSource.slotId];
     const dstP = targetArea === "xi" ? xiAssign[targetSlotId] : benchAssign[targetSlotId];
     if (!srcP || !dstP) return;
 
+    const srcXiSlot = swapSource.area === "xi" ? slots.find((s) => s.id === swapSource.slotId) : null;
+    const dstXiSlot = targetArea === "xi" ? slots.find((s) => s.id === targetSlotId) : null;
+
+    const srcBenchSlot = swapSource.area === "bench" ? BENCH_SLOTS.find((b) => b.id === swapSource.slotId) : null;
+    const dstBenchSlot = targetArea === "bench" ? BENCH_SLOTS.find((b) => b.id === targetSlotId) : null;
+
+    // helpers for bench slot validity
+    const benchAccepts = (slot: BenchSlot, p: Player) => {
+      if (slot.kind === "GK") return p.position === "GK";
+      return p.position !== "GK";
+    };
+
+    // XI ⇄ XI: both players must fit both XI positions
+    if (swapSource.area === "xi" && targetArea === "xi") {
+      if (!srcXiSlot || !dstXiSlot) return;
+      if (srcP.position !== dstXiSlot.position) return;
+      if (dstP.position !== srcXiSlot.position) return;
+
+      setXiAssign((prev) => ({
+        ...prev,
+        [swapSource.slotId]: dstP,
+        [targetSlotId]: srcP,
+      }));
+
+      setSwapSource(null);
+      return;
+    }
+
+    // Bench ⇄ Bench: both players must fit both bench slot kinds
+    if (swapSource.area === "bench" && targetArea === "bench") {
+      if (!srcBenchSlot || !dstBenchSlot) return;
+      if (!benchAccepts(dstBenchSlot, srcP)) return;
+      if (!benchAccepts(srcBenchSlot, dstP)) return;
+
+      setBenchAssign((prev) => ({
+        ...prev,
+        [swapSource.slotId]: dstP,
+        [targetSlotId]: srcP,
+      }));
+
+      setSwapSource(null);
+      return;
+    }
+
+    // XI ⇄ Bench (your existing logic, but symmetric)
     const xiSlotId = targetArea === "xi" ? targetSlotId : swapSource.slotId;
     const benchSlotId = targetArea === "bench" ? targetSlotId : swapSource.slotId;
 
@@ -239,8 +286,7 @@ export const StartingXI: FC<{
     const incomingToBench = targetArea === "bench" ? srcP : dstP;
 
     if (incomingToXI.position !== xiSlot.position) return;
-    if (benchSlot.kind === "GK" && incomingToBench.position !== "GK") return;
-    if (benchSlot.kind === "FIELD" && incomingToBench.position === "GK") return;
+    if (!benchAccepts(benchSlot, incomingToBench)) return;
 
     if (targetArea === "xi") {
       setXiAssign((prev) => ({ ...prev, [targetSlotId]: srcP }));
@@ -305,7 +351,7 @@ export const StartingXI: FC<{
     emptyLabel: string;
     onSlotClick: () => void;
   }) => {
-    const canSwap = !readOnly;
+    const canSwap = !readOnly && !swapSource;
 
     return (
       <div className={`slot ${assigned ? "slot-filled" : ""}`} onClick={onSlotClick} role="button" tabIndex={0}>
@@ -354,7 +400,7 @@ export const StartingXI: FC<{
               emptyLabel={s.label}
               onSlotClick={() => {
                 if (readOnly) return;
-                if (swapSource && swapSource.area === "bench" && assigned) {
+                if (swapSource && assigned) {
                   trySwap("xi", s.id);
                 }
               }}
@@ -387,7 +433,7 @@ export const StartingXI: FC<{
                   emptyLabel={s.label}
                   onSlotClick={() => {
                     if (readOnly) return;
-                    if (swapSource && swapSource.area === "xi" && assigned) {
+                    if (swapSource && assigned) {
                       trySwap("bench", s.id);
                     }
                   }}
