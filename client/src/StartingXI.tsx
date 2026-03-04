@@ -418,7 +418,7 @@ export const StartingXI: FC<{
     <div className="starting-xi-root" ref={rootRef}>
       <div className="starting-xi-card">
         <header className="starting-xi-header">
-          
+
 
           <div className="starting-xi-meta">
             <div className="meta-pill meta-formation">
@@ -435,6 +435,18 @@ export const StartingXI: FC<{
                   </option>
                 ))}
               </select>
+              <div className="starting-xi-controls">
+                {!readOnly && (
+                  <button
+                    type="button"
+                    className="xi-save"
+                    onClick={() => onSave({ formation, startingXI: xiPlayers, bench: benchPlayers })}
+                    disabled={saveDisabled}
+                  >
+                    Tallenna
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -455,19 +467,6 @@ export const StartingXI: FC<{
           <div className="bench-overlay">
             <Bench />
           </div>
-        </div>
-
-        <div className="starting-xi-controls">
-          {!readOnly && (
-            <button
-              type="button"
-              className="xi-save"
-              onClick={() => onSave({ formation, startingXI: xiPlayers, bench: benchPlayers })}
-              disabled={saveDisabled}
-            >
-              Tallenna
-            </button>
-          )}
         </div>
       </div>
     </div>
