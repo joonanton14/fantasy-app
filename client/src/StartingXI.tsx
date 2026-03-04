@@ -97,7 +97,7 @@ export const StartingXI: FC<{
   const [xiAssign, setXiAssign] = useState<Record<string, Player | null>>({});
   const [benchAssign, setBenchAssign] = useState<Record<string, Player | null>>({});
   const [swapSource, setSwapSource] = useState<SwapSource>(null);
-
+  const [saveFlash, setSaveFlash] = useState<"idle" | "clicked" | "saved">("idle");
   useEffect(() => {
     function handlePointerDown(e: MouseEvent | TouchEvent) {
       if (!rootRef.current) return;
@@ -460,11 +460,25 @@ export const StartingXI: FC<{
           {!readOnly && (
             <button
               type="button"
-              className="xi-save"
-              onClick={() => onSave({ formation, startingXI: xiPlayers, bench: benchPlayers })}
+              className={`xi-save ${saveFlash !== "idle" ? `xi-save--${saveFlash}` : ""}`}
+              onClick={() => {
+                if (saveDisabled || readOnly) return;
+
+                // instant feedback
+                setSaveFlash("clicked");
+                window.setTimeout(() => setSaveFlash("saved"), 250);
+                window.setTimeout(() => setSaveFlash("idle"), 1400);
+
+                // keep your existing save call (no await needed)
+                onSave({ formation, startingXI: xiPlayers, bench: benchPlayers });
+              }}
               disabled={saveDisabled}
             >
-              Tallenna
+              {saveFlash === "clicked"
+                ? "Tallennetaan…"
+                : saveFlash === "saved"
+                  ? "Tallennettu ✓"
+                  : "Tallenna"}
             </button>
           )}
         </div>
