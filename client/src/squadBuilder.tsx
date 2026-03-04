@@ -142,6 +142,14 @@ export default function SquadBuilder(props: {
     setLastRemoved(null);
   }
 
+  const pickerOut = useMemo(() => {
+    if (!picker) return null;
+    return assign[picker.slotId] ?? null;
+  }, [picker, assign]);
+
+  function fmtPos(pos: Position) {
+    return pos === "FWD" ? "ST" : pos;
+  }
   const availableForPicker = useMemo(() => {
     if (!picker) return [];
     const slotAssigned = assign[picker.slotId];
@@ -233,21 +241,39 @@ export default function SquadBuilder(props: {
       {picker && (
         <div
           className="picker-backdrop"
-          onClick={() => {
-            setPicker(null);
-          }}
+          onClick={() => setPicker(null)}
+          role="dialog"
+          aria-modal="true"
         >
           <div className="picker-sheet" onClick={(e) => e.stopPropagation()}>
             <div className="picker-head">
-              <div className="picker-title">Valitse pelaaja ({picker.pos})</div>
+              <div className="picker-title">
+                Valitse pelaaja <span className="picker-pos">({fmtPos(picker.pos)})</span>
+              </div>
+
               <button className="picker-close" onClick={() => setPicker(null)} aria-label="Sulje">
                 ✕
               </button>
             </div>
 
+            {/* OUT player (who is being replaced) */}
+            <div className="picker-out">
+              <div className="picker-out-label">Ulos</div>
+              {pickerOut ? (
+                <div className="picker-out-card">
+                  <div className="picker-out-name">{pickerOut.name}</div>
+                  <div className="picker-out-sub">
+                    {teamName(props.teams, pickerOut.teamId)} • {pickerOut.value.toFixed(1)} M
+                  </div>
+                </div>
+              ) : (
+                <div className="picker-out-card picker-out-card--empty">Tyhjä paikka</div>
+              )}
+            </div>
+
             <input
               className="picker-search"
-              placeholder="Hae..."
+              placeholder="Hae pelaajaa..."
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
@@ -263,9 +289,11 @@ export default function SquadBuilder(props: {
                     setPicker(null);
                   }}
                 >
-                  <span className="picker-name">{p.name}</span>
-                  <span className="picker-team">{teamName(props.teams, p.teamId)}</span>
-                  <span className="picker-price">{p.value.toFixed(1)} M</span>
+                  <div className="picker-row-main">
+                    <div className="picker-name">{p.name}</div>
+                    <div className="picker-team">{teamName(props.teams, p.teamId)}</div>
+                  </div>
+                  <div className="picker-price">{p.value.toFixed(1)} M</div>
                 </button>
               ))}
 
