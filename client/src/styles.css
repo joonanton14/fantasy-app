@@ -701,8 +701,8 @@ nav button.active {
 /* Swap icon ALWAYS top-right */
 .swap-slot {
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: 2px;
+  right: 2px;
 
   border: 1px solid rgba(255, 255, 255, 0.10);
   background: rgba(255, 255, 255, 0.06);
@@ -870,7 +870,7 @@ select option {
     --gap: clamp(6px, 2vw, 10px);
     overflow: hidden; 
     width: 100%;
-    max-width: 520px;
+    max-width: 480px;
     margin: 10px auto;
     padding: 10px;
   }
@@ -909,10 +909,12 @@ select option {
 
   /* keep text from breaking layout */
   .player-chip { width: 100%; min-width: 0; }
+
   .player-name {
     font-size: 10.5px;
     line-height: 1.05;
     padding-right: 18px;
+    padding-top: 10px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
