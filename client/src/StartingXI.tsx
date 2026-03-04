@@ -92,7 +92,7 @@ export const StartingXI: FC<{
 }> = ({ teams, squad, initialXI, initialBench, initialFormation, budget, readOnly = false, onSave }) => {
   const rootRef = useRef<HTMLDivElement | null>(null);
 
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [justClicked, setJustClicked] = useState(false);
   const [formation, setFormation] = useState<FormationKey>(initialFormation);
   const [slots, setSlots] = useState<Slot[]>(() => buildSlots(initialFormation));
   const [xiAssign, setXiAssign] = useState<Record<string, Player | null>>({});
@@ -450,8 +450,6 @@ export const StartingXI: FC<{
           <Row position="DEF" />
           <Row position="MID" />
           <Row position="FWD" />
-
-          {/* Keep bench INSIDE pitch exactly like you want */}
           <div className="bench-overlay">
             <Bench />
           </div>
@@ -459,37 +457,21 @@ export const StartingXI: FC<{
 
         <div className="starting-xi-controls">
           {!readOnly && (
-            <>
-              <button
-                type="button"
-                className={`xi-save ${saveState === "saved" ? "xi-save-saved" : ""} ${saveState === "error" ? "xi-save-error" : ""
-                  }`}
-                onClick={async () => {
-                  if (saveDisabled || saveState === "saving") return;
-                  try {
-                    setSaveState("saving");
-                    await onSave({ formation, startingXI: xiPlayers, bench: benchPlayers });
-                    setSaveState("saved");
-                    window.setTimeout(() => setSaveState("idle"), 1200);
-                  } catch {
-                    setSaveState("error");
-                    window.setTimeout(() => setSaveState("idle"), 1600);
-                  }
-                }}
-                disabled={saveDisabled || saveState === "saving"}
-              >
-                {saveState === "saving"
-                  ? "Tallennetaan…"
-                  : saveState === "saved"
-                    ? "Tallennettu ✓"
-                    : saveState === "error"
-                      ? "Virhe – yritä uudelleen"
-                      : "Tallenna"}
-              </button>
+            <button
+              type="button"
+              className={`xi-save ${justClicked ? "xi-save-clicked" : ""}`}
+              onClick={() => {
+                if (saveDisabled) return;
 
-              {/* optional small helper text */}
-              {saveState === "saving" && <div className="xi-save-hint">Tallennetaan kokoonpanoa…</div>}
-            </>
+                setJustClicked(true);
+                window.setTimeout(() => setJustClicked(false), 600);
+
+                onSave({ formation, startingXI: xiPlayers, bench: benchPlayers });
+              }}
+              disabled={saveDisabled}
+            >
+              {justClicked ? "Tallennetaan…" : "Tallenna"}
+            </button>
           )}
         </div>
       </div>
