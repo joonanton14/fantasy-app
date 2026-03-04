@@ -98,6 +98,7 @@ export const StartingXI: FC<{
   const [benchAssign, setBenchAssign] = useState<Record<string, Player | null>>({});
   const [swapSource, setSwapSource] = useState<SwapSource>(null);
   const [saveFlash, setSaveFlash] = useState<"idle" | "clicked" | "saved">("idle");
+
   useEffect(() => {
     function handlePointerDown(e: MouseEvent | TouchEvent) {
       if (!rootRef.current) return;
@@ -176,10 +177,7 @@ export const StartingXI: FC<{
 
   const pickedIds = useMemo(() => new Set([...xiPlayers, ...benchPlayers].map((p) => p.id)), [xiPlayers, benchPlayers]);
 
-  const totalValue = useMemo(
-    () => [...xiPlayers, ...benchPlayers].reduce((s, p) => s + p.value, 0),
-    [xiPlayers, benchPlayers]
-  );
+  const totalValue = useMemo(() => [...xiPlayers, ...benchPlayers].reduce((s, p) => s + p.value, 0), [xiPlayers, benchPlayers]);
 
   const remainingBudget = budget - totalValue;
   const f = FORMATIONS[formation];
@@ -310,12 +308,7 @@ export const StartingXI: FC<{
     const canSwap = !readOnly;
 
     return (
-      <div
-        className={`slot ${assigned ? "slot-filled" : ""}`}
-        onClick={onSlotClick}
-        role="button"
-        tabIndex={0}
-      >
+      <div className={`slot ${assigned ? "slot-filled" : ""}`} onClick={onSlotClick} role="button" tabIndex={0}>
         {assigned ? (
           <>
             {canSwap && (
@@ -396,20 +389,6 @@ export const StartingXI: FC<{
             );
           })}
         </div>
-
-        {swapSource && (
-          <div className="starting-xi-warning" role="alert" style={{ marginTop: 8, opacity: 0.9 }}>
-            Vaihto valittu — klikkaa seuraavaksi pelaajaa kenet haluat vaihtaa.
-            <button
-              type="button"
-              className="app-btn"
-              style={{ marginLeft: 8, padding: "2px 8px" }}
-              onClick={() => setSwapSource(null)}
-            >
-              Peru
-            </button>
-          </div>
-        )}
       </div>
     );
   };
@@ -437,11 +416,7 @@ export const StartingXI: FC<{
             </div>
           </div>
 
-          {!isValid() && (
-            <div className="starting-xi-warning" role="alert">
-              Kokoonpano ei ole kelvollinen.
-            </div>
-          )}
+          {!isValid() && <div className="starting-xi-warning" role="alert">Kokoonpano ei ole kelvollinen.</div>}
         </header>
 
         <div className="pitch">
@@ -450,10 +425,24 @@ export const StartingXI: FC<{
           <Row position="MID" />
           <Row position="FWD" />
 
-          {/* Keep bench INSIDE pitch exactly like you want */}
           <div className="bench-overlay">
             <Bench />
           </div>
+
+          {/* OPTION A: floating guidance inside pitch (no layout jump) */}
+          {swapSource && (
+            <div className="xi-swap-toast" role="status" aria-live="polite">
+              <span className="xi-swap-dot" aria-hidden="true" />
+              <span>
+                Vaihto päällä — valitse{" "}
+                <b>{swapSource.area === "xi" ? "penkiltä" : "kentältä"}</b>{" "}
+                pelaaja jonka kanssa vaihdetaan.
+              </span>
+              <button type="button" className="xi-swap-cancel" onClick={() => setSwapSource(null)}>
+                Peru
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="starting-xi-controls">
@@ -464,21 +453,14 @@ export const StartingXI: FC<{
               onClick={() => {
                 if (saveDisabled || readOnly) return;
 
-                // instant feedback
                 setSaveFlash("clicked");
                 window.setTimeout(() => setSaveFlash("saved"), 250);
                 window.setTimeout(() => setSaveFlash("idle"), 1400);
-
-                // keep your existing save call (no await needed)
                 onSave({ formation, startingXI: xiPlayers, bench: benchPlayers });
               }}
               disabled={saveDisabled}
             >
-              {saveFlash === "clicked"
-                ? "Tallennetaan…"
-                : saveFlash === "saved"
-                  ? "Tallennettu ✓"
-                  : "Tallenna"}
+              {saveFlash === "clicked" ? "Tallennetaan…" : saveFlash === "saved" ? "Tallennettu ✓" : "Tallenna"}
             </button>
           )}
         </div>
