@@ -514,8 +514,8 @@ export default function App() {
                   ) : fixtures.length === 0 ? (
                     <div className="app-muted">Ei otteluita vielä.</div>
                   ) : (
-                    <div className="app-table-wrap">
-                      <table className="app-table">
+                    <div className="app-table-wrap app-table-wrap--fx">
+                      <table className="app-table app-table--fx">
                         <tbody>
                           {(() => {
                             const sorted = fixtures

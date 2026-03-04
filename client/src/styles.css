@@ -1046,9 +1046,6 @@ select option {
   }
 }
 
-/* =========================================================
-   LEADERBOARD — mobile cards (force NO horizontal scroll)
-   ========================================================= */
 @media (max-width: 520px) {
   /* kill the wrapper scroll behaviour */
   .app-table-wrap.app-table-wrap--lb {
@@ -1596,5 +1593,98 @@ body {
   /* Make the value pop a bit */
   .app-table--players td:nth-child(4){
     font-weight: 900;
+  }
+}
+
+/* =========================================================
+   FIXTURES — mobile cards
+   ========================================================= */
+@media (max-width: 520px) {
+  /* stop horizontal scroll just for fixtures */
+  .app-table-wrap.app-table-wrap--fx{
+    overflow-x: visible !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  table.app-table.app-table--fx{
+    min-width: 0 !important;              /* overrides .app-table { min-width: 720px } */
+    width: 100% !important;
+    background: transparent !important;
+    border-collapse: separate !important;
+    border-spacing: 0 10px !important;
+  }
+
+  table.app-table.app-table--fx tbody,
+  table.app-table.app-table--fx tr,
+  table.app-table.app-table--fx td{
+    display: block !important;
+    width: 100% !important;
+  }
+
+  /* Round header rows: those are <tr><td colSpan=4> */
+  table.app-table.app-table--fx tr:has(td[colspan]){
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+  }
+
+  table.app-table.app-table--fx tr:has(td[colspan]) td{
+    padding: 6px 2px 0 !important;
+    border-bottom: 0 !important;
+    font-weight: 900 !important;
+    color: rgba(229,231,235,0.9) !important;
+    opacity: 0.9;
+  }
+
+  /* Fixture row card */
+  table.app-table.app-table--fx tr:not(:has(td[colspan])){
+    background: rgba(3, 7, 18, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  table.app-table.app-table--fx tr:not(:has(td[colspan])) td{
+    white-space: normal !important;   /* override nowrap */
+    overflow: visible !important;
+    text-overflow: unset !important;
+
+    padding: 10px 12px !important;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:last-child{
+    border-bottom: 0;
+  }
+
+  /* Labels for the 4 cells */
+  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(1)::before{ content:"Kierros"; }
+  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(2)::before{ content:"ID"; }
+  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(3)::before{ content:"Ottelu"; }
+  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(4)::before{ content:"Aika"; }
+
+  table.app-table.app-table--fx tr:not(:has(td[colspan])) td{
+    display: grid !important;
+    grid-template-columns: 90px 1fr;
+    gap: 10px;
+    align-items: center;
+  }
+
+  table.app-table.app-table--fx tr:not(:has(td[colspan])) td::before{
+    color: rgba(229,231,235,0.65);
+    font-weight: 800;
+    font-size: 12px;
+  }
+
+  /* Make match line bold */
+  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(3){
+    font-weight: 900;
+  }
+
+  /* Make date a bit smaller */
+  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(4){
+    font-size: 12.5px;
+    opacity: 0.95;
   }
 }
