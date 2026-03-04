@@ -123,7 +123,7 @@ export default function SquadBuilder(props: {
   const canSave = picked.length === 15 && remainingBudget >= 0;
 
   return (
-    <div ref={rootRef}>
+    <div ref={rootRef} className="squad-builder">
       <div className="app-muted" style={{ marginBottom: 8 }}>
         Budjetti jäljellä: <b>{remainingBudget.toFixed(1)} M</b>
       </div>
