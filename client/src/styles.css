@@ -516,7 +516,7 @@ nav button.active {
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  gap: 12px;
+  gap: 5px;
 }
 
 .meta-pill {
