@@ -913,7 +913,6 @@ select option {
   .player-name {
     font-size: 10.5px;
     line-height: 1.05;
-    padding-right: 18px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
