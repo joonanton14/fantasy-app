@@ -1047,89 +1047,118 @@ select option {
 }
 
 /* =========================================================
-   LEADERBOARD — mobile cards (no horizontal scroll)
+   LEADERBOARD — mobile cards (force NO horizontal scroll)
    ========================================================= */
-
 @media (max-width: 520px) {
-  .app-table-wrap--lb{
-    border: 0;
-    overflow: visible;            /* cards don't need scroll container */
-    border-radius: 0;
+  /* kill the wrapper scroll behaviour */
+  .app-table-wrap.app-table-wrap--lb {
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    border: 0 !important;
+    border-radius: 0 !important;
   }
 
-  .app-table--lb{
-    min-width: 0;                 /* kill the wide table */
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0 10px;       /* space between cards */
-    background: transparent;
+  /* kill global table min-width: 720px */
+  table.app-table.app-table--lb {
+    min-width: 0 !important;
+    width: 100% !important;
+    background: transparent !important;
+    border-collapse: separate !important;
+    border-spacing: 0 10px !important;
   }
 
-  .app-table--lb thead{
-    display: none;                /* hide header on mobile */
+  /* hide header on mobile */
+  table.app-table.app-table--lb thead {
+    display: none !important;
   }
 
-  .app-table--lb tbody,
-  .app-table--lb tr,
-  .app-table--lb td{
-    display: block;
-    width: 100%;
+  /* card layout */
+  table.app-table.app-table--lb tbody,
+  table.app-table.app-table--lb tr,
+  table.app-table.app-table--lb td {
+    display: block !important;
+    width: 100% !important;
   }
 
-  .app-table--lb tr{
+  table.app-table.app-table--lb tr {
     background: rgba(3, 7, 18, 0.45);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 16px;
     overflow: hidden;
   }
 
-  /* Each row becomes a small grid */
-  .app-table--lb td{
-    padding: 10px 12px;
+  /* override global nowrap */
+  table.app-table.app-table--lb td {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    padding: 10px 12px !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    white-space: normal;
   }
-  .app-table--lb td:last-child{ border-bottom: 0; }
+  table.app-table.app-table--lb td:last-child {
+    border-bottom: 0;
+  }
 
-  /* Layout: icon + rank + username on first line */
-  .app-table--lb td:nth-child(1),
-  .app-table--lb td:nth-child(2),
-  .app-table--lb td:nth-child(3){
-    display: inline-block;
+  /* --- Line 1: icon + rank + username --- */
+  table.app-table.app-table--lb td:nth-child(1),
+  table.app-table.app-table--lb td:nth-child(2),
+  table.app-table.app-table--lb td:nth-child(3) {
+    display: inline-block !important;
     vertical-align: middle;
   }
 
-  .app-table--lb td:nth-child(1){ width: 26px; text-align: center; opacity: 0.9; }
-  .app-table--lb td:nth-child(2){ width: 44px; font-weight: 900; opacity: 0.9; }
-  .app-table--lb td:nth-child(3){
-    width: calc(100% - 26px - 44px);
-    font-weight: 900;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  table.app-table.app-table--lb td:nth-child(1) {
+    width: 26px !important;
+    text-align: center !important;
+    opacity: 0.9;
+    padding-bottom: 0 !important;
   }
 
-  /* Second line: last + total */
-  .app-table--lb td:nth-child(4),
-  .app-table--lb td:nth-child(5){
-    display: grid;
+  table.app-table.app-table--lb td:nth-child(2) {
+    width: 44px !important;
+    font-weight: 900;
+    opacity: 0.9;
+    padding-bottom: 0 !important;
+  }
+
+  table.app-table.app-table--lb td:nth-child(3) {
+    width: calc(100% - 26px - 44px) !important;
+    font-weight: 900;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important; /* username single line only */
+    padding-bottom: 0 !important;
+  }
+
+  /* --- Line 2: last + total (labels + values) --- */
+  table.app-table.app-table--lb td:nth-child(4),
+  table.app-table.app-table--lb td:nth-child(5) {
+    display: grid !important;
     grid-template-columns: 1fr auto;
     gap: 10px;
     align-items: center;
+    padding-top: 8px !important;
+    text-align: left !important; /* overrides your inline right align */
   }
 
-  .app-table--lb td:nth-child(4)::before{ content: "Viime kierros"; color: rgba(229,231,235,0.65); font-weight: 800; font-size: 12px; }
-  .app-table--lb td:nth-child(5)::before{ content: "Yhteensä";      color: rgba(229,231,235,0.65); font-weight: 800; font-size: 12px; }
-
-  .app-table--lb td:nth-child(4),
-  .app-table--lb td:nth-child(5){
-    text-align: left !important; /* kill inline right-align for mobile cards */
+  table.app-table.app-table--lb td:nth-child(4)::before {
+    content: "Viime kierros";
+    color: rgba(229, 231, 235, 0.65);
+    font-weight: 800;
+    font-size: 12px;
   }
 
-  .app-table--lb td:nth-child(4){ padding-top: 0; }
-  .app-table--lb td:nth-child(5){ padding-top: 0; font-weight: 900; }
+  table.app-table.app-table--lb td:nth-child(5)::before {
+    content: "Yhteensä";
+    color: rgba(229, 231, 235, 0.65);
+    font-weight: 800;
+    font-size: 12px;
+  }
+
+  table.app-table.app-table--lb td:nth-child(5) {
+    font-weight: 900;
+  }
 }
-
 /* =========================================================
    GLOBAL LAYOUT HARDENING (prevents mobile overflow)
    Put this at the VERY END of styles.css
