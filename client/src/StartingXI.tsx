@@ -311,7 +311,7 @@ export const StartingXI: FC<{
       <div className={`slot ${assigned ? "slot-filled" : ""}`} onClick={onSlotClick} role="button" tabIndex={0}>
         {assigned ? (
           <>
-            {canSwap && (
+            {canSwap && !swapSource && (
               <button
                 type="button"
                 className="swap-slot"
