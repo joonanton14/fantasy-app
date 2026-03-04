@@ -1412,6 +1412,10 @@ body {
   justify-items: center;
 }
 
+.bench-item > .slot{
+  width: 100%;
+}
+
 .bench-tag {
   margin-bottom: 6px;
   padding: 2px 10px;
