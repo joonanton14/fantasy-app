@@ -23,14 +23,16 @@ body {
   height: 100%;
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden; /* hard stop for right overflow */
+  overflow-x: hidden;
+  /* hard stop for right overflow */
 }
 
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
   margin: 0;
   padding: 0;
-  background: #f5f5f5; /* fallback */
+  background: #f5f5f5;
+  /* fallback */
   color: var(--text);
 }
 
@@ -368,7 +370,8 @@ nav button.active {
   border: 1px solid var(--border);
   box-shadow: 0 16px 50px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(10px);
-  overflow: hidden; /* prevents right overflow from children */
+  overflow: hidden;
+  /* prevents right overflow from children */
   min-width: 0;
 }
 
@@ -624,11 +627,25 @@ nav button.active {
 }
 
 /* Desktop: fixed-ish cards, centered */
-.pitch-row.pitch-cols-1 { grid-template-columns: repeat(1, minmax(0, var(--slot))); }
-.pitch-row.pitch-cols-2 { grid-template-columns: repeat(2, minmax(0, var(--slot))); }
-.pitch-row.pitch-cols-3 { grid-template-columns: repeat(3, minmax(0, var(--slot))); }
-.pitch-row.pitch-cols-4 { grid-template-columns: repeat(4, minmax(0, var(--slot))); }
-.pitch-row.pitch-cols-5 { grid-template-columns: repeat(5, minmax(0, var(--slot))); }
+.pitch-row.pitch-cols-1 {
+  grid-template-columns: repeat(1, minmax(0, var(--slot)));
+}
+
+.pitch-row.pitch-cols-2 {
+  grid-template-columns: repeat(2, minmax(0, var(--slot)));
+}
+
+.pitch-row.pitch-cols-3 {
+  grid-template-columns: repeat(3, minmax(0, var(--slot)));
+}
+
+.pitch-row.pitch-cols-4 {
+  grid-template-columns: repeat(4, minmax(0, var(--slot)));
+}
+
+.pitch-row.pitch-cols-5 {
+  grid-template-columns: repeat(5, minmax(0, var(--slot)));
+}
 
 /* Slot card */
 .slot {
@@ -672,7 +689,8 @@ nav button.active {
   gap: 4px;
   justify-items: center;
   text-align: center;
-  position: relative; /* for top-right swap button */
+  position: relative;
+  /* for top-right swap button */
 }
 
 .player-name,
@@ -688,7 +706,8 @@ nav button.active {
   line-height: 1.1;
   white-space: nowrap;
   text-overflow: ellipsis;
-  padding-right: 26px; /* room for top-right icon */
+  padding-right: 26px;
+  /* room for top-right icon */
 }
 
 .player-team {
@@ -813,8 +832,14 @@ select option {
 /* ============================================================= */
 
 @media (max-width: 1024px) {
-  .app-main { padding: 12px; }
-  .app-card { border-radius: 18px; padding: 14px; }
+  .app-main {
+    padding: 12px;
+  }
+
+  .app-card {
+    border-radius: 18px;
+    padding: 14px;
+  }
 }
 
 /* Mobile header + scroll tabs */
@@ -844,12 +869,16 @@ select option {
     flex-wrap: nowrap;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    justify-content: center; /* centered tabs */
+    justify-content: center;
+    /* centered tabs */
     gap: 8px;
     padding: 4px 2px 8px;
     scrollbar-width: none;
   }
-  .app-actions::-webkit-scrollbar { display: none; }
+
+  .app-actions::-webkit-scrollbar {
+    display: none;
+  }
 
   .app-actions button,
   .app-actions .app-btn {
@@ -865,21 +894,25 @@ select option {
 @media (max-width: 520px) {
   .pitch {
     /* Keep pitch padding small so 5 can fit */
-    padding: 8px;                /* was 10px */
+    padding: 8px;
+    /* was 10px */
     margin: 10px auto;
     width: 100%;
     max-width: 520px;
     overflow: hidden;
 
     /* CONSTANT card size on mobile (same always) */
-    --slotW: 60px;               /* <- key: fixed */
+    --slotW: 60px;
+    /* <- key: fixed */
     --slotH: 56px;
 
     /* default gap (overridden per row below) */
     --gapRow: 10px;
   }
 
-  .pitch::before { inset: 8px; }
+  .pitch::before {
+    inset: 8px;
+  }
 
   .pitch-row {
     width: 100%;
@@ -892,17 +925,37 @@ select option {
   }
 
   /* Keep your exact grid structure */
-  .pitch-row.pitch-cols-1 { grid-template-columns: repeat(1, var(--slotW)); --gapRow: 14px; }
-  .pitch-row.pitch-cols-2 { grid-template-columns: repeat(2, var(--slotW)); --gapRow: 14px; }
-  .pitch-row.pitch-cols-3 { grid-template-columns: repeat(3, var(--slotW)); --gapRow: 12px; }
-  .pitch-row.pitch-cols-4 { grid-template-columns: repeat(4, var(--slotW)); --gapRow: 10px; }
+  .pitch-row.pitch-cols-1 {
+    grid-template-columns: repeat(1, var(--slotW));
+    --gapRow: 14px;
+  }
+
+  .pitch-row.pitch-cols-2 {
+    grid-template-columns: repeat(2, var(--slotW));
+    --gapRow: 14px;
+  }
+
+  .pitch-row.pitch-cols-3 {
+    grid-template-columns: repeat(3, var(--slotW));
+    --gapRow: 12px;
+  }
+
+  .pitch-row.pitch-cols-4 {
+    grid-template-columns: repeat(4, var(--slotW));
+    --gapRow: 10px;
+  }
 
   /* 5-wide: smallest gap so it fits, but slot size stays SAME */
-  .pitch-row.pitch-cols-5 { grid-template-columns: repeat(5, var(--slotW)); --gapRow: 6px; }
+  .pitch-row.pitch-cols-5 {
+    grid-template-columns: repeat(5, var(--slotW));
+    --gapRow: 6px;
+  }
 
   .slot {
-    width: var(--slotW);         /* constant */
-    height: var(--slotH);        /* constant */
+    width: var(--slotW);
+    /* constant */
+    height: var(--slotH);
+    /* constant */
     min-height: 0;
     padding: 6px;
     border-radius: 12px;
@@ -911,36 +964,59 @@ select option {
   }
 
   /* Only chip sizing (to prevent text clipping in small fixed cards) */
-  .player-chip { width: 100%; min-width: 0; gap: 2px; }
-
-  .player-name {
-    font-size: 10px;
-    line-height: 1.0;
-    padding-right: 16px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  .player-chip {
+    width: 100%;
+    min-width: 0;
+    gap: 2px;
   }
 
-  .player-team {
-    font-size: 8.6px;
-    line-height: 1.0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    opacity: 0.85;
+  @media (max-width: 520px) {
+
+    /* keep 1-line names, just make them fit */
+    .player-chip {
+      gap: 1px;
+    }
+
+    .player-name {
+      font-size: 9px;
+      /* smaller */
+      line-height: 1;
+      /* tighter */
+      padding-right: 12px;
+      /* less reserved space */
+      margin: 0;
+      /* ensure no extra */
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .player-team {
+      font-size: 8px;
+      /* smaller */
+      line-height: 1;
+      margin: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      opacity: 0.85;
+    }
+
+    /* icon slightly smaller so name gets more room */
+    .swap-slot {
+      width: 14px;
+      height: 14px;
+      border-radius: 5px;
+      font-size: 9px;
+      top: 4px;
+      right: 4px;
+    }
   }
 
-  .swap-slot {
-    width: 16px;
-    height: 16px;
-    border-radius: 6px;
-    font-size: 10px;
-    top: 5px;
-    right: 5px;
+  .pitch .bench-overlay {
+    width: 100%;
+    margin: 0 auto;
   }
-
-  .pitch .bench-overlay { width: 100%; margin: 0 auto; }
 
   /* Bench: 4 fixed cards */
   .bench-row {
@@ -957,9 +1033,20 @@ select option {
     --slotH: 52px;
     --gap: 6px;
   }
-  .player-name { font-size: 10px; }
-  .player-team { font-size: 8.6px; }
-  .swap-slot { width: 15px; height: 15px; font-size: 9px; }
+
+  .player-name {
+    font-size: 10px;
+  }
+
+  .player-team {
+    font-size: 8.6px;
+  }
+
+  .swap-slot {
+    width: 15px;
+    height: 15px;
+    font-size: 9px;
+  }
 }
 
 /* =========================================================
@@ -973,7 +1060,8 @@ select option {
 /* Tablet: tighter padding + readable */
 @media (max-width: 768px) {
   .app-table--lb {
-    min-width: 560px; /* allow scroll if needed, but not crazy wide */
+    min-width: 560px;
+    /* allow scroll if needed, but not crazy wide */
   }
 
   .app-table--lb th,
@@ -990,7 +1078,8 @@ select option {
   }
 
   .app-table--lb {
-    min-width: 520px; /* keeps columns intact; container scrolls */
+    min-width: 520px;
+    /* keeps columns intact; container scrolls */
   }
 
   .app-table--lb th,
@@ -1025,7 +1114,9 @@ select option {
 
 /* Extra tiny phones: a bit more compact */
 @media (max-width: 380px) {
-  .app-table--lb { min-width: 500px; }
+  .app-table--lb {
+    min-width: 500px;
+  }
 
   .app-table--lb th,
   .app-table--lb td {
@@ -1039,7 +1130,8 @@ select option {
    Put this at the VERY END of styles.css
    ========================================================= */
 
-html, body {
+html,
+body {
   width: 100%;
   max-width: 100%;
   overflow-x: hidden;
@@ -1067,22 +1159,24 @@ html, body {
 }
 
 /* Flex + grid children often need this too */
-.app-section > *,
-.app-section-header > *,
-.app-actions > * {
+.app-section>*,
+.app-section-header>*,
+.app-actions>* {
   min-width: 0;
 }
 
 /* Safer overflow handling on modern mobile browsers */
 .app-shell {
-  overflow-x: clip; /* better than hidden on some browsers */
+  overflow-x: clip;
+  /* better than hidden on some browsers */
 }
 
 /* Cards: avoid content forcing width */
 .app-card {
   max-width: 1100px;
   width: 100%;
-  overflow-x: clip; /* tables should scroll inside wraps instead */
+  overflow-x: clip;
+  /* tables should scroll inside wraps instead */
 }
 
 /* =========================================================
@@ -1109,15 +1203,27 @@ html, body {
 }
 
 @media (max-width: 768px) {
-  .app-table--lb { min-width: 560px; }
+  .app-table--lb {
+    min-width: 560px;
+  }
+
   .app-table--lb th,
-  .app-table--lb td { padding: 10px; font-size: 12.5px; }
+  .app-table--lb td {
+    padding: 10px;
+    font-size: 12.5px;
+  }
 }
 
 @media (max-width: 520px) {
-  .app-table--lb { min-width: 520px; }
+  .app-table--lb {
+    min-width: 520px;
+  }
+
   .app-table--lb th,
-  .app-table--lb td { padding: 9px; font-size: 12px; }
+  .app-table--lb td {
+    padding: 9px;
+    font-size: 12px;
+  }
 
   .app-table--lb thead th {
     position: sticky;
@@ -1138,7 +1244,7 @@ html, body {
   gap: 8px;
   align-items: center;
   padding: 8px 0;
-  border-bottom: 1px solid rgba(0,0,0,0.08);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 
   /* desktop default (matches your original intent) */
   grid-template-columns: minmax(100px, 170px) 70px 180px 100px;
