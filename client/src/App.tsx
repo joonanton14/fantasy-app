@@ -318,7 +318,7 @@ export default function App() {
   async function handleLogout() {
     try {
       await apiCall("/auth/logout", { method: "POST" });
-    } catch {}
+    } catch { }
 
     setIsLoggedIn(false);
     setUserId(null);
@@ -361,11 +361,16 @@ export default function App() {
   }
 
   function togglePositionFilter(pos: "GK" | "DEF" | "MID" | "FWD") {
+    const ALL = ["GK", "DEF", "MID", "FWD"] as const;
+
     setFilterPositions((prev) => {
-      const next = new Set(prev);
-      if (next.has(pos)) next.delete(pos);
-      else next.add(pos);
-      return next;
+      const isOnlyThis = prev.size === 1 && prev.has(pos);
+
+      // If already filtering only this position -> reset to all
+      if (isOnlyThis) return new Set(ALL);
+
+      // Otherwise -> filter to only this position
+      return new Set([pos]);
     });
   }
 
