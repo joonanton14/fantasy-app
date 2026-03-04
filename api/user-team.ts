@@ -129,7 +129,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (approxSize > 10_000) return res.status(413).json({ error: "Payload too large" });
 
       const result = validateTeamPayload(req.body);
-      if (!result.ok) return res.status(400).json({ error: result.error });
+
+      if (!result.ok) {
+        return res.status(400).json({ error: ("error" in result ? result.error : "Invalid payload") });
+      }
 
       // merge with existing so partial updates don't erase other parts
       const prev = ((await redis.get<SavedTeam>(key)) ?? {}) as SavedTeam;
