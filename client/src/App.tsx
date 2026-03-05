@@ -425,24 +425,18 @@ export default function App() {
 
       const me = await res.json();
 
-      const savedSession = localStorage.getItem("session");
-      const parsed = savedSession ? JSON.parse(savedSession) : null;
+      const saved = localStorage.getItem("session");
+      const parsed = saved ? JSON.parse(saved) : null;
       const userId = Number(parsed?.userId);
 
-      if (Number.isFinite(userId) && userId > 0) {
-        handleLoginSuccess(userId, me.name, !!me.isAdmin);
-      } else {
+      if (!Number.isFinite(userId) || userId <= 0) {
         setUserName(me.name);
         setIsAdmin(!!me.isAdmin);
         setIsLoggedIn(true);
         setPage(me.isAdmin ? "admin" : "builder");
+        return;
       }
-
-      // ✅ immediately load saved team once logged in
-      const savedTeam = await loadSavedTeam();
-      if (savedTeam) {
-        // set your team state here
-      }
+      handleLoginSuccess(userId, me.name, !!me.isAdmin);
     })();
   }, []);
 
