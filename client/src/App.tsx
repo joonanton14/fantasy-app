@@ -421,28 +421,28 @@ export default function App() {
   useEffect(() => {
     (async () => {
       const res = await apiCall("/auth/me", { method: "GET" });
-      if (!res.ok) return; // not logged in (cookie missing/expired)
+      if (!res.ok) return;
 
-      const me = await res.json(); // { name, isAdmin }
+      const me = await res.json();
 
-      // get last known userId from localStorage
-      const saved = localStorage.getItem("session");
-      const parsed = saved ? JSON.parse(saved) : null;
+      const savedSession = localStorage.getItem("session");
+      const parsed = savedSession ? JSON.parse(savedSession) : null;
       const userId = Number(parsed?.userId);
 
-      // If we don't have a stored id, still mark logged in,
-      // but you may not be able to load team by id.
-      if (!Number.isFinite(userId) || userId <= 0) {
-        // Minimal fallback: set auth state without id
+      if (Number.isFinite(userId) && userId > 0) {
+        handleLoginSuccess(userId, me.name, !!me.isAdmin);
+      } else {
         setUserName(me.name);
         setIsAdmin(!!me.isAdmin);
         setIsLoggedIn(true);
         setPage(me.isAdmin ? "admin" : "builder");
-        return;
       }
 
-      // reuse your existing logic
-      handleLoginSuccess(userId, me.name, !!me.isAdmin);
+      // ✅ immediately load saved team once logged in
+      const savedTeam = await loadSavedTeam();
+      if (savedTeam) {
+        // set your team state here
+      }
     })();
   }, []);
 
