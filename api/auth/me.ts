@@ -8,7 +8,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const session = await getSessionFromReq(req);
     if (!session) return res.status(401).json({ error: "Unauthorized" });
 
+    // ✅ IMPORTANT CHANGE: return id so frontend can load team after reload
     return res.status(200).json({
+      id: session.id,
       name: session.username,
       isAdmin: session.isAdmin,
     });

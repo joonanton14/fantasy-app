@@ -1,47 +1,110 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { VercelRequest } from "@vercel/node";
 import crypto from "crypto";
-import { redis, PREFIX } from "./redis";
-
-const SESSION_TTL_SECONDS = 60 * 60 * 24 * 14; // 14 days
 
 export type SessionData = {
+  id: number;
   username: string;
   isAdmin: boolean;
+  exp: number; // unix seconds
 };
 
-function readTokenFromReq(req: VercelRequest): string | null {
-  // 1) Authorization: Bearer <token>
-  const auth = req.headers.authorization;
-  if (auth && auth.startsWith("Bearer ")) return auth.slice("Bearer ".length).trim();
+const COOKIE_NAME = "sid";
+const SECRET = process.env.SESSION_SECRET || "";
 
-  // 2) Cookie: sid=<token>
-  const cookie = req.headers.cookie || "";
-  const m = cookie.match(/(?:^|;\s*)sid=([^;]+)/);
-  if (m?.[1]) return decodeURIComponent(m[1]);
-
-  return null;
+function base64urlEncode(buf: Buffer) {
+  return buf
+    .toString("base64")
+    .replace(/=/g, "")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_");
 }
 
-export async function createSession(username: string, isAdmin: boolean) {
-  const token = crypto.randomBytes(32).toString("hex");
+function base64urlDecodeToBuffer(s: string) {
+  const padded = s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4);
+  return Buffer.from(padded, "base64");
+}
 
-  // optional: enforce single active session per username
-  const prev = await redis.get<string>(`${PREFIX}:session_of:${username}`);
-  if (prev) await redis.del(`${PREFIX}:session:${prev}`);
+function sign(data: string) {
+  if (!SECRET) throw new Error("Missing env: SESSION_SECRET");
+  return base64urlEncode(crypto.createHmac("sha256", SECRET).update(data).digest());
+}
 
-  await redis.set(`${PREFIX}:session_of:${username}`, token, { ex: SESSION_TTL_SECONDS });
-  await redis.set(`${PREFIX}:session:${token}`, { username, isAdmin }, { ex: SESSION_TTL_SECONDS });
+// ✅ FIX: use Uint8Array views for timingSafeEqual (TS compatibility)
+function safeEqual(a: string, b: string) {
+  const aBuf = Buffer.from(a);
+  const bBuf = Buffer.from(b);
+  if (aBuf.length !== bBuf.length) return false;
 
-  return token;
+  const aView = new Uint8Array(aBuf);
+  const bView = new Uint8Array(bBuf);
+
+  return crypto.timingSafeEqual(aView, bView);
+}
+
+function parseCookie(cookieHeader: string | undefined): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (!cookieHeader) return out;
+
+  const parts = cookieHeader.split(";");
+  for (const part of parts) {
+    const idx = part.indexOf("=");
+    if (idx === -1) continue;
+    const k = part.slice(0, idx).trim();
+    const v = part.slice(idx + 1).trim();
+    out[k] = v;
+  }
+  return out;
+}
+
+export async function createSession(input: { id: number; username: string; isAdmin: boolean }) {
+  // Choose your lifetime (seconds)
+  const ttlSeconds = 60 * 60 * 24 * 7; // 7 days
+  const exp = Math.floor(Date.now() / 1000) + ttlSeconds;
+
+  const payload: SessionData = {
+    id: input.id,
+    username: input.username,
+    isAdmin: input.isAdmin,
+    exp,
+  };
+
+  const json = JSON.stringify(payload);
+  const data = base64urlEncode(Buffer.from(json, "utf8"));
+  const sig = sign(data);
+
+  return `${data}.${sig}`;
 }
 
 export async function getSessionFromReq(req: VercelRequest): Promise<SessionData | null> {
-  const token = readTokenFromReq(req);
-  if (!token) return null;
+  try {
+    const cookies = parseCookie(req.headers.cookie);
+    const raw = cookies[COOKIE_NAME];
+    if (!raw) return null;
 
-  const data = await redis.get<SessionData>(`${PREFIX}:session:${token}`);
-  if (!data?.username) return null;
+    const token = decodeURIComponent(raw);
+    const dot = token.lastIndexOf(".");
+    if (dot === -1) return null;
 
-  // normalize
-  return { username: data.username, isAdmin: !!data.isAdmin };
+    const data = token.slice(0, dot);
+    const sig = token.slice(dot + 1);
+
+    const expected = sign(data);
+    if (!safeEqual(sig, expected)) return null;
+
+    const json = base64urlDecodeToBuffer(data).toString("utf8");
+    const session = JSON.parse(json) as SessionData;
+
+    if (!session || typeof session !== "object") return null;
+    if (typeof session.id !== "number") return null;
+    if (typeof session.username !== "string") return null;
+    if (typeof session.isAdmin !== "boolean") return null;
+    if (typeof session.exp !== "number") return null;
+
+    const now = Math.floor(Date.now() / 1000);
+    if (session.exp <= now) return null;
+
+    return session;
+  } catch {
+    return null;
+  }
 }
