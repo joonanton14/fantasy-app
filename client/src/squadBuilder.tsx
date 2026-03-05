@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { loadSavedTeam } from "./userTeam";
 
 export type Position = "GK" | "DEF" | "MID" | "FWD";
 
@@ -45,71 +44,19 @@ export default function SquadBuilder(props: {
     return map;
   });
 
-  // ✅ NEW: if parent didn't pass initialSquad, we can auto-load from /user-team
-  const [autoInitialSquad, setAutoInitialSquad] = useState<Player[] | null>(null);
-  const [autoLoaded, setAutoLoaded] = useState(false);
-
   // Bottom-sheet picker state
   const [picker, setPicker] = useState<{ slotId: string; pos: Position } | null>(null);
   const [q, setQ] = useState("");
 
-  // Undo remove
+  // Undo remove (optional – keeps your earlier “fine for now”)
   const [lastRemoved, setLastRemoved] = useState<{ slotId: string; player: Player } | null>(null);
   const undoTimerRef = useRef<number | null>(null);
 
-  // ✅ NEW: load saved team from API once on mount (cookie session decides who the user is)
   useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
-      try {
-        // only auto-load if parent didn't give an initialSquad
-        if (props.initialSquad && props.initialSquad.length) {
-          setAutoLoaded(true);
-          return;
-        }
-
-        const saved = await loadSavedTeam(); // GET /user-team (credentials included via apiCall)
-        if (cancelled) return;
-
-        const ids = saved?.squadIds;
-        if (!ids || ids.length !== 15) {
-          setAutoLoaded(true);
-          return;
-        }
-
-        // Map saved ids -> Player objects using props.players
-        const byId = new Map(props.players.map((p) => [p.id, p] as const));
-        const mapped = ids.map((id) => byId.get(id)).filter(Boolean) as Player[];
-
-        // only accept if we can resolve all 15
-        if (mapped.length === 15) {
-          setAutoInitialSquad(mapped);
-        }
-
-        setAutoLoaded(true);
-      } catch {
-        if (!cancelled) setAutoLoaded(true);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-    // only rerun if the player list changes (e.g. after initial data fetch)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.players]);
-
-  const effectiveInitialSquad = props.initialSquad ?? autoInitialSquad ?? [];
-
-  useEffect(() => {
-    // If parent didn't pass initialSquad and we haven't tried/finished autoload yet, wait.
-    if (!props.initialSquad && !autoLoaded) return;
-
     const map: Record<string, Player | null> = {};
     for (const s of slots) map[s.id] = null;
 
-    const seed = effectiveInitialSquad ?? [];
+    const seed = props.initialSquad ?? [];
     const by: Record<Position, Player[]> = { GK: [], DEF: [], MID: [], FWD: [] };
     for (const p of seed) by[p.position].push(p);
     for (const pos of Object.keys(by) as Position[]) by[pos].sort((a, b) => a.id - b.id);
@@ -120,14 +67,15 @@ export default function SquadBuilder(props: {
     setQ("");
     setLastRemoved(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.initialSquad, autoInitialSquad, autoLoaded]);
+  }, [props.initialSquad]);
 
   // close picker when clicking outside whole component
   useEffect(() => {
     function onDown(e: MouseEvent | TouchEvent) {
       if (!rootRef.current) return;
       if (!rootRef.current.contains(e.target as Node)) {
-        // no-op
+        // do not force-close picker here because it’s fixed on viewport; close only via backdrop/close
+        // but we can clear undo message
       }
     }
     document.addEventListener("mousedown", onDown);
@@ -202,7 +150,6 @@ export default function SquadBuilder(props: {
   function fmtPos(pos: Position) {
     return pos === "FWD" ? "ST" : pos;
   }
-
   const availableForPicker = useMemo(() => {
     if (!picker) return [];
     const slotAssigned = assign[picker.slotId];
@@ -292,7 +239,12 @@ export default function SquadBuilder(props: {
 
       {/* Bottom-sheet picker */}
       {picker && (
-        <div className="picker-backdrop" onClick={() => setPicker(null)} role="dialog" aria-modal="true">
+        <div
+          className="picker-backdrop"
+          onClick={() => setPicker(null)}
+          role="dialog"
+          aria-modal="true"
+        >
           <div className="picker-sheet" onClick={(e) => e.stopPropagation()}>
             <div className="picker-head">
               <div className="picker-title">
@@ -319,7 +271,12 @@ export default function SquadBuilder(props: {
               )}
             </div>
 
-            <input className="picker-search" placeholder="Hae pelaajaa..." value={q} onChange={(e) => setQ(e.target.value)} />
+            <input
+              className="picker-search"
+              placeholder="Hae pelaajaa..."
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
 
             <div className="picker-list">
               {availableForPicker.map((p) => (

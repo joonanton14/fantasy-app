@@ -126,62 +126,112 @@ export default function App() {
     return arr;
   }, [players, filterTeamId, filterPositions, playerSort, teamsById]);
 
-  useEffect(() => {
-    let cancelled = false;
+useEffect(() => {
+  let cancelled = false;
 
-    async function restore() {
-      setError(null);
-      const saved = localStorage.getItem("session");
-      if (saved) {
-        try {
-          const { userId, userName, isAdmin } = JSON.parse(saved);
-          if (!cancelled) {
-            setUserId(userId ?? null);
-            setUserName(userName ?? null);
-            setIsAdmin(!!isAdmin);
-            setIsLoggedIn(true);
-            setPage(isAdmin ? "admin" : "builder");
-            setAuthChecked(true);
-          }
-          return;
-        } catch {
-          localStorage.removeItem("session");
-        }
-      }
+  async function bootstrap() {
+    setError(null);
 
+    // Optional: quick UI hydration from localStorage (does NOT decide auth)
+    const saved = localStorage.getItem("session");
+    if (saved) {
       try {
-        const res = await apiCall("/auth/me", { method: "GET" });
-        if (!res.ok) {
-          if (!cancelled) {
-            setIsLoggedIn(false);
-            setUserId(null);
-            setUserName(null);
-            setIsAdmin(false);
-          }
-          return;
+        const parsed = JSON.parse(saved);
+        if (!cancelled) {
+          setUserName(parsed?.userName ?? null);
+          setIsAdmin(!!parsed?.isAdmin);
         }
-
-        const me = await res.json();
-        if (cancelled) return;
-
-        setIsLoggedIn(true);
-        setUserId(null);
-        setUserName(me.name);
-        setIsAdmin(!!me.isAdmin);
-        setPage(me.isAdmin ? "admin" : "builder");
-
-        localStorage.setItem("session", JSON.stringify({ userId: null, userName: me.name, isAdmin: !!me.isAdmin }));
       } catch {
-      } finally {
-        if (!cancelled) setAuthChecked(true);
+        localStorage.removeItem("session");
       }
     }
 
-    restore();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    try {
+      // 1) Verify server session (cookie)
+      const meRes = await apiCall("/auth/me", { method: "GET" });
+      if (!meRes.ok) {
+        // don't “force logout” here if you don't want—just show login screen as not logged in
+        if (!cancelled) {
+          setIsLoggedIn(false);
+          setAuthChecked(true);
+        }
+        return;
+      }
+
+      const me = await meRes.json();
+      if (cancelled) return;
+
+      setIsLoggedIn(true);
+      setUserId(null); // /auth/me doesn't include id (fine)
+      setUserName(me.name ?? null);
+      setIsAdmin(!!me.isAdmin);
+      setPage(me.isAdmin ? "admin" : "builder");
+
+      localStorage.setItem(
+        "session",
+        JSON.stringify({ userId: null, userName: me.name, isAdmin: !!me.isAdmin })
+      );
+
+      // 2) Load base data (players, teams) + saved team
+      const [playersRes, teamsRes, savedTeam] = await Promise.all([
+        apiCall("/players", { method: "GET" }),
+        apiCall("/teams", { method: "GET" }),
+        loadSavedTeam(), // GET /user-team (cookie-based)
+      ]);
+
+      if (cancelled) return;
+
+      const playersData: Player[] = await playersRes.json();
+      const teamsData: Team[] = await teamsRes.json();
+      setPlayers(playersData);
+      setTeams(teamsData);
+
+      // 3) Apply saved team -> state
+      const data = (savedTeam ?? null) as SavedTeamData | null;
+      const byId = new Map(playersData.map((p) => [p.id, p] as const));
+      const mapIds = (ids: number[]) => ids.map((id) => byId.get(id)).filter(Boolean) as Player[];
+
+      const formation = (data?.formation ?? "4-4-2") as FormationKey;
+      setSavedFormation(formation);
+
+      const squadIds = data?.squadIds ?? [];
+      const xiIds = data?.startingXIIds ?? [];
+      const benchIds = data?.benchIds ?? [];
+
+      const squadPlayers = mapIds(squadIds);
+      const xiPlayers = mapIds(xiIds);
+      const benchPlayers = mapIds(benchIds);
+
+      const derivedIds = Array.from(new Set([...xiIds, ...benchIds]));
+      const derivedPlayers = mapIds(derivedIds);
+
+      setSquad(squadPlayers.length ? squadPlayers : derivedPlayers);
+      setStartingXI(xiPlayers);
+      setBench(benchPlayers);
+
+      setSelected((prev) => {
+        const existing = new Set(prev.map((p) => p.id));
+        const merged = [...prev];
+        for (const p of [...(squadPlayers.length ? squadPlayers : derivedPlayers)]) {
+          if (!existing.has(p.id)) merged.push(p);
+        }
+        return merged;
+      });
+    } catch (e) {
+      if (!cancelled) {
+        setError("Alustus epäonnistui. Päivitä sivu tai kirjaudu uudelleen.");
+        // keep whatever UI state you had; no forced logout
+      }
+    } finally {
+      if (!cancelled) setAuthChecked(true);
+    }
+  }
+
+  bootstrap();
+  return () => {
+    cancelled = true;
+  };
+}, []);
 
   useEffect(() => {
     let cancelled = false;
