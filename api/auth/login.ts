@@ -21,9 +21,7 @@ function norm(s: unknown) {
 }
 
 function cookieString(token: string) {
-  // Optional: add Max-Age if you want persistent login across browser restarts predictably
-   const maxAge = 60 * 60 * 24 * 7; // 7 days
-  return `sid=${encodeURIComponent(token)}; HttpOnly; Path=/; SameSite=Lax; Secure; Max-Age=${maxAge}`;
+  return `sid=${encodeURIComponent(token)}; HttpOnly; Path=/; SameSite=Lax; Secure`;
 }
 
 function loadUsersFromEnv(): UserConfig[] {
@@ -62,6 +60,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const users = loadUsersFromEnv();
 
+    // Optional: if env missing, fail loudly so you notice in Vercel logs/UI
     const missing = users
       .filter((u) => !u.username || !u.password)
       .map((u) => `${u.key}_USERNAME / ${u.key}_PASSWORD`);
@@ -73,13 +72,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (!match) return res.status(401).json({ error: "Invalid credentials" });
     if (inputPw !== match.password) return res.status(401).json({ error: "Invalid credentials" });
-
-    // ✅ IMPORTANT CHANGE: store user id in the session too
-    const token = await createSession({
-      id: match.id,
-      username: match.username!,
-      isAdmin: match.isAdmin,
-    });
+    
+    // Store session username as the *actual* username from env
+    const token = await createSession(match.username!, match.isAdmin);
 
     res.setHeader("Set-Cookie", cookieString(token));
     return res.status(200).json({ id: match.id, name: match.username, isAdmin: match.isAdmin });
