@@ -418,28 +418,6 @@ export default function App() {
     return <Login onLoginSuccess={handleLoginSuccess} />;
   }
 
-  useEffect(() => {
-    (async () => {
-      const res = await apiCall("/auth/me", { method: "GET" });
-      if (!res.ok) return;
-
-      const me = await res.json();
-
-      const saved = localStorage.getItem("session");
-      const parsed = saved ? JSON.parse(saved) : null;
-      const userId = Number(parsed?.userId);
-
-      if (!Number.isFinite(userId) || userId <= 0) {
-        setUserName(me.name);
-        setIsAdmin(!!me.isAdmin);
-        setIsLoggedIn(true);
-        setPage(me.isAdmin ? "admin" : "builder");
-        return;
-      }
-      handleLoginSuccess(userId, me.name, !!me.isAdmin);
-    })();
-  }, []);
-
   if (!isAdmin) {
     return (
       <div className="app-shell">
