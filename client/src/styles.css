@@ -885,7 +885,7 @@ select option {
     flex: 0 0 auto;
     white-space: nowrap;
     border-radius: 999px;
-    padding: 8px 10px;
+    padding: 4px 5px;
     font-size: 10px;
     min-height: 26px;
   }
@@ -1323,7 +1323,7 @@ body {
 @media (max-width: 768px) {
   .app-actions {
     min-width: 0;
-    max-width: 100%;
+    max-width: 90%;
     overflow-x: auto;
   }
 }
