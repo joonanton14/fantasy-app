@@ -1330,7 +1330,7 @@ body {
 @media (max-width: 768px) {
   .app-actions button,
   .app-actions .app-btn {
-    width: 20%;
+    width: 14%;
   }
 } 
 
