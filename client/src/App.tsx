@@ -37,7 +37,7 @@ export default function App() {
   type LeaderboardRow = { username: string; total: number; last: number };
   const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
   const [loadingLb, setLoadingLb] = useState(false);
-
+  const [playerSearch, setPlayerSearch] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState<number | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
@@ -85,9 +85,12 @@ export default function App() {
   const [playerSort, setPlayerSort] = useState<PlayerSort>("value_desc");
 
   const filteredPlayers = useMemo(() => {
+    const q = playerSearch.trim().toLowerCase();
+
     const arr = players.filter((p) => {
       if (filterTeamId !== null && p.teamId !== filterTeamId) return false;
       if (!filterPositions.has(p.position)) return false;
+      if (q && !p.name.toLowerCase().includes(q)) return false;
       return true;
     });
 
@@ -124,114 +127,114 @@ export default function App() {
     });
 
     return arr;
-  }, [players, filterTeamId, filterPositions, playerSort, teamsById]);
+  }, [players, filterTeamId, filterPositions, playerSort, teamsById, playerSearch]);
 
-useEffect(() => {
-  let cancelled = false;
+  useEffect(() => {
+    let cancelled = false;
 
-  async function bootstrap() {
-    setError(null);
+    async function bootstrap() {
+      setError(null);
 
-    // Optional: quick UI hydration from localStorage (does NOT decide auth)
-    const saved = localStorage.getItem("session");
-    if (saved) {
+      // Optional: quick UI hydration from localStorage (does NOT decide auth)
+      const saved = localStorage.getItem("session");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (!cancelled) {
+            setUserName(parsed?.userName ?? null);
+            setIsAdmin(!!parsed?.isAdmin);
+          }
+        } catch {
+          localStorage.removeItem("session");
+        }
+      }
+
       try {
-        const parsed = JSON.parse(saved);
-        if (!cancelled) {
-          setUserName(parsed?.userName ?? null);
-          setIsAdmin(!!parsed?.isAdmin);
+        // 1) Verify server session (cookie)
+        const meRes = await apiCall("/auth/me", { method: "GET" });
+        if (!meRes.ok) {
+          // don't “force logout” here if you don't want—just show login screen as not logged in
+          if (!cancelled) {
+            setIsLoggedIn(false);
+            setAuthChecked(true);
+          }
+          return;
         }
-      } catch {
-        localStorage.removeItem("session");
+
+        const me = await meRes.json();
+        if (cancelled) return;
+
+        setIsLoggedIn(true);
+        setUserId(null); // /auth/me doesn't include id (fine)
+        setUserName(me.name ?? null);
+        setIsAdmin(!!me.isAdmin);
+        setPage(me.isAdmin ? "admin" : "builder");
+
+        localStorage.setItem(
+          "session",
+          JSON.stringify({ userId: null, userName: me.name, isAdmin: !!me.isAdmin })
+        );
+
+        // 2) Load base data (players, teams) + saved team
+        const [playersRes, teamsRes, savedTeam] = await Promise.all([
+          apiCall("/players", { method: "GET" }),
+          apiCall("/teams", { method: "GET" }),
+          loadSavedTeam(), // GET /user-team (cookie-based)
+        ]);
+
+        if (cancelled) return;
+
+        const playersData: Player[] = await playersRes.json();
+        const teamsData: Team[] = await teamsRes.json();
+        setPlayers(playersData);
+        setTeams(teamsData);
+
+        // 3) Apply saved team -> state
+        const data = (savedTeam ?? null) as SavedTeamData | null;
+        const byId = new Map(playersData.map((p) => [p.id, p] as const));
+        const mapIds = (ids: number[]) => ids.map((id) => byId.get(id)).filter(Boolean) as Player[];
+
+        const formation = (data?.formation ?? "4-4-2") as FormationKey;
+        setSavedFormation(formation);
+
+        const squadIds = data?.squadIds ?? [];
+        const xiIds = data?.startingXIIds ?? [];
+        const benchIds = data?.benchIds ?? [];
+
+        const squadPlayers = mapIds(squadIds);
+        const xiPlayers = mapIds(xiIds);
+        const benchPlayers = mapIds(benchIds);
+
+        const derivedIds = Array.from(new Set([...xiIds, ...benchIds]));
+        const derivedPlayers = mapIds(derivedIds);
+
+        setSquad(squadPlayers.length ? squadPlayers : derivedPlayers);
+        setStartingXI(xiPlayers);
+        setBench(benchPlayers);
+
+        setSelected((prev) => {
+          const existing = new Set(prev.map((p) => p.id));
+          const merged = [...prev];
+          for (const p of [...(squadPlayers.length ? squadPlayers : derivedPlayers)]) {
+            if (!existing.has(p.id)) merged.push(p);
+          }
+          return merged;
+        });
+      } catch (e) {
+        if (!cancelled) {
+          setError("Alustus epäonnistui. Päivitä sivu tai kirjaudu uudelleen.");
+          // keep whatever UI state you had; no forced logout
+        }
+      } finally {
+        if (!cancelled) setAuthChecked(true);
       }
     }
 
-    try {
-      // 1) Verify server session (cookie)
-      const meRes = await apiCall("/auth/me", { method: "GET" });
-      if (!meRes.ok) {
-        // don't “force logout” here if you don't want—just show login screen as not logged in
-        if (!cancelled) {
-          setIsLoggedIn(false);
-          setAuthChecked(true);
-        }
-        return;
-      }
-
-      const me = await meRes.json();
-      if (cancelled) return;
-
-      setIsLoggedIn(true);
-      setUserId(null); // /auth/me doesn't include id (fine)
-      setUserName(me.name ?? null);
-      setIsAdmin(!!me.isAdmin);
-      setPage(me.isAdmin ? "admin" : "builder");
-
-      localStorage.setItem(
-        "session",
-        JSON.stringify({ userId: null, userName: me.name, isAdmin: !!me.isAdmin })
-      );
-
-      // 2) Load base data (players, teams) + saved team
-      const [playersRes, teamsRes, savedTeam] = await Promise.all([
-        apiCall("/players", { method: "GET" }),
-        apiCall("/teams", { method: "GET" }),
-        loadSavedTeam(), // GET /user-team (cookie-based)
-      ]);
-
-      if (cancelled) return;
-
-      const playersData: Player[] = await playersRes.json();
-      const teamsData: Team[] = await teamsRes.json();
-      setPlayers(playersData);
-      setTeams(teamsData);
-
-      // 3) Apply saved team -> state
-      const data = (savedTeam ?? null) as SavedTeamData | null;
-      const byId = new Map(playersData.map((p) => [p.id, p] as const));
-      const mapIds = (ids: number[]) => ids.map((id) => byId.get(id)).filter(Boolean) as Player[];
-
-      const formation = (data?.formation ?? "4-4-2") as FormationKey;
-      setSavedFormation(formation);
-
-      const squadIds = data?.squadIds ?? [];
-      const xiIds = data?.startingXIIds ?? [];
-      const benchIds = data?.benchIds ?? [];
-
-      const squadPlayers = mapIds(squadIds);
-      const xiPlayers = mapIds(xiIds);
-      const benchPlayers = mapIds(benchIds);
-
-      const derivedIds = Array.from(new Set([...xiIds, ...benchIds]));
-      const derivedPlayers = mapIds(derivedIds);
-
-      setSquad(squadPlayers.length ? squadPlayers : derivedPlayers);
-      setStartingXI(xiPlayers);
-      setBench(benchPlayers);
-
-      setSelected((prev) => {
-        const existing = new Set(prev.map((p) => p.id));
-        const merged = [...prev];
-        for (const p of [...(squadPlayers.length ? squadPlayers : derivedPlayers)]) {
-          if (!existing.has(p.id)) merged.push(p);
-        }
-        return merged;
-      });
-    } catch (e) {
-      if (!cancelled) {
-        setError("Alustus epäonnistui. Päivitä sivu tai kirjaudu uudelleen.");
-        // keep whatever UI state you had; no forced logout
-      }
-    } finally {
-      if (!cancelled) setAuthChecked(true);
-    }
-  }
-
-  bootstrap();
-  return () => {
-    cancelled = true;
-  };
-}, []);
+    bootstrap();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -681,6 +684,15 @@ useEffect(() => {
 
                     <div className="filter-group">
                       <div className="filter-row">
+                        <div className="filter-row">
+                          <label>Haku:</label>
+                          <input
+                            className="app-btn"
+                            placeholder="Hae pelaajaa…"
+                            value={playerSearch}
+                            onChange={(e) => setPlayerSearch(e.target.value)}
+                          />
+                        </div>
                         <label>Joukkue:</label>
                         <select
                           value={filterTeamId ?? ""}
@@ -688,11 +700,14 @@ useEffect(() => {
                           className="app-btn"
                         >
                           <option value="">Kaikki joukkueet</option>
-                          {teams.map((t) => (
-                            <option key={t.id} value={t.id}>
-                              {t.name}
-                            </option>
-                          ))}
+                          {teams
+                            .slice()
+                            .sort((a, b) => a.name.localeCompare(b.name))
+                            .map((t) => (
+                              <option key={t.id} value={t.id}>
+                                {t.name}
+                              </option>
+                            ))}
                         </select>
                       </div>
 
