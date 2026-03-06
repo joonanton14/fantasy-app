@@ -1323,10 +1323,15 @@ body {
 @media (max-width: 768px) {
   .app-actions {
     min-width: 0;
-    max-width: 90%;
+    max-width: 100%;
     overflow-x: auto;
   }
 }
+
+.app-actions button,
+.app-actions .app-btn {
+  width:fit-content
+} 
 
 /* =========================================================
    PITCH — ensure it can never push width

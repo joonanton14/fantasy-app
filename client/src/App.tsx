@@ -525,7 +525,7 @@ export default function App() {
                     Ottelut
                   </button>
 
-                  <button className="app-btn app-btn-primary" onClick={() => setTeamViewTab("transfers")}>
+                  <button className="app-btn" onClick={() => setTeamViewTab("transfers")}>
                     Vaihdot
                   </button>
                 </div>
