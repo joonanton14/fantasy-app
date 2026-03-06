@@ -1330,7 +1330,8 @@ body {
 
 .app-actions button,
 .app-actions .app-btn {
-  width:fit-content
+  width: 90%;
+  max-width: 240px;
 } 
 
 /* =========================================================
