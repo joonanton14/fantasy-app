@@ -682,65 +682,66 @@ export default function App() {
                   <div className="app-section" style={{ marginBottom: 12 }}>
                     <h2 className="app-h2">Suodattimet</h2>
 
-                    <div className="filter-group">
-                      <div className="filter-row">
-                        <div className="filter-row">
-                          <label>Haku:</label>
-                          <input
-                            className="app-btn"
-                            placeholder="Hae pelaajaa…"
-                            value={playerSearch}
-                            onChange={(e) => setPlayerSearch(e.target.value)}
-                          />
-                        </div>
-                        <label>Joukkue:</label>
-                        <select
-                          value={filterTeamId ?? ""}
-                          onChange={(e) => setFilterTeamId(e.target.value ? Number(e.target.value) : null)}
-                          className="app-btn"
-                        >
-                          <option value="">Kaikki joukkueet</option>
-                          {teams
-                            .slice()
-                            .sort((a, b) => a.name.localeCompare(b.name))
-                            .map((t) => (
-                              <option key={t.id} value={t.id}>
-                                {t.name}
-                              </option>
-                            ))}
-                        </select>
-                      </div>
+                    {/* Admin-style top row */}
+                    <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+                      <input
+                        className="app-btn"
+                        placeholder="Hae pelaajia…"
+                        value={playerSearch}
+                        onChange={(e) => setPlayerSearch(e.target.value)}
+                        style={{ flex: 1, minWidth: 220 }}
+                      />
 
-                      <div className="filter-row">
-                        <label>Lajittelu:</label>
-                        <select
-                          value={playerSort}
-                          onChange={(e) => setPlayerSort(e.target.value as PlayerSort)}
-                          className="app-btn"
-                        >
-                          <option value="value_desc">Arvo (kallein→ halvin)</option>
-                          <option value="value_asc">Arvo (halvin → kallein)</option>
-                          <option value="name_asc">Nimi (A →)</option>
-                          <option value="team_asc">Joukkue (A →)</option>
-                          <option value="pos_asc">Pelipaikka</option>
-                          <option value="id_desc">Uusimmat</option>
-                          <option value="id_asc">Vanhimmat</option>
-                        </select>
-                      </div>
-
-                      <div className="filter-row">
-                        <label>Pelipaikat:</label>
-                        <div className="position-buttons">
-                          {(["GK", "DEF", "MID", "FWD"] as const).map((pos) => (
-                            <button
-                              key={pos}
-                              className={`app-btn ${filterPositions.has(pos) ? "app-btn-active" : ""}`}
-                              onClick={() => togglePositionFilter(pos)}
-                            >
-                              {pos}
-                            </button>
+                      <select
+                        className="app-btn"
+                        value={filterTeamId ?? ""}
+                        onChange={(e) => setFilterTeamId(e.target.value ? Number(e.target.value) : null)}
+                        style={{ minWidth: 180 }}
+                        title="Suodata joukkueella"
+                      >
+                        <option value="">Kaikki joukkueet</option>
+                        {teams
+                          .slice()
+                          .sort((a, b) => a.name.localeCompare(b.name))
+                          .map((t) => (
+                            <option key={t.id} value={t.id}>
+                              {t.name}
+                            </option>
                           ))}
-                        </div>
+                      </select>
+
+                      <select
+                        className="app-btn"
+                        value={playerSort}
+                        onChange={(e) => setPlayerSort(e.target.value as PlayerSort)}
+                        style={{ minWidth: 190 }}
+                        title="Järjestä"
+                      >
+                        <option value="value_desc">Arvo (kallein→ halvin)</option>
+                        <option value="value_asc">Arvo (halvin → kallein)</option>
+                        <option value="name_asc">Nimi (A →)</option>
+                        <option value="name_desc">Nimi (Ö →)</option>
+                        <option value="team_asc">Joukkue (A →)</option>
+                        <option value="team_desc">Joukkue (Ö →)</option>
+                        <option value="pos_asc">Pelipaikka</option>
+                        <option value="id_desc">Uusimmat</option>
+                        <option value="id_asc">Vanhimmat</option>
+                      </select>
+                    </div>
+
+                    {/* Keep your position buttons (user-only feature) */}
+                    <div className="filter-row">
+                      <label>Pelipaikat:</label>
+                      <div className="position-buttons">
+                        {(["GK", "DEF", "MID", "FWD"] as const).map((pos) => (
+                          <button
+                            key={pos}
+                            className={`app-btn ${filterPositions.has(pos) ? "app-btn-active" : ""}`}
+                            onClick={() => togglePositionFilter(pos)}
+                          >
+                            {pos}
+                          </button>
+                        ))}
                       </div>
                     </div>
                   </div>
