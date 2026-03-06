@@ -396,18 +396,21 @@ nav button.active {
   min-width: 0;
 }
 
-/* --- Fix: tabs row overflow / too wide --- */
 .app-section-header {
-  max-width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
 }
 
 .app-actions {
-  width: 100%;
-  max-width: 100%;
-  justify-content: flex-start;   /* looks better than centered when wrapping */
-  overflow-x: auto;              /* allows swipe/scroll if still too tight */
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: 2px;           /* tiny space so scrollbar doesn't overlap */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  justify-content: center;
+  min-width: 0;
 }
 
 .app-muted {
