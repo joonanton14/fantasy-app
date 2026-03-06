@@ -399,6 +399,7 @@ nav button.active {
 .app-section-header {
   display: flex;
   flex-wrap: wrap;
+  gap: 12px;
   align-items: center;
   justify-content: space-between;
   min-width: 0;
@@ -407,6 +408,7 @@ nav button.active {
 .app-actions {
   display: flex;
   flex-wrap: wrap;
+  gap: 10px;
   justify-content: center;
   min-width: 0;
 }
@@ -859,11 +861,11 @@ select option {
 
   .app-section-header {
     flex-direction: column;
-    justify-content: space-between;
+    gap: 10px;
   }
 
   .app-actions {
-    width: 100%;
+    width: 90%;
     flex-wrap: nowrap;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
