@@ -37,8 +37,6 @@ export default function App() {
   type LeaderboardRow = { username: string; total: number; last: number };
   const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
   const [loadingLb, setLoadingLb] = useState(false);
-
-  // user
   const [playerSearch, setPlayerSearch] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState<number | null>(null);
@@ -47,12 +45,9 @@ export default function App() {
 
   const [page, setPage] = useState<"builder" | "admin">("builder");
 
-  // base data
   const [players, setPlayers] = useState<Player[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
-
-  // team state
   const [selected, setSelected] = useState<Player[]>([]);
   const [squad, setSquad] = useState<Player[]>([]);
   const [startingXI, setStartingXI] = useState<Player[]>([]);
@@ -61,7 +56,6 @@ export default function App() {
 
   const [error, setError] = useState<string | null>(null);
 
-  // fixtures
   type Fixture = { id: number; homeTeamId: number; awayTeamId: number; date: string; round?: number };
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
   const [fixturesErr, setFixturesErr] = useState<string | null>(null);
@@ -70,7 +64,6 @@ export default function App() {
   const [teamViewTab, setTeamViewTab] =
     useState<"startingXI" | "players" | "leaderboard" | "fixtures" | "transfers">("startingXI");
 
-  // filters
   const [filterTeamId, setFilterTeamId] = useState<number | null>(null);
   const [filterPositions, setFilterPositions] = useState<Set<"GK" | "DEF" | "MID" | "FWD">>(
     new Set(["GK", "DEF", "MID", "FWD"])
@@ -90,11 +83,6 @@ export default function App() {
     | "id_asc";
 
   const [playerSort, setPlayerSort] = useState<PlayerSort>("value_desc");
-
-  // ✅ “Save needed” state (UI ready). To actually flip this when user edits StartingXI/Transfers,
-  // you’ll add callbacks from those components later.
-  const [dirty, setDirty] = useState(false);
-  const [saveFlash, setSaveFlash] = useState<"idle" | "saving" | "saved">("idle");
 
   const filteredPlayers = useMemo(() => {
     const q = playerSearch.trim().toLowerCase();
@@ -141,7 +129,6 @@ export default function App() {
     return arr;
   }, [players, filterTeamId, filterPositions, playerSort, teamsById, playerSearch]);
 
-  // -------------------- BOOTSTRAP (auth + base + saved team) --------------------
   useEffect(() => {
     let cancelled = false;
 
@@ -166,6 +153,7 @@ export default function App() {
         // 1) Verify server session (cookie)
         const meRes = await apiCall("/auth/me", { method: "GET" });
         if (!meRes.ok) {
+          // don't “force logout” here if you don't want—just show login screen as not logged in
           if (!cancelled) {
             setIsLoggedIn(false);
             setAuthChecked(true);
@@ -182,14 +170,16 @@ export default function App() {
         setIsAdmin(!!me.isAdmin);
         setPage(me.isAdmin ? "admin" : "builder");
 
-        localStorage.setItem("session", JSON.stringify({ userId: null, userName: me.name, isAdmin: !!me.isAdmin }));
+        localStorage.setItem(
+          "session",
+          JSON.stringify({ userId: null, userName: me.name, isAdmin: !!me.isAdmin })
+        );
 
         // 2) Load base data (players, teams) + saved team
-        setLoadingSaved(true);
         const [playersRes, teamsRes, savedTeam] = await Promise.all([
           apiCall("/players", { method: "GET" }),
           apiCall("/teams", { method: "GET" }),
-          loadSavedTeam(),
+          loadSavedTeam(), // GET /user-team (cookie-based)
         ]);
 
         if (cancelled) return;
@@ -230,18 +220,13 @@ export default function App() {
           }
           return merged;
         });
-
-        // reset “dirty” because we just loaded from server
-        setDirty(false);
       } catch (e) {
         if (!cancelled) {
           setError("Alustus epäonnistui. Päivitä sivu tai kirjaudu uudelleen.");
+          // keep whatever UI state you had; no forced logout
         }
       } finally {
-        if (!cancelled) {
-          setLoadingSaved(false);
-          setAuthChecked(true);
-        }
+        if (!cancelled) setAuthChecked(true);
       }
     }
 
@@ -251,7 +236,79 @@ export default function App() {
     };
   }, []);
 
-  // -------------------- LOADERS --------------------
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      setError(null);
+      try {
+        const [playersRes, teamsRes] = await Promise.all([apiCall("/players"), apiCall("/teams")]);
+        const playersData: Player[] = await playersRes.json();
+        const teamsData: Team[] = await teamsRes.json();
+        if (cancelled) return;
+        setPlayers(playersData);
+        setTeams(teamsData);
+      } catch {
+        if (!cancelled) setError("Failed to load players or teams");
+      }
+    }
+
+    if (isLoggedIn) load();
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoggedIn]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function run() {
+      setLoadingSaved(true);
+      try {
+        const data = (await loadSavedTeam()) as SavedTeamData | null;
+        if (cancelled) return;
+
+        const byId = new Map(players.map((p) => [p.id, p]));
+        const mapIds = (ids: number[]) => ids.map((id) => byId.get(id)).filter(Boolean) as Player[];
+
+        const formation = (data?.formation ?? "4-4-2") as FormationKey;
+        setSavedFormation(formation);
+
+        const squadIds = data?.squadIds ?? [];
+        const xiIds = data?.startingXIIds ?? [];
+        const benchIds = data?.benchIds ?? [];
+
+        const squadPlayers = mapIds(squadIds);
+        const xiPlayers = mapIds(xiIds);
+        const benchPlayers = mapIds(benchIds);
+
+        const derivedIds = Array.from(new Set([...xiIds, ...benchIds]));
+        const derivedPlayers = mapIds(derivedIds);
+
+        setSquad(squadPlayers.length ? squadPlayers : derivedPlayers);
+        setStartingXI(xiPlayers);
+        setBench(benchPlayers);
+
+        setSelected((prev) => {
+          const existing = new Set(prev.map((p) => p.id));
+          const merged = [...prev];
+          for (const p of [...(squadPlayers.length ? squadPlayers : derivedPlayers)]) {
+            if (!existing.has(p.id)) merged.push(p);
+          }
+          return merged;
+        });
+      } catch {
+      } finally {
+        if (!cancelled) setLoadingSaved(false);
+      }
+    }
+
+    if (isLoggedIn && players.length > 0) run();
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoggedIn, players]);
+
   async function loadFixtures() {
     setLoadingFixtures(true);
     setFixturesErr(null);
@@ -302,7 +359,6 @@ export default function App() {
     };
   }, [isLoggedIn]);
 
-  // -------------------- AUTH --------------------
   function handleLoginSuccess(userId: number, userName: string, isAdmin: boolean) {
     setUserId(userId);
     setUserName(userName);
@@ -310,6 +366,7 @@ export default function App() {
     setIsLoggedIn(true);
     setPage(isAdmin ? "admin" : "builder");
 
+    // only store if userId looks valid
     if (Number.isFinite(userId) && userId > 0) {
       localStorage.setItem("session", JSON.stringify({ userId, userName, isAdmin }));
     }
@@ -318,7 +375,7 @@ export default function App() {
   async function handleLogout() {
     try {
       await apiCall("/auth/logout", { method: "POST" });
-    } catch {}
+    } catch { }
 
     setIsLoggedIn(false);
     setUserId(null);
@@ -329,7 +386,6 @@ export default function App() {
     setSquad([]);
     setStartingXI([]);
     setBench([]);
-    setDirty(false);
 
     setPage("builder");
     setTeamViewTab("startingXI");
@@ -338,7 +394,6 @@ export default function App() {
     localStorage.removeItem("session");
   }
 
-  // -------------------- LEADERBOARD HELPERS --------------------
   function rankDiffSymbol(username: string, currentRank: number): "up" | "down" | "same" | "new" {
     const key = "lb_prev_ranks";
     let prev: Record<string, number> = {};
@@ -362,24 +417,25 @@ export default function App() {
     localStorage.setItem(key, JSON.stringify(next));
   }
 
-  // -------------------- FILTERS --------------------
   function togglePositionFilter(pos: "GK" | "DEF" | "MID" | "FWD") {
     const ALL = ["GK", "DEF", "MID", "FWD"] as const;
+
     setFilterPositions((prev) => {
       const isOnlyThis = prev.size === 1 && prev.has(pos);
+
+      // If already filtering only this position -> reset to all
       if (isOnlyThis) return new Set(ALL);
+
+      // Otherwise -> filter to only this position
       return new Set([pos]);
     });
   }
 
-  // -------------------- SAVES --------------------
   async function saveSquad(nextSquad: Player[]) {
     setSquad(nextSquad);
-    setDirty(false);
-    setSaveFlash("saving");
-    await saveStartingXI({ squadIds: nextSquad.map((p) => p.id) } as any);
-    setSaveFlash("saved");
-    window.setTimeout(() => setSaveFlash("idle"), 1200);
+    await saveStartingXI({
+      squadIds: nextSquad.map((p) => p.id),
+    } as any);
   }
 
   const saveXI = async (payload: { startingXI: Player[]; bench: Player[]; formation: FormationKey }) => {
@@ -391,22 +447,18 @@ export default function App() {
     setSavedFormation(payload.formation);
 
     const squadIds =
-      squad.length === 15 ? squad.map((p) => p.id) : Array.from(new Set([...xi.map((p) => p.id), ...b.map((p) => p.id)]));
+      squad.length === 15
+        ? squad.map((p) => p.id)
+        : Array.from(new Set([...xi.map((p) => p.id), ...b.map((p) => p.id)]));
 
-    setSaveFlash("saving");
     await saveStartingXI({
       formation: payload.formation,
       squadIds,
       startingXIIds: xi.map((p) => p.id),
       benchIds: b.map((p) => p.id),
     } as any);
-
-    setDirty(false);
-    setSaveFlash("saved");
-    window.setTimeout(() => setSaveFlash("idle"), 1200);
   };
 
-  // -------------------- RENDER --------------------
   if (!authChecked) {
     return (
       <div className="app-muted" style={{ padding: 16 }}>
@@ -419,371 +471,339 @@ export default function App() {
     return <Login onLoginSuccess={handleLoginSuccess} />;
   }
 
-  // Admin layout unchanged
-  if (isAdmin) {
+  if (!isAdmin) {
     return (
       <div className="app-shell">
-        <nav>
-          <div className="nav-left">
-            <button className={page === "admin" ? "active" : undefined} onClick={() => setPage("admin")}>
-              Hallintapaneeli
-            </button>
-          </div>
-          <div className="nav-right">
-            <span className="user-info">Morjes, {userName}!</span>
-            <button onClick={handleLogout} className="logout-button">
+        <header className="app-topbar">
+          <div className="app-title">Veikkausliigapörssi</div>
+          <div className="app-user">
+            <span className="app-user-name">Tervehdys {userName}</span>
+            <button onClick={handleLogout} className="app-btn app-btn-danger">
               Kirjaudu ulos
             </button>
           </div>
-        </nav>
+        </header>
 
         <main className="app-main">
-          <div className="app-card">{page === "admin" && <AdminPortal />}</div>
-        </main>
-      </div>
-    );
-  }
+          <div className="app-card">
+            {error && <div className="app-alert">{error}</div>}
 
-  // User layout
-  return (
-    <div className="app-shell">
-      {/* ✅ compact + NOT sticky */}
-      <header className="app-topbar app-topbar--compact">
-        <div className="app-topbar-left">
-          <div className="app-title">Veikkausliigapörssi</div>
-          <div className="app-subtitle">Tervehdys {userName}</div>
-        </div>
+            <div className="app-section">
+              <div className="app-section-header">
+                <div className="app-actions">
+                  <button
+                    className={`app-btn ${teamViewTab === "startingXI" ? "app-btn-active" : ""}`}
+                    onClick={() => setTeamViewTab("startingXI")}
+                  >
+                    Kokoonpano
+                  </button>
 
-        <div className="app-topbar-right">
-          <button onClick={handleLogout} className="app-btn app-btn-danger app-logout">
-            Kirjaudu ulos
-          </button>
-        </div>
-      </header>
+                  <button
+                    className={`app-btn ${teamViewTab === "players" ? "app-btn-active" : ""}`}
+                    onClick={() => setTeamViewTab("players")}
+                  >
+                    Pelaajat
+                  </button>
 
-      <main className="app-main">
-        <div className="app-card">
-          {error && <div className="app-alert">{error}</div>}
+                  <button
+                    className={`app-btn ${teamViewTab === "leaderboard" ? "app-btn-active" : ""}`}
+                    onClick={() => {
+                      setTeamViewTab("leaderboard");
+                      loadLeaderboard();
+                    }}
+                  >
+                    Tulostaulu
+                  </button>
 
-          {/* ✅ Tabs moved DOWN into the card */}
-          <div className="app-subnav">
-            <div className="app-subnav-tabs" role="tablist" aria-label="Sivut">
-              <button
-                className={`app-tab ${teamViewTab === "startingXI" ? "app-tab--active" : ""}`}
-                onClick={() => setTeamViewTab("startingXI")}
-                role="tab"
-                aria-selected={teamViewTab === "startingXI"}
-              >
-                Kokoonpano
-              </button>
+                  <button
+                    className={`app-btn ${teamViewTab === "fixtures" ? "app-btn-active" : ""}`}
+                    onClick={() => {
+                      setTeamViewTab("fixtures");
+                      loadFixtures();
+                    }}
+                  >
+                    Ottelut
+                  </button>
 
-              <button
-                className={`app-tab ${teamViewTab === "players" ? "app-tab--active" : ""}`}
-                onClick={() => setTeamViewTab("players")}
-                role="tab"
-                aria-selected={teamViewTab === "players"}
-              >
-                Pelaajat
-              </button>
+                  <button className="app-btn app-btn-primary" onClick={() => setTeamViewTab("transfers")}>
+                    Vaihdot
+                  </button>
+                </div>
+              </div>
 
-              <button
-                className={`app-tab ${teamViewTab === "leaderboard" ? "app-tab--active" : ""}`}
-                onClick={() => {
-                  setTeamViewTab("leaderboard");
-                  loadLeaderboard();
-                }}
-                role="tab"
-                aria-selected={teamViewTab === "leaderboard"}
-              >
-                Tulostaulu
-              </button>
-
-              <button
-                className={`app-tab ${teamViewTab === "fixtures" ? "app-tab--active" : ""}`}
-                onClick={() => {
-                  setTeamViewTab("fixtures");
-                  loadFixtures();
-                }}
-                role="tab"
-                aria-selected={teamViewTab === "fixtures"}
-              >
-                Ottelut
-              </button>
-
-              <button
-                className={`app-tab ${teamViewTab === "transfers" ? "app-tab--active" : ""}`}
-                onClick={() => setTeamViewTab("transfers")}
-                role="tab"
-                aria-selected={teamViewTab === "transfers"}
-              >
-                Vaihdot
-              </button>
-            </div>
-
-            {/* ✅ “Save” slot (appears only when dirty=true) */}
-            <div className="app-subnav-actions">
-              {saveFlash === "saving" && <span className="app-pill app-pill--info">Tallennetaan…</span>}
-              {saveFlash === "saved" && <span className="app-pill app-pill--ok">Tallennettu ✓</span>}
-
-              {dirty && (
-                <button
-                  className="app-btn app-btn-primary"
-                  onClick={() => {
-                    // NOTE: To make this truly functional,
-                    // StartingXI / TransfersPage must tell App what the current edited state is.
-                    // For now we keep it as a UI slot.
-                  }}
-                  title="Tallennus näkyy kun muutoksia on tekemättä."
-                >
-                  Tallenna
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* CONTENT */}
-          <div className="app-section">
-            {teamViewTab === "transfers" ? (
-              <TransfersPage
-                players={players}
-                teams={teams}
-                squad={squad}
-                budget={INITIAL_BUDGET}
-                onCancel={() => setTeamViewTab("startingXI")}
-                onSave={async ({ squad }) => {
-                  await saveSquad(squad);
-                  setTeamViewTab("startingXI");
-                }}
-              />
-            ) : teamViewTab === "startingXI" ? (
-              <div>
-                {loadingSaved && <div className="app-muted">Ladataan tallennettu joukkue…</div>}
-
-                <StartingXI
+              {teamViewTab === "transfers" ? (
+                <TransfersPage
+                  players={players}
                   teams={teams}
                   squad={squad}
-                  initialXI={startingXI}
-                  initialBench={bench}
-                  initialFormation={savedFormation}
                   budget={INITIAL_BUDGET}
-                  readOnly={false}
-                  onSave={async (p) => {
-                    await saveXI({ formation: p.formation, startingXI: p.startingXI, bench: p.bench });
+                  onCancel={() => setTeamViewTab("startingXI")}
+                  onSave={async ({ squad }) => {
+                    await saveSquad(squad);
+                    setTeamViewTab("startingXI");
                   }}
                 />
-              </div>
-            ) : teamViewTab === "fixtures" ? (
-              <div>
-                <h2 className="app-h2">Ottelut</h2>
+              ) : teamViewTab === "startingXI" ? (
+                <div>
+                  {loadingSaved && <div className="app-muted">Ladataan tallennettu joukkue…</div>}
 
-                {fixturesErr && <div className="app-alert">{fixturesErr}</div>}
+                  <StartingXI
+                    teams={teams}
+                    squad={squad}
+                    initialXI={startingXI}
+                    initialBench={bench}
+                    initialFormation={savedFormation}
+                    budget={INITIAL_BUDGET}
+                    readOnly={false}
+                    onSave={async (p) => {
+                      await saveXI({ formation: p.formation, startingXI: p.startingXI, bench: p.bench });
+                    }}
+                  />
+                </div>
+              ) : teamViewTab === "fixtures" ? (
+                <div>
+                  <h2 className="app-h2">Ottelut</h2>
 
-                {loadingFixtures ? (
-                  <div className="app-muted">Ladataan…</div>
-                ) : fixtures.length === 0 ? (
-                  <div className="app-muted">Ei otteluita vielä.</div>
-                ) : (
-                  <div className="app-table-wrap app-table-wrap--fx">
-                    <table className="app-table app-table--fx">
-                      <tbody>
-                        {(() => {
-                          const sorted = fixtures
-                            .slice()
-                            .sort((a, b) => (a.round ?? 999) - (b.round ?? 999) || a.id - b.id);
+                  {fixturesErr && <div className="app-alert">{fixturesErr}</div>}
 
-                          let lastRound: number | undefined;
+                  {loadingFixtures ? (
+                    <div className="app-muted">Ladataan…</div>
+                  ) : fixtures.length === 0 ? (
+                    <div className="app-muted">Ei otteluita vielä.</div>
+                  ) : (
+                    <div className="app-table-wrap app-table-wrap--fx">
+                      <table className="app-table app-table--fx">
+                        <tbody>
+                          {(() => {
+                            const sorted = fixtures
+                              .slice()
+                              .sort((a, b) => (a.round ?? 999) - (b.round ?? 999) || a.id - b.id);
 
-                          return sorted.flatMap((f) => {
-                            const out: JSX.Element[] = [];
+                            let lastRound: number | undefined;
 
-                            if (f.round !== undefined && f.round !== lastRound) {
-                              lastRound = f.round;
+                            return sorted.flatMap((f) => {
+                              const out: JSX.Element[] = [];
+
+                              if (f.round !== undefined && f.round !== lastRound) {
+                                lastRound = f.round;
+                                out.push(
+                                  <tr key={`round-${f.round}`}>
+                                    <td colSpan={4} style={{ fontWeight: 700 }}>
+                                      Kierros {f.round}
+                                    </td>
+                                  </tr>
+                                );
+                              }
+
                               out.push(
-                                <tr key={`round-${f.round}`}>
-                                  <td colSpan={4} style={{ fontWeight: 700 }}>
-                                    Kierros {f.round}
+                                <tr key={f.id}>
+                                  <td>{f.round ?? "-"}</td>
+                                  <td>{f.id}</td>
+                                  <td>
+                                    {teamsById.get(f.homeTeamId)?.name ?? f.homeTeamId} vs{" "}
+                                    {teamsById.get(f.awayTeamId)?.name ?? f.awayTeamId}
+                                  </td>
+                                  <td>
+                                    {new Date(f.date).toLocaleString("fi-FI", {
+                                      year: "numeric",
+                                      month: "2-digit",
+                                      day: "2-digit",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })}
                                   </td>
                                 </tr>
                               );
-                            }
 
-                            out.push(
-                              <tr key={f.id}>
-                                <td>{f.round ?? "-"}</td>
-                                <td>{f.id}</td>
-                                <td>
-                                  {teamsById.get(f.homeTeamId)?.name ?? f.homeTeamId} vs{" "}
-                                  {teamsById.get(f.awayTeamId)?.name ?? f.awayTeamId}
+                              return out;
+                            });
+                          })()}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              ) : teamViewTab === "leaderboard" ? (
+                <div>
+                  <h2 className="app-h2">Tulostaulu</h2>
+
+                  {loadingLb ? (
+                    <div className="app-muted">Ladataan…</div>
+                  ) : leaderboard.length === 0 ? (
+                    <div className="app-muted">Ei dataa vielä.</div>
+                  ) : (
+                    <div className="app-table-wrap app-table-wrap--lb">
+                      <table className="app-table app-table--lb">
+                        <thead>
+                          <tr>
+                            <th></th>
+                            <th>#</th>
+                            <th>Käyttäjä</th>
+                            <th style={{ textAlign: "right" }}>Viime kierros</th>
+                            <th style={{ textAlign: "right" }}>Yhteensä</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {leaderboard.map((r, idx) => {
+                            const rank = idx + 1;
+                            const trend = rankDiffSymbol(r.username, rank);
+
+                            const icon =
+                              trend === "up" ? "▲" : trend === "down" ? "▼" : trend === "same" ? "•" : "★";
+
+                            const title =
+                              trend === "up"
+                                ? "Noussut"
+                                : trend === "down"
+                                  ? "Laskenut"
+                                  : trend === "same"
+                                    ? "Ei muutosta"
+                                    : "Uusi";
+
+                            return (
+                              <tr key={r.username}>
+                                <td title={title} style={{ width: 28, textAlign: "center", opacity: 0.85 }}>
+                                  {icon}
                                 </td>
-                                <td>
-                                  {new Date(f.date).toLocaleString("fi-FI", {
-                                    year: "numeric",
-                                    month: "2-digit",
-                                    day: "2-digit",
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  })}
-                                </td>
+                                <td>{rank}</td>
+                                <td>{r.username}</td>
+                                <td style={{ textAlign: "right" }}>{r.last ?? 0}</td>
+                                <td style={{ textAlign: "right" }}>{r.total ?? 0}</td>
                               </tr>
                             );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <div className="app-section" style={{ marginBottom: 12 }}>
+                    <h2 className="app-h2">Suodattimet</h2>
 
-                            return out;
-                          });
-                        })()}
-                      </tbody>
-                    </table>
+                    {/* Admin-style top row */}
+                    <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+                      <input
+                        className="app-btn"
+                        placeholder="Hae pelaajia…"
+                        value={playerSearch}
+                        onChange={(e) => setPlayerSearch(e.target.value)}
+                        style={{ flex: 1, minWidth: 220 }}
+                      />
+
+                      <select
+                        className="app-btn"
+                        value={filterTeamId ?? ""}
+                        onChange={(e) => setFilterTeamId(e.target.value ? Number(e.target.value) : null)}
+                        style={{ minWidth: 180 }}
+                        title="Suodata joukkueella"
+                      >
+                        <option value="">Kaikki joukkueet</option>
+                        {teams
+                          .slice()
+                          .sort((a, b) => a.name.localeCompare(b.name))
+                          .map((t) => (
+                            <option key={t.id} value={t.id}>
+                              {t.name}
+                            </option>
+                          ))}
+                      </select>
+
+                      <select
+                        className="app-btn"
+                        value={playerSort}
+                        onChange={(e) => setPlayerSort(e.target.value as PlayerSort)}
+                        style={{ minWidth: 190 }}
+                        title="Järjestä"
+                      >
+                        <option value="value_desc">Arvo (kallein→ halvin)</option>
+                        <option value="value_asc">Arvo (halvin → kallein)</option>
+                        <option value="name_asc">Nimi (A →)</option>
+                        <option value="name_desc">Nimi (Ö →)</option>
+                        <option value="team_asc">Joukkue (A →)</option>
+                        <option value="team_desc">Joukkue (Ö →)</option>
+                        <option value="pos_asc">Pelipaikka</option>
+                        <option value="id_desc">Uusimmat</option>
+                        <option value="id_asc">Vanhimmat</option>
+                      </select>
+                    </div>
+
+                    {/* Keep your position buttons (user-only feature) */}
+                    <div className="filter-row">
+                      <label>Pelipaikat:</label>
+                      <div className="position-buttons">
+                        {(["GK", "DEF", "MID", "FWD"] as const).map((pos) => (
+                          <button
+                            key={pos}
+                            className={`app-btn ${filterPositions.has(pos) ? "app-btn-active" : ""}`}
+                            onClick={() => togglePositionFilter(pos)}
+                          >
+                            {pos}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                )}
-              </div>
-            ) : teamViewTab === "leaderboard" ? (
-              <div>
-                <h2 className="app-h2">Tulostaulu</h2>
 
-                {loadingLb ? (
-                  <div className="app-muted">Ladataan…</div>
-                ) : leaderboard.length === 0 ? (
-                  <div className="app-muted">Ei dataa vielä.</div>
-                ) : (
-                  <div className="app-table-wrap app-table-wrap--lb">
-                    <table className="app-table app-table--lb">
+                  <div className="app-table-wrap app-table-wrap--players">
+                    <table className="app-table app-table--players">
                       <thead>
                         <tr>
-                          <th></th>
-                          <th>#</th>
-                          <th>Käyttäjä</th>
-                          <th style={{ textAlign: "right" }}>Viime kierros</th>
-                          <th style={{ textAlign: "right" }}>Yhteensä</th>
+                          <th>Nimi</th>
+                          <th>Pelipaikka</th>
+                          <th>Joukkue</th>
+                          <th>Arvo</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {leaderboard.map((r, idx) => {
-                          const rank = idx + 1;
-                          const trend = rankDiffSymbol(r.username, rank);
-
-                          const icon = trend === "up" ? "▲" : trend === "down" ? "▼" : trend === "same" ? "•" : "★";
-                          const title =
-                            trend === "up"
-                              ? "Noussut"
-                              : trend === "down"
-                              ? "Laskenut"
-                              : trend === "same"
-                              ? "Ei muutosta"
-                              : "Uusi";
-
+                        {filteredPlayers.map((p) => {
+                          const teamName = teamsById.get(p.teamId)?.name ?? "";
                           return (
-                            <tr key={r.username}>
-                              <td title={title} style={{ width: 28, textAlign: "center", opacity: 0.85 }}>
-                                {icon}
-                              </td>
-                              <td>{rank}</td>
-                              <td>{r.username}</td>
-                              <td style={{ textAlign: "right" }}>{r.last ?? 0}</td>
-                              <td style={{ textAlign: "right" }}>{r.total ?? 0}</td>
+                            <tr key={p.id}>
+                              <td>{p.name}</td>
+                              <td>{p.position}</td>
+                              <td>{teamName}</td>
+                              <td>{p.value.toFixed(1)}</td>
                             </tr>
                           );
                         })}
                       </tbody>
                     </table>
                   </div>
-                )}
-              </div>
-            ) : (
-              <>
-                <div className="app-section" style={{ marginBottom: 12 }}>
-                  <h2 className="app-h2">Suodattimet</h2>
-
-                  {/* Admin-style top row */}
-                  <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
-                    <input
-                      className="app-btn"
-                      placeholder="Hae pelaajia…"
-                      value={playerSearch}
-                      onChange={(e) => setPlayerSearch(e.target.value)}
-                      style={{ flex: 1, minWidth: 220 }}
-                    />
-
-                    <select
-                      className="app-btn"
-                      value={filterTeamId ?? ""}
-                      onChange={(e) => setFilterTeamId(e.target.value ? Number(e.target.value) : null)}
-                      style={{ minWidth: 180 }}
-                      title="Suodata joukkueella"
-                    >
-                      <option value="">Kaikki joukkueet</option>
-                      {teams
-                        .slice()
-                        .sort((a, b) => a.name.localeCompare(b.name))
-                        .map((t) => (
-                          <option key={t.id} value={t.id}>
-                            {t.name}
-                          </option>
-                        ))}
-                    </select>
-
-                    <select
-                      className="app-btn"
-                      value={playerSort}
-                      onChange={(e) => setPlayerSort(e.target.value as PlayerSort)}
-                      style={{ minWidth: 190 }}
-                      title="Järjestä"
-                    >
-                      <option value="value_desc">Arvo (kallein→ halvin)</option>
-                      <option value="value_asc">Arvo (halvin → kallein)</option>
-                      <option value="name_asc">Nimi (A →)</option>
-                      <option value="name_desc">Nimi (Ö →)</option>
-                      <option value="team_asc">Joukkue (A →)</option>
-                      <option value="team_desc">Joukkue (Ö →)</option>
-                      <option value="pos_asc">Pelipaikka</option>
-                      <option value="id_desc">Uusimmat</option>
-                      <option value="id_asc">Vanhimmat</option>
-                    </select>
-                  </div>
-
-                  {/* Position buttons */}
-                  <div className="filter-row">
-                    <label>Pelipaikat:</label>
-                    <div className="position-buttons">
-                      {(["GK", "DEF", "MID", "FWD"] as const).map((pos) => (
-                        <button
-                          key={pos}
-                          className={`app-btn ${filterPositions.has(pos) ? "app-btn-active" : ""}`}
-                          onClick={() => togglePositionFilter(pos)}
-                        >
-                          {pos}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="app-table-wrap app-table-wrap--players">
-                  <table className="app-table app-table--players">
-                    <thead>
-                      <tr>
-                        <th>Nimi</th>
-                        <th>Pelipaikka</th>
-                        <th>Joukkue</th>
-                        <th>Arvo</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredPlayers.map((p) => {
-                        const tn = teamsById.get(p.teamId)?.name ?? "";
-                        return (
-                          <tr key={p.id}>
-                            <td>{p.name}</td>
-                            <td>{p.position}</td>
-                            <td>{tn}</td>
-                            <td>{p.value.toFixed(1)}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </>
-            )}
+                </>
+              )}
+            </div>
           </div>
+        </main>
+      </div>
+    );
+  }
+
+  return (
+    <div className="app-shell">
+      <nav>
+        <div className="nav-left">
+          <button className={page === "admin" ? "active" : undefined} onClick={() => setPage("admin")}>
+            Hallintapaneeli
+          </button>
+        </div>
+        <div className="nav-right">
+          <span className="user-info">Morjes, {userName}!</span>
+          <button onClick={handleLogout} className="logout-button">
+            Kirjaudu ulos
+          </button>
+        </div>
+      </nav>
+
+      <main className="app-main">
+        <div className="app-card">
+          {page === "admin" && <AdminPortal />}
+          {page === "builder" && (
+            <>
+              <h1 className="app-h1">Veikkauliigapörssi admin</h1>
+            </>
+          )}
         </div>
       </main>
     </div>
