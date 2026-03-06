@@ -1327,11 +1327,11 @@ body {
     overflow-x: auto;
   }
 }
-
-.app-actions button,
-.app-actions .app-btn {
-  width: 90%;
-  max-width: 240px;
+@media (max-width: 768px) {
+  .app-actions button,
+  .app-actions .app-btn {
+    width: 90%;
+  }
 } 
 
 /* =========================================================
