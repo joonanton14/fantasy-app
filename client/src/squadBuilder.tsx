@@ -47,6 +47,9 @@ export default function SquadBuilder(props: {
   const [picker, setPicker] = useState<{ slotId: string; pos: Position } | null>(null);
   const [q, setQ] = useState("");
 
+  const [onlySuitable, setOnlySuitable] = useState(false);
+  const [sortBy, setSortBy] = useState<"name" | "price-asc" | "price-desc" | "team">("name");
+
   const [pendingRestore, setPendingRestore] = useState<{ slotId: string; player: Player } | null>(null);
 
   useEffect(() => {
@@ -159,7 +162,7 @@ export default function SquadBuilder(props: {
       teamCounts.set(pl.teamId, (teamCounts.get(pl.teamId) ?? 0) + 1);
     }
 
-    return props.players
+    let rows = props.players
       .filter((p) => p.position === picker.pos)
       .filter((p) => !qq || p.name.toLowerCase().includes(qq))
       .map((p) => {
@@ -171,30 +174,59 @@ export default function SquadBuilder(props: {
 
         const tooExpensive = p.value > transferBudget;
 
+        const disabled = isPickedElsewhere || teamLimitExceeded || tooExpensive;
+
         return {
           player: p,
-          disabled: isPickedElsewhere || teamLimitExceeded || tooExpensive,
+          disabled,
+          suitable: !disabled,
           reason: isPickedElsewhere
-            ? "Jo valittu"
+            ? "Pelaaja jo valittu"
             : teamLimitExceeded
-              ? "3 pelaajaa jo tästä joukkueesta"
+              ? "Maksimimäärä pelaajia jo valittuna tästä joukkueelta"
               : tooExpensive
-                ? "Ei riitä budjetti"
+                ? "Ei riittävästi rahaa"
                 : null,
         };
-      })
-      .sort((a, b) => {
-        if (a.disabled !== b.disabled) return a.disabled ? 1 : -1;
-        return a.player.name.localeCompare(b.player.name);
       });
-  }, [picker, assign, q, props.players, pickedIds, transferBudget]);
+
+    if (onlySuitable) {
+      rows = rows.filter((row) => row.suitable);
+    }
+
+    rows.sort((a, b) => {
+      if (!onlySuitable && a.disabled !== b.disabled) {
+        return a.disabled ? 1 : -1;
+      }
+
+      switch (sortBy) {
+        case "price-asc":
+          return a.player.value - b.player.value || a.player.name.localeCompare(b.player.name);
+
+        case "price-desc":
+          return b.player.value - a.player.value || a.player.name.localeCompare(b.player.name);
+
+        case "team":
+          return (
+            teamName(props.teams, a.player.teamId).localeCompare(teamName(props.teams, b.player.teamId)) ||
+            a.player.name.localeCompare(b.player.name)
+          );
+
+        case "name":
+        default:
+          return a.player.name.localeCompare(b.player.name);
+      }
+    });
+
+    return rows;
+  }, [picker, assign, q, props.players, pickedIds, transferBudget, onlySuitable, sortBy, props.teams]);
 
   const canSave = picked.length === 15 && remainingBudget >= 0;
 
   return (
     <div ref={rootRef} className="squad-builder">
       <div className="app-muted" style={{ marginBottom: 8 }}>
-        Budjetti jäljellä: <b>{remainingBudget.toFixed(1)} M</b>
+        Rahaa jäljellä: <b>{remainingBudget.toFixed(1)} M</b>
       </div>
 
       <div className="pitch">
@@ -264,7 +296,7 @@ export default function SquadBuilder(props: {
           <div className="picker-sheet" onClick={(e) => e.stopPropagation()}>
             <div className="picker-head">
               <div className="picker-title">
-                Valitse pelaaja <span className="picker-pos">({fmtPos(picker.pos)})</span>
+                Valitse <span className="picker-pos">({fmtPos(picker.pos)})</span>
               </div>
 
               <button
@@ -289,7 +321,7 @@ export default function SquadBuilder(props: {
                   </div>
                 </div>
               ) : (
-                <div className="picker-out-card picker-out-card--empty">Tyhjä paikka</div>
+                <div className="picker-out-card picker-out-card--empty">Tyhjä</div>
               )}
             </div>
 
@@ -311,6 +343,28 @@ export default function SquadBuilder(props: {
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
+
+            <div className="picker-tools">
+              <label className="picker-toggle">
+                <input
+                  type="checkbox"
+                  checked={onlySuitable}
+                  onChange={(e) => setOnlySuitable(e.target.checked)}
+                />
+                <span>Näytä vain sopivat</span>
+              </label>
+
+              <select
+                className="picker-sort"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as "name" | "price-asc" | "price-desc" | "team")}
+              >
+                <option value="name">Järjestä: Nimi</option>
+                <option value="price-asc">Järjestä: Hinta ↑</option>
+                <option value="price-desc">Järjestä: Hinta ↓</option>
+                <option value="team">Järjestä: Joukkue</option>
+              </select>
+            </div>
 
             <div className="picker-list">
               {availableForPicker.map(({ player, disabled, reason }) => (
