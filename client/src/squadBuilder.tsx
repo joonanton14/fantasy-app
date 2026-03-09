@@ -104,6 +104,16 @@ export default function SquadBuilder(props: {
     }
   }
 
+  function closePicker() {
+    if (picker && pendingRestore?.slotId === picker.slotId && !assign[picker.slotId]) {
+      setAssign((prev) => ({ ...prev, [picker.slotId]: pendingRestore.player }));
+    }
+
+    setPendingRestore(null);
+    setPicker(null);
+    setQ("");
+  }
+
   function removeFrom(slotId: string) {
     const removed = assign[slotId];
     if (!removed) return;
@@ -299,16 +309,10 @@ export default function SquadBuilder(props: {
                 Valitse <span className="picker-pos">({fmtPos(picker.pos)})</span>
               </div>
 
-              <button
-                className="picker-close"
-                onClick={() => {
-                  setPicker(null);
-                  setQ("");
-                }}
-                aria-label="Sulje"
-              >
+              <button className="picker-close" onClick={closePicker} aria-label="Sulje">
                 ✕
               </button>
+
             </div>
 
             <div className="picker-out">
@@ -328,14 +332,6 @@ export default function SquadBuilder(props: {
             <div className="app-muted" style={{ marginBottom: 10 }}>
               Rahaa käytettävissä: <b>{transferBudget.toFixed(1)} M</b>
             </div>
-
-            {pendingRestore?.slotId === picker.slotId && (
-              <div style={{ marginBottom: 10 }}>
-                <button type="button" className="picker-cancel-transfer" onClick={cancelTransfer}>
-                  Peru
-                </button>
-              </div>
-            )}
 
             <input
               className="picker-search"
@@ -359,10 +355,9 @@ export default function SquadBuilder(props: {
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as "name" | "price-asc" | "price-desc" | "team")}
               >
-                <option value="name">Järjestä: Nimi</option>
-                <option value="price-asc">Järjestä: Hinta ↑</option>
-                <option value="price-desc">Järjestä: Hinta ↓</option>
-                <option value="team">Järjestä: Joukkue</option>
+                <option value="name">Nimi A-</option>
+                <option value="price-asc">Hinta ↑</option>
+                <option value="price-desc">Hinta ↓</option>
               </select>
             </div>
 
