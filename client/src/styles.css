@@ -1855,33 +1855,28 @@ body {
   .squad-builder .remove-slot{ width: 13px; height: 13px; font-size: 8px; }
 }
 
-.picker-backdrop {
+.picker-backdrop{
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.45);
   backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  z-index: 9999;
-  padding: 12px;
+  display: grid;
+  align-items: end;
+  z-index: 999;
 }
 
-.picker-sheet {
-  width: min(720px, 100%);
+.picker-sheet{
   background: rgba(17,24,39,0.95);
   border: 1px solid rgba(255,255,255,0.10);
   border-radius: 18px 18px 0 0;
   padding: 12px;
-  max-height: 85dvh;
+  max-height: 72vh;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
 
 .picker-head{
-  margin-top: 1rem;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1915,10 +1910,11 @@ body {
   margin-bottom: 10px;
 }
 
-.picker-list {
-  overflow-y: auto;
-  min-height: 0;
-  -webkit-overflow-scrolling: touch;
+.picker-list{
+  overflow: auto;
+  max-height: calc(72vh - 120px);
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
 }
 
 .picker-row{
