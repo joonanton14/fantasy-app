@@ -46,8 +46,7 @@ export default function SquadBuilder(props: {
 
   const [picker, setPicker] = useState<{ slotId: string; pos: Position } | null>(null);
   const [q, setQ] = useState("");
-
-  // store removed player so transfer can be cancelled from inside picker
+  
   const [pendingRestore, setPendingRestore] = useState<{ slotId: string; player: Player } | null>(null);
 
   useEffect(() => {
@@ -71,7 +70,6 @@ export default function SquadBuilder(props: {
     function onDown(e: MouseEvent | TouchEvent) {
       if (!rootRef.current) return;
       if (!rootRef.current.contains(e.target as Node)) {
-        // picker closes only via backdrop/close button
       }
     }
     document.addEventListener("mousedown", onDown);
@@ -98,7 +96,6 @@ export default function SquadBuilder(props: {
 
     setAssign((prev) => ({ ...prev, [slotId]: p }));
 
-    // once a new player is selected, pending restore is no longer valid for that slot
     if (pendingRestore?.slotId === slotId) {
       setPendingRestore(null);
     }
@@ -121,7 +118,6 @@ export default function SquadBuilder(props: {
       return;
     }
 
-    // only restore if this picker belongs to the same slot and it is still empty
     if (pendingRestore.slotId === picker.slotId && !assign[picker.slotId]) {
       setAssign((prev) => ({ ...prev, [picker.slotId]: pendingRestore.player }));
     }
@@ -134,7 +130,6 @@ export default function SquadBuilder(props: {
   const pickerOut = useMemo(() => {
     if (!picker) return null;
 
-    // if slot currently empty because of removal, show the pending removed player as "out"
     if (pendingRestore?.slotId === picker.slotId) return pendingRestore.player;
 
     return assign[picker.slotId] ?? null;
@@ -144,7 +139,6 @@ export default function SquadBuilder(props: {
     return pos === "FWD" ? "ST" : pos;
   }
 
-  // max money available for THIS transfer
   const transferBudget = useMemo(() => {
     if (!picker) return 0;
     const outgoingValue = pickerOut?.value ?? 0;
@@ -187,7 +181,7 @@ export default function SquadBuilder(props: {
                     tabIndex={0}
                     onClick={() => {
                       setQ("");
-                      setPendingRestore(null); // normal open, not a remove flow
+                      setPendingRestore(null);
                       setPicker({ slotId: s.id, pos: s.position });
                     }}
                   >
@@ -268,13 +262,13 @@ export default function SquadBuilder(props: {
             </div>
 
             <div className="app-muted" style={{ marginBottom: 10 }}>
-              Rahaa käytettävissä tähän siirtoon: <b>{transferBudget.toFixed(1)} M</b>
+              Rahaa käytettävissä: <b>{transferBudget.toFixed(1)} M</b>
             </div>
 
             {pendingRestore?.slotId === picker.slotId && (
               <div style={{ marginBottom: 10 }}>
                 <button type="button" className="picker-cancel-transfer" onClick={cancelTransfer}>
-                  Peru siirto
+                  Peru
                 </button>
               </div>
             )}

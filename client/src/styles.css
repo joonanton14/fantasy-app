@@ -2133,3 +2133,73 @@ body {
   .picker-title{ font-size: 15px; }
   .picker-close{ width: 36px; height: 36px; border-radius: 13px; }
 }
+
+.slot-swap-source {
+  outline: 2px solid currentColor;
+  transform: scale(1.02);
+}
+
+.slot-swap-hint {
+  opacity: 0.75;
+}
+
+.slot-swap-target {
+  opacity: 1;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.22);
+}
+
+.bench-swap-hint {
+  outline: 2px dashed rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+}
+
+.pitch-row-swap-hint {
+  position: relative;
+}
+
+.pitch-row-swap-hint .slot {
+  opacity: 0.75;
+}
+
+.pitch-row-swap-hint .slot-swap-target {
+  opacity: 1;
+}
+
+.xi-cancel-swap {
+  margin-right: 8px;
+}
+
+.slot-swap-source {
+  outline: 2px solid currentColor;
+  transform: scale(1.02);
+}
+
+.slot-swap-hint {
+  opacity: 0.75;
+}
+
+.slot-swap-target {
+  opacity: 1;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.22);
+}
+
+.bench-swap-hint {
+  outline: 2px dashed rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+}
+
+.pitch-row-swap-hint {
+  position: relative;
+}
+
+.pitch-row-swap-hint .slot {
+  opacity: 0.75;
+}
+
+.pitch-row-swap-hint .slot-swap-target {
+  opacity: 1;
+}
+
+.xi-cancel-swap {
+  margin-right: 8px;
+}

@@ -219,11 +219,52 @@ export const StartingXI: FC<{
     setSwapSource({ area, slotId });
   }
 
+  function benchAccepts(slot: BenchSlot, p: Player) {
+    if (slot.kind === "GK") return p.position === "GK";
+    return p.position !== "GK";
+  }
+
+  function isValidSwapTarget(targetArea: "xi" | "bench", targetSlotId: string) {
+    if (!swapSource) return false;
+    if (swapSource.area === targetArea && swapSource.slotId === targetSlotId) return false;
+
+    const srcP = swapSource.area === "xi" ? xiAssign[swapSource.slotId] : benchAssign[swapSource.slotId];
+    const dstP = targetArea === "xi" ? xiAssign[targetSlotId] : benchAssign[targetSlotId];
+    if (!srcP || !dstP) return false;
+
+    const srcXiSlot = swapSource.area === "xi" ? slots.find((s) => s.id === swapSource.slotId) : null;
+    const dstXiSlot = targetArea === "xi" ? slots.find((s) => s.id === targetSlotId) : null;
+
+    const srcBenchSlot = swapSource.area === "bench" ? BENCH_SLOTS.find((b) => b.id === swapSource.slotId) : null;
+    const dstBenchSlot = targetArea === "bench" ? BENCH_SLOTS.find((b) => b.id === targetSlotId) : null;
+
+    if (swapSource.area === "xi" && targetArea === "xi") {
+      if (!srcXiSlot || !dstXiSlot) return false;
+      return srcP.position === dstXiSlot.position && dstP.position === srcXiSlot.position;
+    }
+
+    if (swapSource.area === "bench" && targetArea === "bench") {
+      if (!srcBenchSlot || !dstBenchSlot) return false;
+      return benchAccepts(dstBenchSlot, srcP) && benchAccepts(srcBenchSlot, dstP);
+    }
+
+    const xiSlotId = targetArea === "xi" ? targetSlotId : swapSource.slotId;
+    const benchSlotId = targetArea === "bench" ? targetSlotId : swapSource.slotId;
+
+    const xiSlot = slots.find((s) => s.id === xiSlotId);
+    const benchSlot = BENCH_SLOTS.find((b) => b.id === benchSlotId);
+    if (!xiSlot || !benchSlot) return false;
+
+    const incomingToXI = targetArea === "xi" ? srcP : dstP;
+    const incomingToBench = targetArea === "bench" ? srcP : dstP;
+
+    return incomingToXI.position === xiSlot.position && benchAccepts(benchSlot, incomingToBench);
+  }
+
   function trySwap(targetArea: "xi" | "bench", targetSlotId: string) {
     if (readOnly) return;
     if (!swapSource) return;
 
-    // don't swap the slot with itself
     if (swapSource.area === targetArea && swapSource.slotId === targetSlotId) return;
 
     const srcP = swapSource.area === "xi" ? xiAssign[swapSource.slotId] : benchAssign[swapSource.slotId];
@@ -236,13 +277,6 @@ export const StartingXI: FC<{
     const srcBenchSlot = swapSource.area === "bench" ? BENCH_SLOTS.find((b) => b.id === swapSource.slotId) : null;
     const dstBenchSlot = targetArea === "bench" ? BENCH_SLOTS.find((b) => b.id === targetSlotId) : null;
 
-    // helpers for bench slot validity
-    const benchAccepts = (slot: BenchSlot, p: Player) => {
-      if (slot.kind === "GK") return p.position === "GK";
-      return p.position !== "GK";
-    };
-
-    // XI ⇄ XI: both players must fit both XI positions
     if (swapSource.area === "xi" && targetArea === "xi") {
       if (!srcXiSlot || !dstXiSlot) return;
       if (srcP.position !== dstXiSlot.position) return;
@@ -253,12 +287,10 @@ export const StartingXI: FC<{
         [swapSource.slotId]: dstP,
         [targetSlotId]: srcP,
       }));
-
       setSwapSource(null);
       return;
     }
 
-    // Bench ⇄ Bench: both players must fit both bench slot kinds
     if (swapSource.area === "bench" && targetArea === "bench") {
       if (!srcBenchSlot || !dstBenchSlot) return;
       if (!benchAccepts(dstBenchSlot, srcP)) return;
@@ -269,12 +301,10 @@ export const StartingXI: FC<{
         [swapSource.slotId]: dstP,
         [targetSlotId]: srcP,
       }));
-
       setSwapSource(null);
       return;
     }
 
-    // XI ⇄ Bench (your existing logic, but symmetric)
     const xiSlotId = targetArea === "xi" ? targetSlotId : swapSource.slotId;
     const benchSlotId = targetArea === "bench" ? targetSlotId : swapSource.slotId;
 
@@ -351,13 +381,29 @@ export const StartingXI: FC<{
     emptyLabel: string;
     onSlotClick: () => void;
   }) => {
-    const canSwap = !readOnly && !swapSource;
+    const isSource = !!swapSource && swapSource.area === area && swapSource.slotId === slotId;
+    const oppositeAreaActive =
+      !!swapSource &&
+      ((swapSource.area === "xi" && area === "bench") || (swapSource.area === "bench" && area === "xi"));
+
+    const isTarget = !!swapSource && isValidSwapTarget(area, slotId);
 
     return (
-      <div className={`slot ${assigned ? "slot-filled" : ""}`} onClick={onSlotClick} role="button" tabIndex={0}>
+      <div
+        className={[
+          "slot",
+          assigned ? "slot-filled" : "",
+          isSource ? "slot-swap-source" : "",
+          oppositeAreaActive ? "slot-swap-hint" : "",
+          isTarget ? "slot-swap-target" : "",
+        ].join(" ")}
+        onClick={onSlotClick}
+        role="button"
+        tabIndex={0}
+      >
         {assigned ? (
           <>
-            {canSwap && !swapSource && (
+            {!readOnly && !swapSource && (
               <button
                 type="button"
                 className="swap-slot"
@@ -385,9 +431,10 @@ export const StartingXI: FC<{
 
   const Row = ({ position }: { position: Position }) => {
     const rowSlots = slots.filter((s) => s.position === position);
+    const highlightRow = !!swapSource && swapSource.area === "bench";
 
     return (
-      <div className={`pitch-row pitch-cols-${rowSlots.length}`}>
+      <div className={`pitch-row pitch-cols-${rowSlots.length} ${highlightRow ? "pitch-row-swap-hint" : ""}`}>
         {rowSlots.map((s) => {
           const assigned = xiAssign[s.id] ?? null;
 
@@ -412,8 +459,10 @@ export const StartingXI: FC<{
   };
 
   const Bench = () => {
+    const highlightBench = !!swapSource && swapSource.area === "xi";
+
     return (
-      <div className="bench">
+      <div className={`bench ${highlightBench ? "bench-swap-hint" : ""}`}>
         <div className="bench-row">
           {BENCH_SLOTS.map((s) => {
             const assigned = benchAssign[s.id] ?? null;
@@ -481,24 +530,19 @@ export const StartingXI: FC<{
           <div className="bench-overlay">
             <Bench />
           </div>
-
-          {/* OPTION A: floating guidance inside pitch (no layout jump) */}
-          {swapSource && (
-            <div className="xi-swap-toast" role="status" aria-live="polite">
-              <span className="xi-swap-dot" aria-hidden="true" />
-              <span>
-                Vaihto päällä — valitse{" "}
-                <b>{swapSource.area === "xi" ? "penkiltä" : "kentältä"}</b>{" "}
-                pelaaja jonka kanssa vaihdetaan.
-              </span>
-              <button type="button" className="xi-swap-cancel" onClick={() => setSwapSource(null)}>
-                Peru
-              </button>
-            </div>
-          )}
         </div>
 
         <div className="starting-xi-controls">
+          {!readOnly && swapSource && (
+            <button
+              type="button"
+              className="xi-cancel-swap"
+              onClick={() => setSwapSource(null)}
+            >
+              Peru vaihto
+            </button>
+          )}
+
           {!readOnly && (
             <button
               type="button"
