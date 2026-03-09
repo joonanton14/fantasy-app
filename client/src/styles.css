@@ -1855,22 +1855,31 @@ body {
   .squad-builder .remove-slot{ width: 13px; height: 13px; font-size: 8px; }
 }
 
-.picker-backdrop{
+.picker-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.45);
-  backdrop-filter: blur(6px);
-  display: grid;
-  align-items: end;
-  z-index: 999;
+  z-index: 9999;
+  background: rgba(10, 12, 18, 0.58);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+
+  padding: 12px;
 }
 
-.picker-sheet{
-  background: rgba(17,24,39,0.95);
-  border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 18px 18px 0 0;
-  padding: 12px;
-  max-height: 72vh;
+.picker-sheet {
+  width: min(720px, 100%);
+  max-height: min(85dvh, 85vh);
+  background: #11151c;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.35);
+
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
