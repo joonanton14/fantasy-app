@@ -1602,3 +1602,200 @@ select option {
     font-size: 8px;
   }
 }
+
+@media (max-width: 520px) {
+  .picker-backdrop {
+    padding: 0 !important;
+    display: flex !important;
+    align-items: flex-end !important;
+    justify-content: center !important;
+  }
+
+  .picker-sheet {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+
+    margin: 0 !important;
+    border-radius: 20px 20px 0 0 !important;
+
+    /* taller and lower */
+    max-height: 94dvh !important;
+    min-height: 78dvh !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+
+    padding:
+      10px
+      10px
+      calc(14px + env(safe-area-inset-bottom, 0px)) !important;
+
+    overflow: hidden !important;
+  }
+
+  .picker-head,
+  .picker-out,
+  .picker-search,
+  .picker-tools,
+  .app-muted {
+    flex-shrink: 0 !important;
+  }
+
+  .picker-head {
+    margin: 0 0 8px 0 !important;
+  }
+
+  .picker-out {
+    margin-bottom: 8px !important;
+  }
+
+  .picker-search {
+    margin-bottom: 8px !important;
+  }
+
+  .picker-tools {
+    margin: 8px 0 10px !important;
+  }
+
+  .picker-list {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .squad-builder {
+    width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+  .squad-builder .pitch {
+    width: 100%;
+    max-width: 100%;
+    margin: 10px auto;
+    padding: 8px;
+    overflow: hidden;
+
+    --slotW: 60px;
+    --slotH: 56px;
+    --gapRow: 10px;
+  }
+
+  .squad-builder .pitch::before {
+    inset: 8px;
+  }
+
+  .squad-builder .pitch-row {
+    width: 100%;
+    margin: 10px 0;
+    justify-content: center;
+    align-content: center;
+    gap: var(--gapRow);
+  }
+
+  .squad-builder .pitch-row.pitch-cols-1 {
+    grid-template-columns: repeat(1, var(--slotW));
+    --gapRow: 14px;
+  }
+
+  .squad-builder .pitch-row.pitch-cols-2 {
+    grid-template-columns: repeat(2, var(--slotW));
+    --gapRow: 14px;
+  }
+
+  .squad-builder .pitch-row.pitch-cols-3 {
+    grid-template-columns: repeat(3, var(--slotW));
+    --gapRow: 12px;
+  }
+
+  .squad-builder .pitch-row.pitch-cols-4 {
+    grid-template-columns: repeat(4, var(--slotW));
+    --gapRow: 10px;
+  }
+
+  .squad-builder .pitch-row.pitch-cols-5 {
+    grid-template-columns: repeat(5, var(--slotW));
+    --gapRow: 6px;
+  }
+
+  .squad-builder .slot {
+    width: var(--slotW);
+    height: var(--slotH);
+    min-height: 0;
+    padding: 6px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+  }
+
+  .squad-builder .player-chip {
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+
+    gap: 1px;
+    padding: 0 2px 2px;
+  }
+
+  .squad-builder .player-name,
+  .squad-builder .player-team {
+    width: 100%;
+    max-width: 100%;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .squad-builder .player-name {
+    font-size: 9px;
+    line-height: 1;
+    padding-right: 0;
+  }
+
+  .squad-builder .player-team {
+    font-size: 8px;
+    line-height: 1;
+    opacity: 0.85;
+  }
+
+  .squad-builder .remove-slot {
+    width: 14px;
+    height: 14px;
+    border-radius: 5px;
+    font-size: 9px;
+    top: 4px;
+    right: 4px;
+  }
+}
+
+@media (max-width: 380px) {
+  .squad-builder .pitch {
+    --slotW: 56px;
+    --slotH: 52px;
+  }
+
+  .squad-builder .player-name {
+    font-size: 8.8px;
+  }
+
+  .squad-builder .player-team {
+    font-size: 7.8px;
+  }
+
+  .squad-builder .remove-slot {
+    width: 13px;
+    height: 13px;
+    font-size: 8px;
+  }
+}
