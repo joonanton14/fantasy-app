@@ -46,7 +46,7 @@ export default function SquadBuilder(props: {
 
   const [picker, setPicker] = useState<{ slotId: string; pos: Position } | null>(null);
   const [q, setQ] = useState("");
-  
+
   const [pendingRestore, setPendingRestore] = useState<{ slotId: string; player: Player } | null>(null);
 
   useEffect(() => {
@@ -141,21 +141,53 @@ export default function SquadBuilder(props: {
 
   const transferBudget = useMemo(() => {
     if (!picker) return 0;
-    const outgoingValue = pickerOut?.value ?? 0;
+    const slotAssigned = assign[picker.slotId];
+    const outgoingValue = slotAssigned?.value ?? 0;
     return remainingBudget + outgoingValue;
-  }, [picker, pickerOut, remainingBudget]);
+  }, [picker, assign, remainingBudget]);
 
   const availableForPicker = useMemo(() => {
     if (!picker) return [];
+
     const slotAssigned = assign[picker.slotId];
     const qq = q.trim().toLowerCase();
 
+    const teamCounts = new Map<number, number>();
+    for (const [slotId, pl] of Object.entries(assign)) {
+      if (!pl) continue;
+      if (slotId === picker.slotId) continue;
+      teamCounts.set(pl.teamId, (teamCounts.get(pl.teamId) ?? 0) + 1);
+    }
+
     return props.players
       .filter((p) => p.position === picker.pos)
-      .filter((p) => !pickedIds.has(p.id) || p.id === slotAssigned?.id)
       .filter((p) => !qq || p.name.toLowerCase().includes(qq))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [picker, props.players, pickedIds, assign, q]);
+      .map((p) => {
+        const isSameCurrent = p.id === slotAssigned?.id;
+        const isPickedElsewhere = pickedIds.has(p.id) && !isSameCurrent;
+
+        const nextTeamCount = (teamCounts.get(p.teamId) ?? 0) + 1;
+        const teamLimitExceeded = nextTeamCount > 3;
+
+        const tooExpensive = p.value > transferBudget;
+
+        return {
+          player: p,
+          disabled: isPickedElsewhere || teamLimitExceeded || tooExpensive,
+          reason: isPickedElsewhere
+            ? "Jo valittu"
+            : teamLimitExceeded
+              ? "3 pelaajaa jo tästä joukkueesta"
+              : tooExpensive
+                ? "Ei riitä budjetti"
+                : null,
+        };
+      })
+      .sort((a, b) => {
+        if (a.disabled !== b.disabled) return a.disabled ? 1 : -1;
+        return a.player.name.localeCompare(b.player.name);
+      });
+  }, [picker, assign, q, props.players, pickedIds, transferBudget]);
 
   const canSave = picked.length === 15 && remainingBudget >= 0;
 
@@ -281,29 +313,27 @@ export default function SquadBuilder(props: {
             />
 
             <div className="picker-list">
-              {availableForPicker.map((p) => {
-                const tooExpensive = p.value > transferBudget;
-
-                return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    className={`picker-row ${tooExpensive ? "picker-row-disabled" : ""}`}
-                    disabled={tooExpensive}
-                    onClick={() => {
-                      assignTo(picker.slotId, p);
-                      setPicker(null);
-                      setQ("");
-                    }}
-                  >
-                    <div className="picker-row-main">
-                      <div className="picker-name">{p.name}</div>
-                      <div className="picker-team">{teamName(props.teams, p.teamId)}</div>
+              {availableForPicker.map(({ player, disabled, reason }) => (
+                <button
+                  key={player.id}
+                  type="button"
+                  className={`picker-row ${disabled ? "picker-row-disabled" : ""}`}
+                  disabled={disabled}
+                  onClick={() => {
+                    assignTo(picker.slotId, player);
+                    setPicker(null);
+                  }}
+                >
+                  <div className="picker-row-main">
+                    <div className="picker-name">{player.name}</div>
+                    <div className="picker-team">
+                      {teamName(props.teams, player.teamId)}
+                      {reason && <span className="picker-reason"> • {reason}</span>}
                     </div>
-                    <div className="picker-price">{p.value.toFixed(1)} M</div>
-                  </button>
-                );
-              })}
+                  </div>
+                  <div className="picker-price">{player.value.toFixed(1)} M</div>
+                </button>
+              ))}
 
               {availableForPicker.length === 0 && <div className="picker-empty">Ei saatavilla</div>}
             </div>
