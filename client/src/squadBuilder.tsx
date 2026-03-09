@@ -44,13 +44,11 @@ export default function SquadBuilder(props: {
     return map;
   });
 
-  // Bottom-sheet picker state
   const [picker, setPicker] = useState<{ slotId: string; pos: Position } | null>(null);
   const [q, setQ] = useState("");
 
-  // Undo remove (optional – keeps your earlier “fine for now”)
-  const [lastRemoved, setLastRemoved] = useState<{ slotId: string; player: Player } | null>(null);
-  const undoTimerRef = useRef<number | null>(null);
+  // store removed player so transfer can be cancelled from inside picker
+  const [pendingRestore, setPendingRestore] = useState<{ slotId: string; player: Player } | null>(null);
 
   useEffect(() => {
     const map: Record<string, Player | null> = {};
@@ -65,17 +63,15 @@ export default function SquadBuilder(props: {
     setAssign(map);
     setPicker(null);
     setQ("");
-    setLastRemoved(null);
+    setPendingRestore(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.initialSquad]);
 
-  // close picker when clicking outside whole component
   useEffect(() => {
     function onDown(e: MouseEvent | TouchEvent) {
       if (!rootRef.current) return;
       if (!rootRef.current.contains(e.target as Node)) {
-        // do not force-close picker here because it’s fixed on viewport; close only via backdrop/close
-        // but we can clear undo message
+        // picker closes only via backdrop/close button
       }
     }
     document.addEventListener("mousedown", onDown);
@@ -83,12 +79,6 @@ export default function SquadBuilder(props: {
     return () => {
       document.removeEventListener("mousedown", onDown);
       document.removeEventListener("touchstart", onDown);
-    };
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (undoTimerRef.current) window.clearTimeout(undoTimerRef.current);
     };
   }, []);
 
@@ -101,59 +91,69 @@ export default function SquadBuilder(props: {
   function assignTo(slotId: string, p: Player) {
     const current = assign[slotId];
 
-    // prevent duplicates
     if (pickedIds.has(p.id) && current?.id !== p.id) return;
 
-    // budget check
     const nextTotal = totalValue - (current?.value ?? 0) + p.value;
     if (nextTotal > props.budget) return;
 
     setAssign((prev) => ({ ...prev, [slotId]: p }));
+
+    // once a new player is selected, pending restore is no longer valid for that slot
+    if (pendingRestore?.slotId === slotId) {
+      setPendingRestore(null);
+    }
   }
 
   function removeFrom(slotId: string) {
     const removed = assign[slotId];
     if (!removed) return;
 
-    setLastRemoved({ slotId, player: removed });
+    setPendingRestore({ slotId, player: removed });
     setAssign((prev) => ({ ...prev, [slotId]: null }));
 
-    // Open picker immediately for replacement
     setQ("");
     setPicker({ slotId, pos: removed.position });
-
-    if (undoTimerRef.current) window.clearTimeout(undoTimerRef.current);
-    undoTimerRef.current = window.setTimeout(() => setLastRemoved(null), 6000);
   }
 
-  function undoRemove() {
-    if (!lastRemoved) return;
-
-    const { slotId, player } = lastRemoved;
-
-    // only undo if still empty and player not already elsewhere
-    const stillEmpty = !assign[slotId];
-    const alreadyPicked = pickedIds.has(player.id);
-
-    if (stillEmpty && !alreadyPicked) {
-      setAssign((prev) => ({ ...prev, [slotId]: player }));
+  function cancelTransfer() {
+    if (!picker || !pendingRestore) {
+      setPicker(null);
+      return;
     }
 
-    setLastRemoved(null);
+    // only restore if this picker belongs to the same slot and it is still empty
+    if (pendingRestore.slotId === picker.slotId && !assign[picker.slotId]) {
+      setAssign((prev) => ({ ...prev, [picker.slotId]: pendingRestore.player }));
+    }
+
+    setPendingRestore(null);
+    setPicker(null);
+    setQ("");
   }
 
   const pickerOut = useMemo(() => {
     if (!picker) return null;
+
+    // if slot currently empty because of removal, show the pending removed player as "out"
+    if (pendingRestore?.slotId === picker.slotId) return pendingRestore.player;
+
     return assign[picker.slotId] ?? null;
-  }, [picker, assign]);
+  }, [picker, assign, pendingRestore]);
 
   function fmtPos(pos: Position) {
     return pos === "FWD" ? "ST" : pos;
   }
+
+  // max money available for THIS transfer
+  const transferBudget = useMemo(() => {
+    if (!picker) return 0;
+    const outgoingValue = pickerOut?.value ?? 0;
+    return remainingBudget + outgoingValue;
+  }, [picker, pickerOut, remainingBudget]);
+
   const availableForPicker = useMemo(() => {
     if (!picker) return [];
     const slotAssigned = assign[picker.slotId];
-
     const qq = q.trim().toLowerCase();
 
     return props.players
@@ -187,6 +187,7 @@ export default function SquadBuilder(props: {
                     tabIndex={0}
                     onClick={() => {
                       setQ("");
+                      setPendingRestore(null); // normal open, not a remove flow
                       setPicker({ slotId: s.id, pos: s.position });
                     }}
                   >
@@ -218,30 +219,19 @@ export default function SquadBuilder(props: {
         })}
       </div>
 
-      {/* Undo toast */}
-      {lastRemoved && (
-        <div className="undo-toast" role="status" aria-live="polite">
-          <span className="undo-dot" aria-hidden="true" />
-          <span className="undo-text">
-            Pelaaja poistettu: <b>{lastRemoved.player.name}</b>
-          </span>
-          <button type="button" className="undo-btn" onClick={undoRemove}>
-            Kumoa
-          </button>
-        </div>
-      )}
-
       <div className="starting-xi-controls" style={{ marginTop: 12 }}>
         <button className="xi-save" disabled={!canSave} onClick={() => props.onSave(picked)}>
           Tallenna
         </button>
       </div>
 
-      {/* Bottom-sheet picker */}
       {picker && (
         <div
           className="picker-backdrop"
-          onClick={() => setPicker(null)}
+          onClick={() => {
+            setPicker(null);
+            setQ("");
+          }}
           role="dialog"
           aria-modal="true"
         >
@@ -251,12 +241,18 @@ export default function SquadBuilder(props: {
                 Valitse pelaaja <span className="picker-pos">({fmtPos(picker.pos)})</span>
               </div>
 
-              <button className="picker-close" onClick={() => setPicker(null)} aria-label="Sulje">
+              <button
+                className="picker-close"
+                onClick={() => {
+                  setPicker(null);
+                  setQ("");
+                }}
+                aria-label="Sulje"
+              >
                 ✕
               </button>
             </div>
 
-            {/* OUT player (who is being replaced) */}
             <div className="picker-out">
               <div className="picker-out-label">Ulos</div>
               {pickerOut ? (
@@ -271,6 +267,18 @@ export default function SquadBuilder(props: {
               )}
             </div>
 
+            <div className="app-muted" style={{ marginBottom: 10 }}>
+              Rahaa käytettävissä tähän siirtoon: <b>{transferBudget.toFixed(1)} M</b>
+            </div>
+
+            {pendingRestore?.slotId === picker.slotId && (
+              <div style={{ marginBottom: 10 }}>
+                <button type="button" className="picker-cancel-transfer" onClick={cancelTransfer}>
+                  Peru siirto
+                </button>
+              </div>
+            )}
+
             <input
               className="picker-search"
               placeholder="Hae pelaajaa..."
@@ -279,23 +287,29 @@ export default function SquadBuilder(props: {
             />
 
             <div className="picker-list">
-              {availableForPicker.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  className="picker-row"
-                  onClick={() => {
-                    assignTo(picker.slotId, p);
-                    setPicker(null);
-                  }}
-                >
-                  <div className="picker-row-main">
-                    <div className="picker-name">{p.name}</div>
-                    <div className="picker-team">{teamName(props.teams, p.teamId)}</div>
-                  </div>
-                  <div className="picker-price">{p.value.toFixed(1)} M</div>
-                </button>
-              ))}
+              {availableForPicker.map((p) => {
+                const tooExpensive = p.value > transferBudget;
+
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    className={`picker-row ${tooExpensive ? "picker-row-disabled" : ""}`}
+                    disabled={tooExpensive}
+                    onClick={() => {
+                      assignTo(picker.slotId, p);
+                      setPicker(null);
+                      setQ("");
+                    }}
+                  >
+                    <div className="picker-row-main">
+                      <div className="picker-name">{p.name}</div>
+                      <div className="picker-team">{teamName(props.teams, p.teamId)}</div>
+                    </div>
+                    <div className="picker-price">{p.value.toFixed(1)} M</div>
+                  </button>
+                );
+              })}
 
               {availableForPicker.length === 0 && <div className="picker-empty">Ei saatavilla</div>}
             </div>
