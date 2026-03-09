@@ -1603,199 +1603,263 @@ select option {
   }
 }
 
+@media (max-width: 520px){
+
+.picker-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+
+  padding: 0;
+}
+
+.picker-sheet {
+  width: min(720px, 100%);
+  height: min(88svh, 760px);
+  max-height: min(88svh, 760px);
+
+  display: flex;
+  flex-direction: column;
+
+  margin: 0;
+  padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0px));
+
+  background: rgba(17, 24, 39, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-bottom: 0;
+  border-radius: 20px 20px 0 0;
+  overflow: hidden;
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.picker-head,
+.picker-out,
+.picker-search,
+.picker-tools,
+.picker-backdrop .app-muted {
+  flex-shrink: 0;
+}
+
+.picker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.picker-title {
+  font-weight: 900;
+  font-size: 16px;
+  color: #fff;
+}
+
+.picker-pos {
+  color: rgba(229, 231, 235, 0.7);
+  font-weight: 800;
+}
+
+.picker-close {
+  width: 38px;
+  height: 38px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.92);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
+.picker-out {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.picker-out-label {
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.4px;
+  color: rgba(229, 231, 235, 0.7);
+}
+
+.picker-out-card {
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(3, 7, 18, 0.45);
+}
+
+.picker-out-card--empty {
+  color: rgba(229, 231, 235, 0.6);
+  font-weight: 800;
+}
+
+.picker-out-name {
+  font-weight: 900;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.picker-out-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: rgba(229, 231, 235, 0.7);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.picker-search {
+  width: 100%;
+  border-radius: 14px;
+  padding: 11px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(3, 7, 18, 0.55);
+  color: #fff;
+  outline: none;
+  margin-bottom: 10px;
+}
+
+.picker-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 10px 0 12px;
+  flex-wrap: wrap;
+}
+
+.picker-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.picker-sort {
+  min-height: 36px;
+}
+
+.picker-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(3, 7, 18, 0.25);
+}
+
+.picker-row {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: rgba(229, 231, 235, 0.92);
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.picker-row:last-child {
+  border-bottom: 0;
+}
+
+.picker-row-main {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.picker-name {
+  font-weight: 900;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.picker-team {
+  font-size: 12px;
+  color: rgba(229, 231, 235, 0.7);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.picker-price {
+  flex: 0 0 auto;
+  font-weight: 900;
+  color: rgba(229, 231, 235, 0.95);
+  white-space: nowrap;
+}
+
+.picker-row-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.picker-reason {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.picker-empty {
+  padding: 14px;
+  text-align: center;
+  color: rgba(229, 231, 235, 0.6);
+}
+
 @media (max-width: 520px) {
-  .picker-backdrop {
-    padding: 0 !important;
-    display: flex !important;
-    align-items: flex-end !important;
-    justify-content: center !important;
-  }
-
   .picker-sheet {
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 100% !important;
-
-    margin: 0 !important;
-    border-radius: 20px 20px 0 0 !important;
-
-    /* taller and lower */
-    max-height: 94dvh !important;
-    min-height: 78dvh !important;
-
-    display: flex !important;
-    flex-direction: column !important;
-
-    padding:
-      10px
-      10px
-      calc(14px + env(safe-area-inset-bottom, 0px)) !important;
-
-    overflow: hidden !important;
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+    height: 92svh;
+    max-height: 92svh;
+    border-radius: 18px 18px 0 0;
+    padding: 10px 10px calc(14px + env(safe-area-inset-bottom, 0px));
   }
 
-  .picker-head,
-  .picker-out,
-  .picker-search,
-  .picker-tools,
-  .app-muted {
-    flex-shrink: 0 !important;
+  .picker-title {
+    font-size: 15px;
   }
 
-  .picker-head {
-    margin: 0 0 8px 0 !important;
-  }
-
-  .picker-out {
-    margin-bottom: 8px !important;
-  }
-
-  .picker-search {
-    margin-bottom: 8px !important;
+  .picker-close {
+    width: 36px;
+    height: 36px;
+    border-radius: 13px;
   }
 
   .picker-tools {
-    margin: 8px 0 10px !important;
+    align-items: flex-start;
+    gap: 8px;
   }
 
-  .picker-list {
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
+  .picker-sort {
+    max-width: 170px;
   }
 }
-
-@media (max-width: 520px) {
-  .squad-builder {
-    width: 100%;
-    min-width: 0;
-    overflow-x: hidden;
-  }
-
-  .squad-builder .pitch {
-    width: 100%;
-    max-width: 100%;
-    margin: 10px auto;
-    padding: 8px;
-    overflow: hidden;
-
-    --slotW: 60px;
-    --slotH: 56px;
-    --gapRow: 10px;
-  }
-
-  .squad-builder .pitch::before {
-    inset: 8px;
-  }
-
-  .squad-builder .pitch-row {
-    width: 100%;
-    margin: 10px 0;
-    justify-content: center;
-    align-content: center;
-    gap: var(--gapRow);
-  }
-
-  .squad-builder .pitch-row.pitch-cols-1 {
-    grid-template-columns: repeat(1, var(--slotW));
-    --gapRow: 14px;
-  }
-
-  .squad-builder .pitch-row.pitch-cols-2 {
-    grid-template-columns: repeat(2, var(--slotW));
-    --gapRow: 14px;
-  }
-
-  .squad-builder .pitch-row.pitch-cols-3 {
-    grid-template-columns: repeat(3, var(--slotW));
-    --gapRow: 12px;
-  }
-
-  .squad-builder .pitch-row.pitch-cols-4 {
-    grid-template-columns: repeat(4, var(--slotW));
-    --gapRow: 10px;
-  }
-
-  .squad-builder .pitch-row.pitch-cols-5 {
-    grid-template-columns: repeat(5, var(--slotW));
-    --gapRow: 6px;
-  }
-
-  .squad-builder .slot {
-    width: var(--slotW);
-    height: var(--slotH);
-    min-height: 0;
-    padding: 6px;
-    border-radius: 12px;
-    display: grid;
-    place-items: center;
-  }
-
-  .squad-builder .player-chip {
-    width: 100%;
-    height: 100%;
-    min-width: 0;
-
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    align-items: center;
-
-    gap: 1px;
-    padding: 0 2px 2px;
-  }
-
-  .squad-builder .player-name,
-  .squad-builder .player-team {
-    width: 100%;
-    max-width: 100%;
-    text-align: center;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .squad-builder .player-name {
-    font-size: 9px;
-    line-height: 1;
-    padding-right: 0;
-  }
-
-  .squad-builder .player-team {
-    font-size: 8px;
-    line-height: 1;
-    opacity: 0.85;
-  }
-
-  .squad-builder .remove-slot {
-    width: 14px;
-    height: 14px;
-    border-radius: 5px;
-    font-size: 9px;
-    top: 4px;
-    right: 4px;
-  }
-}
-
-@media (max-width: 380px) {
-  .squad-builder .pitch {
-    --slotW: 56px;
-    --slotH: 52px;
-  }
-
-  .squad-builder .player-name {
-    font-size: 8.8px;
-  }
-
-  .squad-builder .player-team {
-    font-size: 7.8px;
-  }
-
-  .squad-builder .remove-slot {
-    width: 13px;
-    height: 13px;
-    font-size: 8px;
-  }
 }

@@ -212,162 +212,168 @@ export default function SquadBuilder(props: {
   const canSave = picked.length === 15 && remainingBudget >= 0;
 
   return (
-    <div ref={rootRef} className="squad-builder">
-      <div className="app-muted" style={{ marginBottom: 8 }}>
-        Budjetti jäljellä: <b>{remainingBudget.toFixed(1)} M</b>
-      </div>
+    <div ref={rootRef} className="starting-xi-root squad-builder">
+      <div className="starting-xi-card">
+        <header className="starting-xi-header">
+          <h3>Joukkue</h3>
 
-      <div className="pitch">
-        {(["GK", "DEF", "MID", "FWD"] as const).map((pos) => {
-          const row = slots.filter((s) => s.position === pos);
-          return (
-            <div key={pos} className={`pitch-row pitch-cols-${row.length}`}>
-              {row.map((s) => {
-                const assigned = assign[s.id];
+          <div className="app-muted" style={{ marginBottom: 8 }}>
+            Budjetti jäljellä: <b>{remainingBudget.toFixed(1)} M</b>
+          </div>
+        </header>
 
-                return (
-                  <div
-                    key={s.id}
-                    className={`slot ${assigned ? "slot-filled" : ""}`}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => {
-                      setQ("");
-                      setOnlySuitable(false);
-                      setSortBy("name");
-                      setPendingRestore(null);
-                      setPicker({ slotId: s.id, pos: s.position });
-                    }}
-                  >
-                    {assigned ? (
-                      <div className="player-chip">
-                        <div className="player-name">{assigned.name}</div>
-                        <div className="player-team">{teamName(props.teams, assigned.teamId)}</div>
+        <div className="pitch">
+          {(["GK", "DEF", "MID", "FWD"] as const).map((pos) => {
+            const row = slots.filter((s) => s.position === pos);
+            return (
+              <div key={pos} className={`pitch-row pitch-cols-${row.length}`}>
+                {row.map((s) => {
+                  const assigned = assign[s.id];
 
-                        <button
-                          type="button"
-                          className="remove-slot"
-                          title="Poista"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeFrom(s.id);
-                          }}
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="slot-empty">{s.label}</div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          );
-        })}
-      </div>
+                  return (
+                    <div
+                      key={s.id}
+                      className={`slot ${assigned ? "slot-filled" : ""}`}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => {
+                        setQ("");
+                        setOnlySuitable(false);
+                        setSortBy("name");
+                        setPendingRestore(null);
+                        setPicker({ slotId: s.id, pos: s.position });
+                      }}
+                    >
+                      {assigned ? (
+                        <div className="player-chip">
+                          <div className="player-name">{assigned.name}</div>
+                          <div className="player-team">{teamName(props.teams, assigned.teamId)}</div>
 
-      <div className="starting-xi-controls" style={{ marginTop: 12 }}>
-        <button className="xi-save" disabled={!canSave} onClick={() => props.onSave(picked)}>
-          Tallenna
-        </button>
-      </div>
+                          <button
+                            type="button"
+                            className="remove-slot"
+                            title="Poista"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeFrom(s.id);
+                            }}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="slot-empty">{s.label}</div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
 
-      {picker && (
-        <div
-          className="picker-backdrop"
-          onClick={closePickerAndRestore}
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="picker-sheet" onClick={(e) => e.stopPropagation()}>
-            <div className="picker-head">
-              <div className="picker-title">
-                Valitse pelaaja <span className="picker-pos">({fmtPos(picker.pos)})</span>
+        <div className="starting-xi-controls" style={{ marginTop: 12 }}>
+          <button className="xi-save" disabled={!canSave} onClick={() => props.onSave(picked)}>
+            Tallenna
+          </button>
+        </div>
+
+        {picker && (
+          <div
+            className="picker-backdrop"
+            onClick={closePickerAndRestore}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="picker-sheet" onClick={(e) => e.stopPropagation()}>
+              <div className="picker-head">
+                <div className="picker-title">
+                  Valitse pelaaja <span className="picker-pos">({fmtPos(picker.pos)})</span>
+                </div>
+
+                <button className="picker-close" onClick={closePickerAndRestore} aria-label="Sulje">
+                  ✕
+                </button>
               </div>
 
-              <button className="picker-close" onClick={closePickerAndRestore} aria-label="Sulje">
-                ✕
-              </button>
-            </div>
-
-            <div className="picker-out">
-              <div className="picker-out-label">Ulos</div>
-              {pickerOut ? (
-                <div className="picker-out-card">
-                  <div className="picker-out-name">{pickerOut.name}</div>
-                  <div className="picker-out-sub">
-                    {teamName(props.teams, pickerOut.teamId)} • {pickerOut.value.toFixed(1)} M
-                  </div>
-                </div>
-              ) : (
-                <div className="picker-out-card picker-out-card--empty">Tyhjä paikka</div>
-              )}
-            </div>
-
-            <div className="app-muted" style={{ marginBottom: 10 }}>
-              Rahaa käytettävissä tähän siirtoon: <b>{transferBudget.toFixed(1)} M</b>
-            </div>
-
-            <input
-              className="picker-search"
-              placeholder="Hae pelaajaa..."
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
-
-            <div className="picker-tools">
-              <label className="picker-toggle">
-                <input
-                  type="checkbox"
-                  checked={onlySuitable}
-                  onChange={(e) => setOnlySuitable(e.target.checked)}
-                />
-                <span>Näytä vain sopivat</span>
-              </label>
-
-              <select
-                className="picker-sort"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as "name" | "price-asc" | "price-desc" | "team")}
-              >
-                <option value="name">Järjestä: Nimi</option>
-                <option value="price-asc">Järjestä: Hinta ↑</option>
-                <option value="price-desc">Järjestä: Hinta ↓</option>
-                <option value="team">Järjestä: Joukkue</option>
-              </select>
-            </div>
-
-            <div className="picker-list">
-              {availableForPicker.map(({ player, disabled, reason }) => (
-                <button
-                  key={player.id}
-                  type="button"
-                  className={`picker-row ${disabled ? "picker-row-disabled" : ""}`}
-                  disabled={disabled}
-                  onClick={() => {
-                    assignTo(picker.slotId, player);
-                    setPendingRestore(null);
-                    setPicker(null);
-                    setQ("");
-                  }}
-                >
-                  <div className="picker-row-main">
-                    <div className="picker-name">{player.name}</div>
-                    <div className="picker-team">
-                      {teamName(props.teams, player.teamId)}
-                      {reason && <span className="picker-reason"> • {reason}</span>}
+              <div className="picker-out">
+                <div className="picker-out-label">Ulos</div>
+                {pickerOut ? (
+                  <div className="picker-out-card">
+                    <div className="picker-out-name">{pickerOut.name}</div>
+                    <div className="picker-out-sub">
+                      {teamName(props.teams, pickerOut.teamId)} • {pickerOut.value.toFixed(1)} M
                     </div>
                   </div>
-                  <div className="picker-price">{player.value.toFixed(1)} M</div>
-                </button>
-              ))}
+                ) : (
+                  <div className="picker-out-card picker-out-card--empty">Tyhjä paikka</div>
+                )}
+              </div>
 
-              {availableForPicker.length === 0 && <div className="picker-empty">Ei saatavilla</div>}
+              <div className="app-muted" style={{ marginBottom: 10 }}>
+                Rahaa käytettävissä tähän siirtoon: <b>{transferBudget.toFixed(1)} M</b>
+              </div>
+
+              <input
+                className="picker-search"
+                placeholder="Hae pelaajaa..."
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+              />
+
+              <div className="picker-tools">
+                <label className="picker-toggle">
+                  <input
+                    type="checkbox"
+                    checked={onlySuitable}
+                    onChange={(e) => setOnlySuitable(e.target.checked)}
+                  />
+                  <span>Näytä vain sopivat</span>
+                </label>
+
+                <select
+                  className="picker-sort"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as "name" | "price-asc" | "price-desc" | "team")}
+                >
+                  <option value="name">Järjestä: Nimi</option>
+                  <option value="price-asc">Järjestä: Hinta ↑</option>
+                  <option value="price-desc">Järjestä: Hinta ↓</option>
+                  <option value="team">Järjestä: Joukkue</option>
+                </select>
+              </div>
+
+              <div className="picker-list">
+                {availableForPicker.map(({ player, disabled, reason }) => (
+                  <button
+                    key={player.id}
+                    type="button"
+                    className={`picker-row ${disabled ? "picker-row-disabled" : ""}`}
+                    disabled={disabled}
+                    onClick={() => {
+                      assignTo(picker.slotId, player);
+                      setPendingRestore(null);
+                      setPicker(null);
+                      setQ("");
+                    }}
+                  >
+                    <div className="picker-row-main">
+                      <div className="picker-name">{player.name}</div>
+                      <div className="picker-team">
+                        {teamName(props.teams, player.teamId)}
+                        {reason && <span className="picker-reason"> • {reason}</span>}
+                      </div>
+                    </div>
+                    <div className="picker-price">{player.value.toFixed(1)} M</div>
+                  </button>
+                ))}
+
+                {availableForPicker.length === 0 && <div className="picker-empty">Ei saatavilla</div>}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
