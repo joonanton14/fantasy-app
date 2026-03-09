@@ -99,18 +99,19 @@ export const StartingXI: FC<{
   const [swapSource, setSwapSource] = useState<SwapSource>(null);
   const [saveFlash, setSaveFlash] = useState<"idle" | "clicked" | "saved">("idle");
 
-  useEffect(() => {
-    function handlePointerDown(e: MouseEvent | TouchEvent) {
-      if (!rootRef.current) return;
-      if (!rootRef.current.contains(e.target as Node)) setSwapSource(null);
+useEffect(() => {
+  function handlePointerDown(e: PointerEvent) {
+    if (!rootRef.current) return;
+    if (!rootRef.current.contains(e.target as Node)) {
+      setSwapSource(null);
     }
-    document.addEventListener("mousedown", handlePointerDown);
-    document.addEventListener("touchstart", handlePointerDown);
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("touchstart", handlePointerDown);
-    };
-  }, []);
+  }
+
+  document.addEventListener("pointerdown", handlePointerDown);
+  return () => {
+    document.removeEventListener("pointerdown", handlePointerDown);
+  };
+}, []);
 
   const pool = useMemo(() => uniqById(squad), [squad]);
   const poolSet = useMemo(() => new Set(pool.map((p) => p.id)), [pool]);
