@@ -370,8 +370,8 @@ nav button.active {
   border: 1px solid var(--border);
   box-shadow: 0 16px 50px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(10px);
-  overflow: hidden;
-  /* prevents right overflow from children */
+  overflow-x: clip;
+  overflow-y: visible;
   min-width: 0;
 }
 
@@ -1855,183 +1855,102 @@ body {
   .squad-builder .remove-slot{ width: 13px; height: 13px; font-size: 8px; }
 }
 
-.picker-backdrop{
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.45);
-  backdrop-filter: blur(6px);
-  display: grid;
-  align-items: end;
-  z-index: 999;
-}
-
-.picker-sheet{
-  background: rgba(17,24,39,0.95);
-  border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 18px 18px 0 0;
-  padding: 12px;
-  max-height: 72vh;
-  overflow: hidden;
-}
-
-.picker-head{
-  margin-top: 2rem;
-  margin-bottom: 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.picker-title{
-  font-weight: 900;
-  color: #fff;
-}
-
-.picker-close{
-  width: 34px;
-  height: 34px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.92);
-  cursor: pointer;
-}
-
-.picker-search{
-  width: 100%;
-  border-radius: 14px;
-  padding: 10px 12px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(3,7,18,0.55);
-  color: #fff;
-  outline: none;
-  margin-bottom: 10px;
-}
-
-.picker-list{
-  overflow: auto;
-  max-height: calc(72vh - 120px);
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.08);
-}
-
-.picker-row{
-  width: 100%;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px;
-  padding: 12px;
-  text-align: left;
-  border: 0;
-  background: rgba(3,7,18,0.35);
-  color: rgba(229,231,235,0.92);
-  cursor: pointer;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-}
-
-.picker-row:active{ transform: scale(0.99); }
-
-.picker-name{ font-weight: 900; }
-.picker-team{ opacity: 0.75; font-size: 12px; grid-column: 1 / 2; }
-.picker-price{ font-weight: 900; opacity: 0.9; align-self: start; }
-
-.picker-empty{
-  padding: 14px;
-  text-align: center;
-  color: rgba(229,231,235,0.6);
-}
-
 /* =========================================================
-   SQUAD BUILDER PICKER — full width bottom sheet (modern)
+   SQUAD BUILDER PICKER — cleaned single version
    ========================================================= */
 
-.picker-backdrop{
+.picker-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 999;
-  background: rgba(0,0,0,0.55);
+  z-index: 2147483647;
+  background: rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 
-  display: grid;
-  align-items: end;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 12px;
 }
 
-.picker-sheet{
-  width: 100%;
-  max-width: 720px;                 /* looks great on tablet too */
+.picker-sheet {
+  width: min(720px, 100%);
+  max-height: min(86dvh, 86vh);
   margin: 0 auto;
   padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0px));
 
-  background: rgba(17,24,39,0.96);
-  border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 18px 18px 0 0;
-
-  max-height: min(78vh, 720px);
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
+
+  background: rgba(17, 24, 39, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.35);
 }
 
-.picker-head{
+.picker-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
   margin-bottom: 10px;
+  flex-shrink: 0;
 }
 
-.picker-title{
+.picker-title {
   font-weight: 900;
-  color: #fff;
   font-size: 16px;
+  color: #fff;
 }
 
-.picker-pos{
-  color: rgba(229,231,235,0.7);
+.picker-pos {
+  color: rgba(229, 231, 235, 0.7);
   font-weight: 800;
 }
 
-.picker-close{
+.picker-close {
   width: 38px;
   height: 38px;
   border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.92);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.92);
   cursor: pointer;
   display: grid;
   place-items: center;
   padding: 0;
   line-height: 1;
+  flex: 0 0 auto;
 }
 
-/* OUT section */
-.picker-out{
+.picker-out {
   display: grid;
   gap: 6px;
   margin-bottom: 10px;
+  flex-shrink: 0;
 }
 
-.picker-out-label{
+.picker-out-label {
   font-size: 12px;
   font-weight: 900;
   letter-spacing: 0.4px;
-  color: rgba(229,231,235,0.7);
+  color: rgba(229, 231, 235, 0.7);
 }
 
-.picker-out-card{
+.picker-out-card {
   padding: 10px 12px;
   border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(3,7,18,0.45);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(3, 7, 18, 0.45);
 }
 
-.picker-out-card--empty{
-  color: rgba(229,231,235,0.6);
+.picker-out-card--empty {
+  color: rgba(229, 231, 235, 0.6);
   font-weight: 800;
 }
 
-.picker-out-name{
+.picker-out-name {
   font-weight: 900;
   color: #fff;
   overflow: hidden;
@@ -2039,222 +1958,25 @@ body {
   white-space: nowrap;
 }
 
-.picker-out-sub{
+.picker-out-sub {
   margin-top: 2px;
   font-size: 12px;
-  color: rgba(229,231,235,0.7);
+  color: rgba(229, 231, 235, 0.7);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.picker-search{
+.picker-search {
   width: 100%;
   border-radius: 14px;
   padding: 11px 12px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(3,7,18,0.55);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(3, 7, 18, 0.55);
   color: #fff;
   outline: none;
   margin-bottom: 10px;
-}
-
-/* list */
-.picker-list{
-  overflow: auto;
-  max-height: calc(min(78vh, 720px) - 210px);
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(3,7,18,0.25);
-}
-
-/* rows (fix the “white boxes” problem) */
-.picker-row{
-  width: 100%;
-  border: 0;
-  background: transparent;
-  color: rgba(229,231,235,0.92);
-  cursor: pointer;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-
-  padding: 12px 12px;
-  text-align: left;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-}
-
-.picker-row:last-child{ border-bottom: 0; }
-
-.picker-row:active{ transform: scale(0.99); }
-
-.picker-row-main{
-  min-width: 0;
-  display: grid;
-  gap: 2px;
-}
-
-.picker-name{
-  font-weight: 900;
-  color: #fff;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.picker-team{
-  font-size: 12px;
-  color: rgba(229,231,235,0.7);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.picker-price{
-  flex: 0 0 auto;
-  font-weight: 900;
-  color: rgba(229,231,235,0.95);
-  white-space: nowrap;
-}
-
-.picker-empty{
-  padding: 14px;
-  text-align: center;
-  color: rgba(229,231,235,0.6);
-}
-
-/* phone tweaks */
-@media (max-width: 520px){
-  .picker-sheet{
-    max-width: 100%;
-    border-radius: 18px 18px 0 0;
-    padding: 12px 10px calc(12px + env(safe-area-inset-bottom, 0px));
-  }
-  .picker-title{ font-size: 15px; }
-  .picker-close{ width: 36px; height: 36px; border-radius: 13px; }
-}
-
-.slot-swap-source {
-  outline: 2px solid currentColor;
-  transform: scale(1.02);
-}
-
-.slot-swap-hint {
-  opacity: 0.75;
-}
-
-.slot-swap-target {
-  opacity: 1;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.22);
-}
-
-.bench-swap-hint {
-  outline: 2px dashed rgba(255, 255, 255, 0.18);
-  border-radius: 12px;
-}
-
-.pitch-row-swap-hint {
-  position: relative;
-}
-
-.pitch-row-swap-hint .slot {
-  opacity: 0.75;
-}
-
-.pitch-row-swap-hint .slot-swap-target {
-  opacity: 1;
-}
-
-.xi-cancel-swap {
-  margin-right: 8px;
-}
-
-.slot-swap-source {
-  outline: 2px solid currentColor;
-  transform: scale(1.02);
-}
-
-.slot-swap-hint {
-  opacity: 0.75;
-}
-
-.slot-swap-target {
-  opacity: 1;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.22);
-}
-
-.bench-swap-hint {
-  outline: 2px dashed rgba(255, 255, 255, 0.18);
-  border-radius: 12px;
-}
-
-.pitch-row-swap-hint {
-  position: relative;
-}
-
-.pitch-row-swap-hint .slot {
-  opacity: 0.75;
-}
-
-.pitch-row-swap-hint .slot-swap-target {
-  opacity: 1;
-}
-
-
-.xi-cancel-swap {
-  appearance: none;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.06);
-  color: #fff;
-  border-radius: 12px;
-  padding: 10px 14px;
-  min-height: 42px;
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  cursor: pointer;
-  transition:
-    border-color 0.18s ease,
-    transform 0.12s ease,
-    box-shadow 0.18s ease,
-    opacity 0.18s ease;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.xi-cancel-swap:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.18);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
-}
-
-.xi-cancel-swap:active {
-  transform: translateY(1px) scale(0.99);
-}
-
-.xi-cancel-swap:focus-visible {
-  outline: none;
-  border-color: rgba(255, 255, 255, 0.28);
-  box-shadow:
-    0 0 0 3px rgba(255, 255, 255, 0.08),
-    0 6px 18px rgba(0, 0, 0, 0.16);
-}
-
-.xi-cancel-swap:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.starting-xi-controls {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 14px;
-  flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
 .picker-tools {
@@ -2264,6 +1986,7 @@ body {
   gap: 10px;
   margin: 10px 0 12px;
   flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
 .picker-toggle {
@@ -2275,4 +1998,145 @@ body {
 
 .picker-sort {
   min-height: 36px;
+}
+
+.picker-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(3, 7, 18, 0.25);
+}
+
+.picker-row {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: rgba(229, 231, 235, 0.92);
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.picker-row:last-child {
+  border-bottom: 0;
+}
+
+.picker-row:active {
+  transform: scale(0.99);
+}
+
+.picker-row-main {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.picker-name {
+  font-weight: 900;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.picker-team {
+  font-size: 12px;
+  color: rgba(229, 231, 235, 0.7);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.picker-price {
+  flex: 0 0 auto;
+  font-weight: 900;
+  color: rgba(229, 231, 235, 0.95);
+  white-space: nowrap;
+}
+
+.picker-row-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.picker-reason {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.picker-empty {
+  padding: 14px;
+  text-align: center;
+  color: rgba(229, 231, 235, 0.6);
+}
+
+/* phone tweaks */
+@media (max-width: 520px) {
+  .picker-backdrop {
+    padding: 0;
+  }
+
+  .picker-sheet {
+    width: 100%;
+    max-width: 100%;
+    max-height: 90dvh;
+    border-radius: 18px 18px 0 0;
+    padding: 12px 10px calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .picker-title {
+    font-size: 15px;
+  }
+
+  .picker-close {
+    width: 36px;
+    height: 36px;
+    border-radius: 13px;
+  }
+}
+
+/* =========================================================
+   Starting XI swap highlight styles
+   ========================================================= */
+
+.slot-swap-source {
+  outline: 2px solid currentColor;
+  transform: scale(1.02);
+}
+
+.slot-swap-hint {
+  opacity: 0.75;
+}
+
+.slot-swap-target {
+  opacity: 1;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.22);
+}
+
+.bench-swap-hint {
+  outline: 2px dashed rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+}
+
+.pitch-row-swap-hint {
+  position: relative;
+}
+
+.pitch-row-swap-hint .slot {
+  opacity: 0.75;
+}
+
+.pitch-row-swap-hint .slot-swap-target {
+  opacity: 1;
 }
