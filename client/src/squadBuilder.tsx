@@ -46,11 +46,9 @@ export default function SquadBuilder(props: {
 
   const [picker, setPicker] = useState<{ slotId: string; pos: Position } | null>(null);
   const [q, setQ] = useState("");
-
+  const [pendingRestore, setPendingRestore] = useState<{ slotId: string; player: Player } | null>(null);
   const [onlySuitable, setOnlySuitable] = useState(false);
   const [sortBy, setSortBy] = useState<"name" | "price-asc" | "price-desc" | "team">("name");
-
-  const [pendingRestore, setPendingRestore] = useState<{ slotId: string; player: Player } | null>(null);
 
   useEffect(() => {
     const map: Record<string, Player | null> = {};
@@ -66,22 +64,10 @@ export default function SquadBuilder(props: {
     setPicker(null);
     setQ("");
     setPendingRestore(null);
+    setOnlySuitable(false);
+    setSortBy("name");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.initialSquad]);
-
-  useEffect(() => {
-    function onDown(e: MouseEvent | TouchEvent) {
-      if (!rootRef.current) return;
-      if (!rootRef.current.contains(e.target as Node)) {
-      }
-    }
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("touchstart", onDown);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("touchstart", onDown);
-    };
-  }, []);
 
   const picked = useMemo(() => Object.values(assign).filter(Boolean) as Player[], [assign]);
   const pickedIds = useMemo(() => new Set(picked.map((p) => p.id)), [picked]);
@@ -97,21 +83,19 @@ export default function SquadBuilder(props: {
     const nextTotal = totalValue - (current?.value ?? 0) + p.value;
     if (nextTotal > props.budget) return;
 
+    let sameTeamCount = 0;
+    for (const [id, pl] of Object.entries(assign)) {
+      if (!pl) continue;
+      if (id === slotId) continue;
+      if (pl.teamId === p.teamId) sameTeamCount++;
+    }
+    if (sameTeamCount >= 3) return;
+
     setAssign((prev) => ({ ...prev, [slotId]: p }));
 
     if (pendingRestore?.slotId === slotId) {
       setPendingRestore(null);
     }
-  }
-
-  function closePicker() {
-    if (picker && pendingRestore?.slotId === picker.slotId && !assign[picker.slotId]) {
-      setAssign((prev) => ({ ...prev, [picker.slotId]: pendingRestore.player }));
-    }
-
-    setPendingRestore(null);
-    setPicker(null);
-    setQ("");
   }
 
   function removeFrom(slotId: string) {
@@ -120,19 +104,18 @@ export default function SquadBuilder(props: {
 
     setPendingRestore({ slotId, player: removed });
     setAssign((prev) => ({ ...prev, [slotId]: null }));
-
     setQ("");
+    setOnlySuitable(false);
+    setSortBy("name");
     setPicker({ slotId, pos: removed.position });
   }
 
-  function cancelTransfer() {
-    if (!picker || !pendingRestore) {
-      setPicker(null);
-      return;
-    }
-
-    if (pendingRestore.slotId === picker.slotId && !assign[picker.slotId]) {
-      setAssign((prev) => ({ ...prev, [picker.slotId]: pendingRestore.player }));
+  function closePickerAndRestore() {
+    if (picker && pendingRestore?.slotId === picker.slotId && !assign[picker.slotId]) {
+      setAssign((prev) => ({
+        ...prev,
+        [picker.slotId]: pendingRestore.player,
+      }));
     }
 
     setPendingRestore(null);
@@ -142,15 +125,9 @@ export default function SquadBuilder(props: {
 
   const pickerOut = useMemo(() => {
     if (!picker) return null;
-
     if (pendingRestore?.slotId === picker.slotId) return pendingRestore.player;
-
     return assign[picker.slotId] ?? null;
   }, [picker, assign, pendingRestore]);
-
-  function fmtPos(pos: Position) {
-    return pos === "FWD" ? "ST" : pos;
-  }
 
   const transferBudget = useMemo(() => {
     if (!picker) return 0;
@@ -158,6 +135,10 @@ export default function SquadBuilder(props: {
     const outgoingValue = slotAssigned?.value ?? 0;
     return remainingBudget + outgoingValue;
   }, [picker, assign, remainingBudget]);
+
+  function fmtPos(pos: Position) {
+    return pos === "FWD" ? "ST" : pos;
+  }
 
   const availableForPicker = useMemo(() => {
     if (!picker) return [];
@@ -191,11 +172,11 @@ export default function SquadBuilder(props: {
           disabled,
           suitable: !disabled,
           reason: isPickedElsewhere
-            ? "Pelaaja jo valittu"
+            ? "Jo valittu"
             : teamLimitExceeded
-              ? "Maksimimäärä pelaajia jo valittuna tästä joukkueelta"
+              ? "3 pelaajaa jo tästä joukkueesta"
               : tooExpensive
-                ? "Ei riittävästi rahaa"
+                ? "Ei riitä budjetti"
                 : null,
         };
       });
@@ -212,16 +193,13 @@ export default function SquadBuilder(props: {
       switch (sortBy) {
         case "price-asc":
           return a.player.value - b.player.value || a.player.name.localeCompare(b.player.name);
-
         case "price-desc":
           return b.player.value - a.player.value || a.player.name.localeCompare(b.player.name);
-
         case "team":
           return (
             teamName(props.teams, a.player.teamId).localeCompare(teamName(props.teams, b.player.teamId)) ||
             a.player.name.localeCompare(b.player.name)
           );
-
         case "name":
         default:
           return a.player.name.localeCompare(b.player.name);
@@ -236,7 +214,7 @@ export default function SquadBuilder(props: {
   return (
     <div ref={rootRef} className="squad-builder">
       <div className="app-muted" style={{ marginBottom: 8 }}>
-        Rahaa jäljellä: <b>{remainingBudget.toFixed(1)} M</b>
+        Budjetti jäljellä: <b>{remainingBudget.toFixed(1)} M</b>
       </div>
 
       <div className="pitch">
@@ -255,6 +233,8 @@ export default function SquadBuilder(props: {
                     tabIndex={0}
                     onClick={() => {
                       setQ("");
+                      setOnlySuitable(false);
+                      setSortBy("name");
                       setPendingRestore(null);
                       setPicker({ slotId: s.id, pos: s.position });
                     }}
@@ -296,23 +276,19 @@ export default function SquadBuilder(props: {
       {picker && (
         <div
           className="picker-backdrop"
-          onClick={() => {
-            setPicker(null);
-            setQ("");
-          }}
+          onClick={closePickerAndRestore}
           role="dialog"
           aria-modal="true"
         >
           <div className="picker-sheet" onClick={(e) => e.stopPropagation()}>
             <div className="picker-head">
               <div className="picker-title">
-                Valitse <span className="picker-pos">({fmtPos(picker.pos)})</span>
+                Valitse pelaaja <span className="picker-pos">({fmtPos(picker.pos)})</span>
               </div>
 
-              <button className="picker-close" onClick={closePicker} aria-label="Sulje">
+              <button className="picker-close" onClick={closePickerAndRestore} aria-label="Sulje">
                 ✕
               </button>
-
             </div>
 
             <div className="picker-out">
@@ -325,12 +301,12 @@ export default function SquadBuilder(props: {
                   </div>
                 </div>
               ) : (
-                <div className="picker-out-card picker-out-card--empty">Tyhjä</div>
+                <div className="picker-out-card picker-out-card--empty">Tyhjä paikka</div>
               )}
             </div>
 
             <div className="app-muted" style={{ marginBottom: 10 }}>
-              Rahaa käytettävissä: <b>{transferBudget.toFixed(1)} M</b>
+              Rahaa käytettävissä tähän siirtoon: <b>{transferBudget.toFixed(1)} M</b>
             </div>
 
             <input
@@ -355,9 +331,10 @@ export default function SquadBuilder(props: {
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as "name" | "price-asc" | "price-desc" | "team")}
               >
-                <option value="name">Nimi A-</option>
-                <option value="price-asc">Hinta ↑</option>
-                <option value="price-desc">Hinta ↓</option>
+                <option value="name">Järjestä: Nimi</option>
+                <option value="price-asc">Järjestä: Hinta ↑</option>
+                <option value="price-desc">Järjestä: Hinta ↓</option>
+                <option value="team">Järjestä: Joukkue</option>
               </select>
             </div>
 
@@ -370,7 +347,9 @@ export default function SquadBuilder(props: {
                   disabled={disabled}
                   onClick={() => {
                     assignTo(picker.slotId, player);
+                    setPendingRestore(null);
                     setPicker(null);
+                    setQ("");
                   }}
                 >
                   <div className="picker-row-main">
