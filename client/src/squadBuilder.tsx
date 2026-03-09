@@ -145,6 +145,8 @@ export default function SquadBuilder(props: {
 
     const slotAssigned = assign[picker.slotId];
     const qq = q.trim().toLowerCase();
+    const removedForThisSlot =
+      pendingRestore?.slotId === picker.slotId ? pendingRestore.player : null;
 
     const teamCounts = new Map<number, number>();
     for (const [slotId, pl] of Object.entries(assign)) {
@@ -156,6 +158,7 @@ export default function SquadBuilder(props: {
     let rows = props.players
       .filter((p) => p.position === picker.pos)
       .filter((p) => !qq || p.name.toLowerCase().includes(qq))
+      .filter((p) => p.id !== removedForThisSlot?.id)
       .map((p) => {
         const isSameCurrent = p.id === slotAssigned?.id;
         const isPickedElsewhere = pickedIds.has(p.id) && !isSameCurrent;
@@ -164,7 +167,6 @@ export default function SquadBuilder(props: {
         const teamLimitExceeded = nextTeamCount > 3;
 
         const tooExpensive = p.value > transferBudget;
-
         const disabled = isPickedElsewhere || teamLimitExceeded || tooExpensive;
 
         return {
@@ -207,7 +209,7 @@ export default function SquadBuilder(props: {
     });
 
     return rows;
-  }, [picker, assign, q, props.players, pickedIds, transferBudget, onlySuitable, sortBy, props.teams]);
+  }, [picker, assign, q, props.players, pickedIds, transferBudget, onlySuitable, sortBy, props.teams, pendingRestore]);
 
   const canSave = picked.length === 15 && remainingBudget >= 0;
 

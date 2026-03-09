@@ -12,12 +12,6 @@ export default function TransfersPage(props: {
 }) {
   return (
     <div className="app-card">
-      <div>
-        <button className="app-btn" onClick={props.onCancel}>
-          Takaisin
-        </button>
-      </div>
-
       <SquadBuilder
         players={props.players}
         teams={props.teams}
