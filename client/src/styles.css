@@ -19,24 +19,22 @@
 }
 
 html,
-body {
+body,
+#root {
   height: 100%;
   width: 100%;
   max-width: 100%;
   overflow-x: hidden;
-  /* hard stop for right overflow */
 }
 
 body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
   margin: 0;
   padding: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
   background: #f5f5f5;
-  /* fallback */
   color: var(--text);
 }
 
-/* Make media never push layout wider */
 img,
 svg,
 canvas,
@@ -45,7 +43,6 @@ video {
   height: auto;
 }
 
-/* Prevent iOS input zoom */
 input,
 select,
 textarea,
@@ -53,7 +50,7 @@ button {
   font-size: 16px;
 }
 
-/* -------------------- BASIC FORMS (non-auth) -------------------- */
+/* -------------------- BASIC FORMS -------------------- */
 .form-group {
   display: flex;
   flex-direction: column;
@@ -131,10 +128,7 @@ nav button.active {
   background-color: #990000 !important;
 }
 
-/* ============================================================= */
-/* ======================= AUTH (modern) ======================= */
-/* ============================================================= */
-
+/* ======================= AUTH ======================= */
 .auth-wrap {
   min-height: 100vh;
   display: grid;
@@ -317,12 +311,10 @@ nav button.active {
   cursor: not-allowed;
 }
 
-/* ============================================================= */
-/* =================== APP SHELL (user view) =================== */
-/* ============================================================= */
-
+/* =================== APP SHELL =================== */
 .app-shell {
   min-height: 100vh;
+  overflow-x: clip;
   background:
     radial-gradient(1200px 600px at 20% 10%, rgba(99, 102, 241, 0.10), transparent 60%),
     radial-gradient(900px 500px at 80% 20%, rgba(16, 185, 129, 0.08), transparent 55%),
@@ -364,6 +356,8 @@ nav button.active {
 
 .app-card {
   width: min(1100px, 100%);
+  max-width: 1100px;
+  min-width: 0;
   border-radius: 22px;
   padding: 18px;
   background: var(--glass);
@@ -372,7 +366,6 @@ nav button.active {
   backdrop-filter: blur(10px);
   overflow-x: clip;
   overflow-y: visible;
-  min-width: 0;
 }
 
 .app-h1 {
@@ -390,10 +383,20 @@ nav button.active {
   color: #fff;
 }
 
+.app-section,
+.app-section-header,
+.app-actions,
+.starting-xi-root,
+.starting-xi-card,
+.pitch,
+.pitch-row,
+.bench-row {
+  min-width: 0;
+}
+
 .app-section {
   display: grid;
   gap: 12px;
-  min-width: 0;
 }
 
 .app-section-header {
@@ -402,7 +405,6 @@ nav button.active {
   gap: 12px;
   align-items: center;
   justify-content: space-between;
-  min-width: 0;
 }
 
 .app-actions {
@@ -410,7 +412,6 @@ nav button.active {
   flex-wrap: wrap;
   gap: 10px;
   justify-content: center;
-  min-width: 0;
 }
 
 .app-muted {
@@ -418,7 +419,16 @@ nav button.active {
   color: rgba(229, 231, 235, 0.60);
 }
 
-/* Buttons */
+.app-alert {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.22);
+  color: rgba(254, 226, 226, 0.95);
+  font-size: 13px;
+}
+
 .app-btn {
   border: 1px solid rgba(255, 255, 255, 0.10);
   background: rgba(255, 255, 255, 0.06);
@@ -445,12 +455,10 @@ nav button.active {
   background: rgba(255, 255, 255, 0.14);
 }
 
-/* ============================================================= */
 /* ========================= TABLES ============================ */
-/* ============================================================= */
-
 .app-table-wrap {
   width: 100%;
+  max-width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   border-radius: 18px;
@@ -459,8 +467,9 @@ nav button.active {
 
 .app-table {
   width: 100%;
-  border-collapse: collapse;
+  max-width: 100%;
   min-width: 720px;
+  border-collapse: collapse;
   background: rgba(3, 7, 18, 0.35);
 }
 
@@ -482,13 +491,9 @@ nav button.active {
   text-transform: uppercase;
 }
 
-/* ============================================================= */
 /* ======================= STARTING XI ========================= */
-/* ============================================================= */
-
 .starting-xi-root {
   width: 100%;
-  min-width: 0;
 }
 
 .starting-xi-card {
@@ -497,7 +502,6 @@ nav button.active {
   margin: 0 auto;
   padding: 0;
   text-align: center;
-  min-width: 0;
 }
 
 .starting-xi-header {
@@ -549,7 +553,6 @@ nav button.active {
   font-size: 13px;
 }
 
-/* Formation dropdown */
 .meta-formation {
   position: relative;
   display: inline-flex;
@@ -562,7 +565,6 @@ nav button.active {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-
   border-radius: 999px;
   padding: 8px 34px 8px 12px;
   border: 1px solid rgba(255, 255, 255, 0.10);
@@ -572,7 +574,6 @@ nav button.active {
   font-size: 12px;
   cursor: pointer;
   outline: none;
-
   text-align: center;
   text-align-last: center;
 }
@@ -588,12 +589,10 @@ nav button.active {
   font-size: 12px;
 }
 
-/* =========================
-   PITCH — DESKTOP/TABLET (your existing look)
-   ========================= */
-
+/* ========================= PITCH / SLOTS ========================= */
 .pitch {
   position: relative;
+  max-width: 100%;
   border-radius: 18px;
   padding: 16px;
   background:
@@ -602,9 +601,6 @@ nav button.active {
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
   margin: 16px 0;
-  min-width: 0;
-
-  /* sizing tokens */
   --slot: 160px;
   --gap: 12px;
 }
@@ -623,42 +619,23 @@ nav button.active {
   gap: var(--gap);
   justify-content: center;
   margin: 14px 0;
-  min-width: 0;
 }
 
-/* Desktop: fixed-ish cards, centered */
-.pitch-row.pitch-cols-1 {
-  grid-template-columns: repeat(1, minmax(0, var(--slot)));
-}
+.pitch-row.pitch-cols-1 { grid-template-columns: repeat(1, minmax(0, var(--slot))); }
+.pitch-row.pitch-cols-2 { grid-template-columns: repeat(2, minmax(0, var(--slot))); }
+.pitch-row.pitch-cols-3 { grid-template-columns: repeat(3, minmax(0, var(--slot))); }
+.pitch-row.pitch-cols-4 { grid-template-columns: repeat(4, minmax(0, var(--slot))); }
+.pitch-row.pitch-cols-5 { grid-template-columns: repeat(5, minmax(0, var(--slot))); }
 
-.pitch-row.pitch-cols-2 {
-  grid-template-columns: repeat(2, minmax(0, var(--slot)));
-}
-
-.pitch-row.pitch-cols-3 {
-  grid-template-columns: repeat(3, minmax(0, var(--slot)));
-}
-
-.pitch-row.pitch-cols-4 {
-  grid-template-columns: repeat(4, minmax(0, var(--slot)));
-}
-
-.pitch-row.pitch-cols-5 {
-  grid-template-columns: repeat(5, minmax(0, var(--slot)));
-}
-
-/* Slot card */
 .slot {
   position: relative;
   border-radius: 16px;
   padding: 12px 10px;
   min-height: 74px;
   cursor: pointer;
-
   background: rgba(3, 7, 18, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.10);
   user-select: none;
-
   display: grid;
   place-items: center;
   text-align: center;
@@ -681,7 +658,6 @@ nav button.active {
   pointer-events: none;
 }
 
-/* Player chip */
 .player-chip {
   width: 100%;
   min-width: 0;
@@ -690,7 +666,6 @@ nav button.active {
   justify-items: center;
   text-align: center;
   position: relative;
-  /* for top-right swap button */
 }
 
 .player-name,
@@ -707,7 +682,6 @@ nav button.active {
   white-space: nowrap;
   text-overflow: ellipsis;
   padding-right: 26px;
-  /* room for top-right icon */
 }
 
 .player-team {
@@ -717,29 +691,24 @@ nav button.active {
   text-overflow: ellipsis;
 }
 
-/* Swap icon ALWAYS top-right */
-.swap-slot {
+.swap-slot,
+.remove-slot {
   position: absolute;
   top: 6px;
   right: 6px;
-
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.92);
-
   width: 26px;
   height: 26px;
   border-radius: 9px;
-
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.92);
   cursor: pointer;
   display: grid;
   place-items: center;
-
   line-height: 1;
   padding: 0;
 }
 
-/* Bench */
 .pitch .bench-overlay {
   width: min(92%, 760px);
   margin: 0 auto;
@@ -758,13 +727,41 @@ nav button.active {
   grid-template-columns: repeat(4, minmax(0, var(--slot)));
 }
 
-/* Controls */
-.starting-xi-controls {
+.bench-item {
   display: grid;
-  gap: 10px;
   justify-items: center;
-  margin-top: 16px;
-  text-align: center;
+}
+
+.bench-item > .slot {
+  width: 100%;
+}
+
+.bench-tag {
+  margin-bottom: 6px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.6px;
+  line-height: 1;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(3, 7, 18, 0.55);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.bench-tag-GK  { border-color: rgba(16,185,129,0.35); }
+.bench-tag-DEF { border-color: rgba(59,130,246,0.35); }
+.bench-tag-MID { border-color: rgba(234,179,8,0.35); }
+.bench-tag-FWD { border-color: rgba(239,68,68,0.35); }
+
+/* ========================= STARTING XI CONTROLS ========================= */
+.starting-xi-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+  flex-wrap: wrap;
 }
 
 .xi-save {
@@ -782,37 +779,104 @@ nav button.active {
   cursor: not-allowed;
 }
 
-/* ============================================================= */
-/* ======================== ADMIN PORTAL ======================= */
-/* ============================================================= */
+.xi-save--clicked {
+  opacity: 0.85;
+  transform: scale(0.98);
+}
 
-.admin-table-wrap {
+.xi-save--saved {
+  background: rgba(16, 185, 129, 0.22) !important;
+  border: 1px solid rgba(16, 185, 129, 0.35) !important;
+  color: rgba(229, 231, 235, 0.95) !important;
+}
+
+.xi-cancel-swap {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  border-radius: 12px;
+  padding: 10px 14px;
+  min-height: 42px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.18s ease, transform 0.12s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.xi-cancel-swap:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
+}
+
+.xi-cancel-swap:active {
+  transform: translateY(1px) scale(0.99);
+}
+
+.xi-cancel-swap:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ========================= SWAP HIGHLIGHTS ========================= */
+.slot-swap-source {
+  outline: 2px solid currentColor;
+  transform: scale(1.02);
+}
+
+.slot-swap-hint {
+  opacity: 0.75;
+}
+
+.slot-swap-target {
+  opacity: 1;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.22);
+}
+
+.bench-swap-hint {
+  outline: 2px dashed rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+}
+
+.pitch-row-swap-hint {
+  position: relative;
+}
+
+.pitch-row-swap-hint .slot {
+  opacity: 0.75;
+}
+
+.pitch-row-swap-hint .slot-swap-target {
+  opacity: 1;
+}
+
+/* ========================= FILTERS / PLAYER LIST ========================= */
+.filter-group {
+  display: grid;
+  gap: 10px;
+}
+
+.filter-row {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  align-items: center;
+  gap: 10px;
+}
+
+.position-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filter-row select {
   width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  max-width: 100%;
 }
-
-.admin-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 520px;
-  background: rgba(3, 7, 18, 0.35);
-}
-
-.admin-table th,
-.admin-table td {
-  padding: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  text-align: left;
-  color: rgba(229, 231, 235, 0.88);
-  font-size: 13px;
-}
-
-/* ============================================================= */
-/* ===================== SELECT READABILITY ==================== */
-/* ============================================================= */
 
 select.app-btn,
 .app-btn select,
@@ -827,227 +891,145 @@ select option {
   color: #e5e7eb;
 }
 
-/* ============================================================= */
-/* ===================== RESPONSIVE DESIGN ===================== */
-/* ============================================================= */
-
-@media (max-width: 1024px) {
-  .app-main {
-    padding: 12px;
+/* Players table mobile */
+@media (max-width: 520px) {
+  .app-table-wrap--players {
+    border-radius: 16px;
+    overflow: visible;
+    border: 0;
   }
 
-  .app-card {
-    border-radius: 18px;
-    padding: 14px;
-  }
-}
-
-/* Mobile header + scroll tabs */
-@media (max-width: 768px) {
-  .app-topbar {
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    padding-top: calc(12px + env(safe-area-inset-top, 0px));
-    flex-direction: column;
-    gap: 10px;
-    padding: 12px;
-  }
-
-  .app-user {
+  .app-table--players {
+    min-width: 0;
     width: 100%;
-    justify-content: space-between;
+    border-collapse: separate;
+    border-spacing: 0 10px;
+    background: transparent;
   }
 
-  .app-section-header {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .app-actions {
-    width: 100%;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    justify-content: center;
-    /* centered tabs */
-    gap: 8px;
-    padding: 4px 2px 8px;
-    scrollbar-width: none;
-  }
-
-  .app-actions::-webkit-scrollbar {
+  .app-table--players thead {
     display: none;
   }
 
-  .app-actions button,
-  .app-actions .app-btn {
-    flex: 0 0 auto;
-    white-space: nowrap;
-    border-radius: 999px;
-    padding: 4px 5px;
-    font-size: 10px;
-    min-height: 26px;
-  }
-}
-
-@media (max-width: 520px) {
-  .pitch {
-    /* Keep pitch padding small so 5 can fit */
-    padding: 8px;
-    /* was 10px */
-    margin: 10px auto;
+  .app-table--players tbody,
+  .app-table--players tr,
+  .app-table--players td {
+    display: block;
     width: 100%;
-    max-width: 520px;
+  }
+
+  .app-table--players tr {
+    background: rgba(3, 7, 18, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
     overflow: hidden;
-
-    /* CONSTANT card size on mobile (same always) */
-    --slotW: 60px;
-    /* <- key: fixed */
-    --slotH: 56px;
-
-    /* default gap (overridden per row below) */
-    --gapRow: 10px;
   }
 
-  .pitch::before {
-    inset: 8px;
-  }
-
-  .pitch-row {
-    width: 100%;
-    margin: 10px 0;
-    justify-content: center;
-    align-content: center;
-
-    /* gap is per-row via CSS var */
-    gap: var(--gapRow);
-  }
-
-  /* Keep your exact grid structure */
-  .pitch-row.pitch-cols-1 {
-    grid-template-columns: repeat(1, var(--slotW));
-    --gapRow: 14px;
-  }
-
-  .pitch-row.pitch-cols-2 {
-    grid-template-columns: repeat(2, var(--slotW));
-    --gapRow: 14px;
-  }
-
-  .pitch-row.pitch-cols-3 {
-    grid-template-columns: repeat(3, var(--slotW));
-    --gapRow: 12px;
-  }
-
-  .pitch-row.pitch-cols-4 {
-    grid-template-columns: repeat(4, var(--slotW));
-    --gapRow: 10px;
-  }
-
-  /* 5-wide: smallest gap so it fits, but slot size stays SAME */
-  .pitch-row.pitch-cols-5 {
-    grid-template-columns: repeat(5, var(--slotW));
-    --gapRow: 6px;
-  }
-
-  .slot {
-    width: var(--slotW);
-    /* constant */
-    height: var(--slotH);
-    /* constant */
-    min-height: 0;
-    padding: 6px;
-    border-radius: 12px;
+  .app-table--players td {
     display: grid;
-    place-items: center;
+    grid-template-columns: 110px 1fr;
+    gap: 10px;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    white-space: normal;
   }
 
-  .player-chip {
-    width: 100%;
-    height: 100%;
-    min-width: 0;
-
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end; /* bottom */
-    align-items: center;
-
-    gap: 1px;
-    padding: 0 2px 2px; /* a little bottom padding */
+  .app-table--players td:last-child {
+    border-bottom: 0;
   }
 
-  /* Keep name/team single line, but give them max width */
-  .player-name,
-  .player-team {
-    width: 100%;
-    max-width: 100%;
-    text-align: center;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  .app-table--players td:nth-child(1)::before { content: "Nimi"; }
+  .app-table--players td:nth-child(2)::before { content: "Pelipaikka"; }
+  .app-table--players td:nth-child(3)::before { content: "Joukkue"; }
+  .app-table--players td:nth-child(4)::before { content: "Arvo"; }
+
+  .app-table--players td::before {
+    color: rgba(229, 231, 235, 0.65);
+    font-weight: 800;
+    font-size: 12px;
   }
 
-  .player-name {
-    font-size: 9px;
-    line-height: 1;
-    padding-right: 0; /* no reserved space now */
-  }
-
-  .player-team {
-    font-size: 8px;
-    line-height: 1;
-    opacity: 0.85;
-  }
-
-  /* Icon stays top-right, smaller so it doesn't steal space */
-  .swap-slot {
-    width: 14px;
-    height: 14px;
-    border-radius: 5px;
-    font-size: 9px;
-    top: 4px;
-    right: 4px;
-  }
-
-  .pitch .bench-overlay {
-    width: 100%;
-    margin: 0 auto;
-  }
-
-  /* Bench: 4 fixed cards */
-  .bench-row {
-    gap: 8px;
-    justify-content: center;
-    grid-template-columns: repeat(4, var(--slotW));
+  .app-table--players td:nth-child(4) {
+    font-weight: 900;
   }
 }
 
-/* extra tiny phones */
-@media (max-width: 380px) {
-  .pitch {
-    --slotW: clamp(52px, 19vw, 78px);
-    --slotH: 52px;
-    --gap: 6px;
-  }
-
-  .player-name {
-    font-size: 10px;
-  }
-
-  .player-team {
-    font-size: 8.6px;
-  }
-
-  .swap-slot {
-    width: 15px;
-    height: 15px;
-    font-size: 9px;
-  }
-}
-
+/* Fixtures mobile */
 @media (max-width: 520px) {
-  /* kill the wrapper scroll behaviour */
+  .app-table-wrap.app-table-wrap--fx {
+    overflow-x: visible !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  table.app-table.app-table--fx {
+    min-width: 0 !important;
+    width: 100% !important;
+    background: transparent !important;
+    border-collapse: separate !important;
+    border-spacing: 0 10px !important;
+  }
+
+  table.app-table.app-table--fx tbody,
+  table.app-table.app-table--fx tr,
+  table.app-table.app-table--fx td {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  table.app-table.app-table--fx tr:has(td[colspan]) {
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+  }
+
+  table.app-table.app-table--fx tr:has(td[colspan]) td {
+    padding: 6px 2px 0 !important;
+    border-bottom: 0 !important;
+    font-weight: 700 !important;
+  }
+
+  table.app-table.app-table--fx tr:not(:has(td[colspan])) {
+    background: rgba(3, 7, 18, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  table.app-table.app-table--fx tr:not(:has(td[colspan])) td {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    padding: 10px 12px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:last-child {
+    border-bottom: 0;
+  }
+
+  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(1)::before { content: "Kierros"; }
+  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(2)::before { content: "ID"; }
+  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(3)::before { content: "Ottelu"; }
+  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(4)::before { content: "Aika"; }
+
+  table.app-table.app-table--fx tr:not(:has(td[colspan])) td {
+    display: grid !important;
+    grid-template-columns: 90px 1fr;
+    gap: 10px;
+    align-items: center;
+  }
+
+  table.app-table.app-table--fx tr:not(:has(td[colspan])) td::before {
+    color: rgba(229, 231, 235, 0.65);
+    font-weight: 800;
+    font-size: 12px;
+  }
+}
+
+/* Leaderboard mobile */
+@media (max-width: 520px) {
   .app-table-wrap.app-table-wrap--lb {
     overflow-x: visible !important;
     overflow-y: visible !important;
@@ -1055,7 +1037,6 @@ select option {
     border-radius: 0 !important;
   }
 
-  /* kill global table min-width: 720px */
   table.app-table.app-table--lb {
     min-width: 0 !important;
     width: 100% !important;
@@ -1064,12 +1045,10 @@ select option {
     border-spacing: 0 10px !important;
   }
 
-  /* hide header on mobile */
   table.app-table.app-table--lb thead {
     display: none !important;
   }
 
-  /* card layout */
   table.app-table.app-table--lb tbody,
   table.app-table.app-table--lb tr,
   table.app-table.app-table--lb td {
@@ -1084,7 +1063,6 @@ select option {
     overflow: hidden;
   }
 
-  /* override global nowrap */
   table.app-table.app-table--lb td {
     white-space: normal !important;
     overflow: visible !important;
@@ -1092,11 +1070,11 @@ select option {
     padding: 10px 12px !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   }
+
   table.app-table.app-table--lb td:last-child {
     border-bottom: 0;
   }
 
-  /* --- Line 1: icon + rank + username --- */
   table.app-table.app-table--lb td:nth-child(1),
   table.app-table.app-table--lb td:nth-child(2),
   table.app-table.app-table--lb td:nth-child(3) {
@@ -1123,11 +1101,10 @@ select option {
     font-weight: 900;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
-    white-space: nowrap !important; /* username single line only */
+    white-space: nowrap !important;
     padding-bottom: 0 !important;
   }
 
-  /* --- Line 2: last + total (labels + values) --- */
   table.app-table.app-table--lb td:nth-child(4),
   table.app-table.app-table--lb td:nth-child(5) {
     display: grid !important;
@@ -1135,7 +1112,7 @@ select option {
     gap: 10px;
     align-items: center;
     padding-top: 8px !important;
-    text-align: left !important; /* overrides your inline right align */
+    text-align: left !important;
   }
 
   table.app-table.app-table--lb td:nth-child(4)::before {
@@ -1156,709 +1133,8 @@ select option {
     font-weight: 900;
   }
 }
-/* =========================================================
-   GLOBAL LAYOUT HARDENING (prevents mobile overflow)
-   Put this at the VERY END of styles.css
-   ========================================================= */
 
-html,
-body {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
-}
-
-#root {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
-}
-
-/* Critical: allow flex/grid children to shrink instead of forcing overflow */
-.app-shell,
-.app-main,
-.app-card,
-.app-section,
-.app-section-header,
-.app-actions,
-.starting-xi-root,
-.starting-xi-card,
-.pitch,
-.pitch-row,
-.bench-row {
-  min-width: 0;
-}
-
-/* Flex + grid children often need this too */
-.app-section>*,
-.app-section-header>*,
-.app-actions>* {
-  min-width: 0;
-}
-
-/* Safer overflow handling on modern mobile browsers */
-.app-shell {
-  overflow-x: clip;
-  /* better than hidden on some browsers */
-}
-
-/* Cards: avoid content forcing width */
-.app-card {
-  max-width: 1100px;
-  width: 100%;
-  overflow-x: clip;
-  /* tables should scroll inside wraps instead */
-}
-
-/* =========================================================
-   TABLES — always scroll inside wrapper, never push page
-   ========================================================= */
-
-.app-table-wrap {
-  max-width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.app-table {
-  max-width: 100%;
-}
-
-/* =========================================================
-   LEADERBOARD (Tulostaulu) — responsive table
-   ========================================================= */
-
-.app-table-wrap--lb {
-  max-width: 100%;
-  border-radius: 18px;
-}
-
-@media (max-width: 768px) {
-  .app-table--lb {
-    min-width: 560px;
-  }
-
-  .app-table--lb th,
-  .app-table--lb td {
-    padding: 10px;
-    font-size: 12.5px;
-  }
-}
-
-@media (max-width: 520px) {
-  .app-table--lb {
-    min-width: 520px;
-  }
-
-  .app-table--lb th,
-  .app-table--lb td {
-    padding: 9px;
-    font-size: 12px;
-  }
-
-  .app-table--lb thead th {
-    position: sticky;
-    top: 0;
-    background: rgba(3, 7, 18, 0.88);
-    backdrop-filter: blur(10px);
-    z-index: 1;
-  }
-}
-
-/* =========================================================
-   ADMIN PORTAL — FIX MOBILE/TABLET OVERFLOW KILLERS
-   ========================================================= */
-
-/* scoring rows */
-.admin-row {
-  display: grid;
-  gap: 8px;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-
-  /* desktop default (matches your original intent) */
-  grid-template-columns: minmax(100px, 170px) 70px 180px 100px;
-}
-
-/* tablet: simplify */
-@media (max-width: 920px) {
-  .admin-row {
-    grid-template-columns: 1fr 110px;
-    gap: 10px;
-  }
-}
-
-/* phone: stack everything */
-@media (max-width: 520px) {
-  .admin-row {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-
-  .admin-row input,
-  .admin-row select {
-    width: 100%;
-    max-width: 100%;
-  }
-}
-
-/* home/away grid container */
-.admin-two-col {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-@media (max-width: 768px) {
-  .admin-two-col {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* =========================================================
-   APP ACTIONS (tabs) — prevent hidden overflow weirdness
-   ========================================================= */
-@media (max-width: 768px) {
-  .app-actions {
-    min-width: 0;
-    max-width: 100%;
-    overflow-x: auto;
-  }
-}
-@media (max-width: 768px) {
-  .app-actions button,
-  .app-actions .app-btn {
-    width: 18%;
-  }
-} 
-
-/* =========================================================
-   PITCH — ensure it can never push width
-   ========================================================= */
-.pitch {
-  max-width: 100%;
-}
-
-.xi-save--clicked {
-  opacity: 0.85;
-  transform: scale(0.98);
-}
-
-.xi-save--saved {
-  background: rgba(16, 185, 129, 0.22) !important;
-  border: 1px solid rgba(16, 185, 129, 0.35) !important;
-  color: rgba(229, 231, 235, 0.95) !important;
-}
-
-/* Floating swap guidance (no layout shift) */
-.xi-swap-toast{
-  position: sticky;              /* stays visible while scrolling inside card */
-  bottom: 10px;
-  margin-top: 10px;
-
-  width: min(92%, 720px);
-  margin-left: auto;
-  margin-right: auto;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-
-  padding: 10px 12px;
-  border-radius: 16px;
-
-  background: rgba(3, 7, 18, 0.78);
-  border: 1px solid rgba(99, 102, 241, 0.28);
-  backdrop-filter: blur(10px);
-
-  color: rgba(229, 231, 235, 0.92);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.xi-swap-dot{
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  background: rgba(99, 102, 241, 1);
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18);
-  flex: 0 0 auto;
-  margin-right: 6px;
-}
-
-.xi-swap-toast > span{
-  flex: 1;
-  min-width: 0;
-}
-
-.xi-swap-cancel{
-  flex: 0 0 auto;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.92);
-  border-radius: 999px;
-  padding: 6px 10px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.xi-swap-cancel:active{ transform: scale(0.98); }
-
-@media (max-width: 520px){
-  .xi-swap-toast{
-    width: 100%;
-    bottom: 8px;
-    font-size: 12px;
-    padding: 9px 10px;
-    border-radius: 14px;
-  }
-  .xi-swap-cancel{ padding: 6px 9px; }
-}
-
-.pos-badge{
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.4px;
-  line-height: 1;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.92);
-}
-
-/* Optional: subtle colors per position (still fits your glass style) */
-.pos-GK  { border-color: rgba(16,185,129,0.30); background: rgba(16,185,129,0.12); }
-.pos-DEF { border-color: rgba(59,130,246,0.30); background: rgba(59,130,246,0.12); }
-.pos-MID { border-color: rgba(234,179,8,0.30);  background: rgba(234,179,8,0.12); }
-.pos-FWD { border-color: rgba(239,68,68,0.30);  background: rgba(239,68,68,0.12); }
-
-/* Mobile: compact */
-@media (max-width: 520px){
-  .pos-badge{
-    font-size: 9px;
-    padding: 1px 6px;
-  }
-}
-
-.bench-item {
-  display: grid;
-  justify-items: center;
-}
-
-.bench-item > .slot{
-  width: 100%;
-}
-
-.bench-tag {
-  margin-bottom: 6px;
-  padding: 2px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.6px;
-  line-height: 1;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(3, 7, 18, 0.55);
-  color: rgba(255, 255, 255, 0.92);
-}
-
-.bench-tag-GK  { border-color: rgba(16,185,129,0.35); }
-.bench-tag-DEF { border-color: rgba(59,130,246,0.35); }
-.bench-tag-MID { border-color: rgba(234,179,8,0.35); }
-.bench-tag-FWD { border-color: rgba(239,68,68,0.35); }
-
-@media (max-width: 520px) {
-  .bench-tag { font-size: 10px; padding: 2px 8px; margin-bottom: 5px; }
-}
-
-/* =========================================================
-   PLAYERS LIST — mobile-friendly (cards), desktop stays table
-   ========================================================= */
-
-.filter-group{
-  display: grid;
-  gap: 10px;
-}
-
-.filter-row{
-  display: grid;
-  grid-template-columns: 110px 1fr;
-  align-items: center;
-  gap: 10px;
-}
-
-.position-buttons{
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-/* Make selects not overflow */
-.filter-row select{
-  width: 100%;
-  max-width: 100%;
-}
-
-/* Mobile: stack filters + make position buttons scrollable chips */
-@media (max-width: 520px){
-  .filter-row{
-    grid-template-columns: 1fr;
-    align-items: start;
-    gap: 6px;
-  }
-
-  .filter-row label{
-    font-size: 12px;
-    opacity: 0.85;
-  }
-
-  .position-buttons{
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 2px;
-    scrollbar-width: none;
-  }
-  .position-buttons::-webkit-scrollbar{ display: none; }
-
-  .position-buttons .app-btn{
-    flex: 0 0 auto;
-    border-radius: 999px;
-    padding: 8px 10px;
-    font-size: 12px;
-    min-height: 34px;
-  }
-}
-
-/* ---------- Players table -> cards (mobile only) ---------- */
-@media (max-width: 520px){
-  .app-table-wrap--players{
-    border-radius: 16px;
-    overflow: visible;         /* cards don't need horizontal scroll */
-    border: 0;
-  }
-
-  .app-table--players{
-    min-width: 0;              /* kill the 720px minimum */
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0 10px;    /* space between cards */
-    background: transparent;
-  }
-
-  .app-table--players thead{
-    display: none;             /* hide header on mobile */
-  }
-
-  .app-table--players tbody,
-  .app-table--players tr,
-  .app-table--players td{
-    display: block;
-    width: 100%;
-  }
-
-  .app-table--players tr{
-    background: rgba(3, 7, 18, 0.45);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    overflow: hidden;
-  }
-
-  .app-table--players td{
-    display: grid;
-    grid-template-columns: 110px 1fr;
-    gap: 10px;
-    padding: 10px 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    white-space: normal;       /* allow wrapping inside card */
-  }
-
-  .app-table--players td:last-child{
-    border-bottom: 0;
-  }
-
-  /* Labels via nth-child (no data-label changes needed) */
-  .app-table--players td:nth-child(1)::before{ content: "Nimi"; }
-  .app-table--players td:nth-child(2)::before{ content: "Pelipaikka"; }
-  .app-table--players td:nth-child(3)::before{ content: "Joukkue"; }
-  .app-table--players td:nth-child(4)::before{ content: "Arvo"; }
-
-  .app-table--players td::before{
-    color: rgba(229, 231, 235, 0.65);
-    font-weight: 800;
-    font-size: 12px;
-  }
-
-  /* Make the value pop a bit */
-  .app-table--players td:nth-child(4){
-    font-weight: 900;
-  }
-}
-
-/* =========================================================
-   FIXTURES — mobile cards
-   ========================================================= */
-@media (max-width: 520px) {
-  /* stop horizontal scroll just for fixtures */
-  .app-table-wrap.app-table-wrap--fx{
-    overflow-x: visible !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-  }
-
-  table.app-table.app-table--fx{
-    min-width: 0 !important;              /* overrides .app-table { min-width: 720px } */
-    width: 100% !important;
-    background: transparent !important;
-    border-collapse: separate !important;
-    border-spacing: 0 10px !important;
-  }
-
-  table.app-table.app-table--fx tbody,
-  table.app-table.app-table--fx tr,
-  table.app-table.app-table--fx td{
-    display: block !important;
-    width: 100% !important;
-  }
-
-  /* Round header rows: those are <tr><td colSpan=4> */
-  table.app-table.app-table--fx tr:has(td[colspan]){
-    background: transparent !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    overflow: visible !important;
-  }
-
-  table.app-table.app-table--fx tr:has(td[colspan]) td{
-    padding: 6px 2px 0 !important;
-    border-bottom: 0 !important;
-    font-weight: 900 !important;
-    color: rgba(229,231,235,0.9) !important;
-    opacity: 0.9;
-  }
-
-  /* Fixture row card */
-  table.app-table.app-table--fx tr:not(:has(td[colspan])){
-    background: rgba(3, 7, 18, 0.45);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    overflow: hidden;
-  }
-
-  table.app-table.app-table--fx tr:not(:has(td[colspan])) td{
-    white-space: normal !important;   /* override nowrap */
-    overflow: visible !important;
-    text-overflow: unset !important;
-
-    padding: 10px 12px !important;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-  }
-  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:last-child{
-    border-bottom: 0;
-  }
-
-  /* Labels for the 4 cells */
-  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(1)::before{ content:"Kierros"; }
-  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(2)::before{ content:"ID"; }
-  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(3)::before{ content:"Ottelu"; }
-  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(4)::before{ content:"Aika"; }
-
-  table.app-table.app-table--fx tr:not(:has(td[colspan])) td{
-    display: grid !important;
-    grid-template-columns: 90px 1fr;
-    gap: 10px;
-    align-items: center;
-  }
-
-  table.app-table.app-table--fx tr:not(:has(td[colspan])) td::before{
-    color: rgba(229,231,235,0.65);
-    font-weight: 800;
-    font-size: 12px;
-  }
-
-  /* Make match line bold */
-  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(3){
-    font-weight: 900;
-  }
-
-  /* Make date a bit smaller */
-  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(4){
-    font-size: 12.5px;
-    opacity: 0.95;
-  }
-}
-
-/* SquadBuilder remove button (top-right like swap icon) */
-.remove-slot{
-  position: absolute;
-  top: 6px;
-  right: 6px;
-
-  width: 26px;
-  height: 26px;
-  border-radius: 9px;
-
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.92);
-
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-
-  line-height: 1;
-  padding: 0;
-}
-
-/* Make sure chip is the anchor */
-.slot .player-chip{
-  position: relative;
-}
-
-@media (max-width: 520px){
-  .remove-slot{
-    width: 16px;
-    height: 16px;
-    border-radius: 6px;
-    font-size: 10px;
-    top: 5px;
-    right: 5px;
-  }
-}
-
-.slot-pop-title{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.slot-pop-close{
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.92);
-  border-radius: 10px;
-  width: 30px;
-  height: 30px;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  padding: 0;
-  line-height: 1;
-}
-
-/* =========================================================
-   SQUAD BUILDER — use same mobile sizing rules as StartingXI
-   ========================================================= */
-
-@media (max-width: 520px){
-  .squad-builder .pitch{
-    padding: 8px;
-    margin: 10px auto;
-    width: 100%;
-    max-width: 520px;
-    overflow: hidden;
-
-    /* SAME constants as StartingXI */
-    --slotW: 60px;
-    --slotH: 56px;
-    --gapRow: 10px;
-  }
-
-  .squad-builder .pitch::before{ inset: 8px; }
-
-  .squad-builder .pitch-row{
-    width: 100%;
-    margin: 10px 0;
-    justify-content: center;
-    align-content: center;
-    gap: var(--gapRow);
-  }
-
-  /* keep structure by row length */
-  .squad-builder .pitch-row.pitch-cols-1{ grid-template-columns: repeat(1, var(--slotW)); --gapRow: 14px; }
-  .squad-builder .pitch-row.pitch-cols-2{ grid-template-columns: repeat(2, var(--slotW)); --gapRow: 14px; }
-  .squad-builder .pitch-row.pitch-cols-3{ grid-template-columns: repeat(3, var(--slotW)); --gapRow: 12px; }
-  .squad-builder .pitch-row.pitch-cols-4{ grid-template-columns: repeat(4, var(--slotW)); --gapRow: 10px; }
-  .squad-builder .pitch-row.pitch-cols-5{ grid-template-columns: repeat(5, var(--slotW)); --gapRow: 6px; }
-
-  .squad-builder .slot{
-    width: var(--slotW);
-    height: var(--slotH);
-    min-height: 0;
-    padding: 6px;
-    border-radius: 12px;
-    display: grid;
-    place-items: center;
-  }
-
-  /* Make chip content sit bottom + fit text like StartingXI */
-  .squad-builder .player-chip{
-    width: 100%;
-    height: 100%;
-    min-width: 0;
-
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    align-items: center;
-
-    gap: 1px;
-    padding: 0 2px 2px;
-  }
-
-  .squad-builder .player-name,
-  .squad-builder .player-team{
-    width: 100%;
-    max-width: 100%;
-    text-align: center;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .squad-builder .player-name{
-    font-size: 9px;
-    line-height: 1;
-    padding-right: 0;
-  }
-
-  .squad-builder .player-team{
-    font-size: 8px;
-    line-height: 1;
-    opacity: 0.85;
-  }
-
-  /* remove X button same size as swap icon */
-  .squad-builder .remove-slot{
-    width: 14px;
-    height: 14px;
-    border-radius: 5px;
-    font-size: 9px;
-    top: 4px;
-    right: 4px;
-  }
-}
-
-/* extra tiny phones */
-@media (max-width: 380px){
-  .squad-builder .pitch{ --slotW: 56px; --slotH: 52px; }
-  .squad-builder .player-name{ font-size: 8.8px; }
-  .squad-builder .player-team{ font-size: 7.8px; }
-  .squad-builder .remove-slot{ width: 13px; height: 13px; font-size: 8px; }
-}
-
-/* =========================================================
-   SQUAD BUILDER PICKER — cleaned single version
-   ========================================================= */
-
+/* ========================= PICKER ========================= */
 .picker-backdrop {
   position: fixed;
   inset: 0;
@@ -1866,7 +1142,6 @@ body {
   background: rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -1875,14 +1150,12 @@ body {
 
 .picker-sheet {
   width: min(720px, 100%);
-  max-height: min(86dvh, 86vh);
+  max-height: 86dvh;
   margin: 0 auto;
   padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0px));
-
   display: flex;
   flex-direction: column;
   overflow: hidden;
-
   background: rgba(17, 24, 39, 0.96);
   border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: 20px 20px 0 0;
@@ -2004,8 +1277,8 @@ body {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(3, 7, 18, 0.25);
@@ -2017,12 +1290,10 @@ body {
   background: transparent;
   color: rgba(229, 231, 235, 0.92);
   cursor: pointer;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-
   padding: 12px;
   text-align: left;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
@@ -2081,15 +1352,219 @@ body {
   color: rgba(229, 231, 235, 0.6);
 }
 
-/* phone tweaks */
+/* ========================= RESPONSIVE ========================= */
+@media (max-width: 1024px) {
+  .app-main {
+    padding: 12px;
+  }
+
+  .app-card {
+    border-radius: 18px;
+    padding: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    padding-top: calc(12px + env(safe-area-inset-top, 0px));
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .app-user {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .app-section-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .app-actions {
+    width: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    justify-content: center;
+    gap: 8px;
+    padding: 4px 2px 8px;
+    scrollbar-width: none;
+  }
+
+  .app-actions::-webkit-scrollbar {
+    display: none;
+  }
+
+  .app-actions button,
+  .app-actions .app-btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    border-radius: 999px;
+    padding: 4px 5px;
+    font-size: 10px;
+    min-height: 26px;
+  }
+
+  .admin-two-col {
+    grid-template-columns: 1fr;
+  }
+
+  .picker-backdrop {
+    padding: 10px;
+  }
+
+  .picker-sheet {
+    width: 100%;
+    max-height: 88dvh;
+  }
+}
+
 @media (max-width: 520px) {
+  .filter-row {
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 6px;
+  }
+
+  .filter-row label {
+    font-size: 12px;
+    opacity: 0.85;
+  }
+
+  .position-buttons {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+
+  .position-buttons::-webkit-scrollbar {
+    display: none;
+  }
+
+  .position-buttons .app-btn {
+    flex: 0 0 auto;
+    border-radius: 999px;
+    padding: 8px 10px;
+    font-size: 12px;
+    min-height: 34px;
+  }
+
+  .pitch {
+    padding: 8px;
+    margin: 10px auto;
+    width: 100%;
+    max-width: 520px;
+    overflow: hidden;
+    --slotW: 60px;
+    --slotH: 56px;
+    --gapRow: 10px;
+  }
+
+  .pitch::before {
+    inset: 8px;
+  }
+
+  .pitch-row {
+    width: 100%;
+    margin: 10px 0;
+    justify-content: center;
+    align-content: center;
+    gap: var(--gapRow);
+  }
+
+  .pitch-row.pitch-cols-1 { grid-template-columns: repeat(1, var(--slotW)); --gapRow: 14px; }
+  .pitch-row.pitch-cols-2 { grid-template-columns: repeat(2, var(--slotW)); --gapRow: 14px; }
+  .pitch-row.pitch-cols-3 { grid-template-columns: repeat(3, var(--slotW)); --gapRow: 12px; }
+  .pitch-row.pitch-cols-4 { grid-template-columns: repeat(4, var(--slotW)); --gapRow: 10px; }
+  .pitch-row.pitch-cols-5 { grid-template-columns: repeat(5, var(--slotW)); --gapRow: 6px; }
+
+  .slot {
+    width: var(--slotW);
+    height: var(--slotH);
+    min-height: 0;
+    padding: 6px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+  }
+
+  .player-chip {
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 1px;
+    padding: 0 2px 2px;
+  }
+
+  .player-name,
+  .player-team {
+    width: 100%;
+    max-width: 100%;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .player-name {
+    font-size: 9px;
+    line-height: 1;
+    padding-right: 0;
+  }
+
+  .player-team {
+    font-size: 8px;
+    line-height: 1;
+    opacity: 0.85;
+  }
+
+  .swap-slot,
+  .remove-slot {
+    width: 14px;
+    height: 14px;
+    border-radius: 5px;
+    font-size: 9px;
+    top: 4px;
+    right: 4px;
+  }
+
+  .pitch .bench-overlay {
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .bench-row {
+    gap: 8px;
+    justify-content: center;
+    grid-template-columns: repeat(4, var(--slotW));
+  }
+
+  .bench-tag {
+    font-size: 10px;
+    padding: 2px 8px;
+    margin-bottom: 5px;
+  }
+
   .picker-backdrop {
     padding: 0;
+    align-items: flex-end;
   }
 
   .picker-sheet {
     width: 100%;
     max-width: 100%;
+    min-width: 100%;
     max-height: 90dvh;
     border-radius: 18px 18px 0 0;
     padding: 12px 10px calc(12px + env(safe-area-inset-bottom, 0px));
@@ -2106,100 +1581,24 @@ body {
   }
 }
 
-/* =========================================================
-   Starting XI swap highlight styles
-   ========================================================= */
-
-.slot-swap-source {
-  outline: 2px solid currentColor;
-  transform: scale(1.02);
-}
-
-.slot-swap-hint {
-  opacity: 0.75;
-}
-
-.slot-swap-target {
-  opacity: 1;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.22);
-}
-
-.bench-swap-hint {
-  outline: 2px dashed rgba(255, 255, 255, 0.18);
-  border-radius: 12px;
-}
-
-.pitch-row-swap-hint {
-  position: relative;
-}
-
-.pitch-row-swap-hint .slot {
-  opacity: 0.75;
-}
-
-.pitch-row-swap-hint .slot-swap-target {
-  opacity: 1;
-}
-
-
-@media (max-width: 520px) {
-  .picker-backdrop {
-    position: fixed !important;
-    inset: 0 !important;
-    z-index: 2147483647 !important;
-
-    display: flex !important;
-    align-items: flex-end !important;
-    justify-content: stretch !important;
-
-    padding: 0 !important;
-    margin: 0 !important;
-
-    background: rgba(0, 0, 0, 0.55) !important;
-    -webkit-backdrop-filter: none !important;
-    backdrop-filter: none !important;
+@media (max-width: 380px) {
+  .pitch {
+    --slotW: 56px;
+    --slotH: 52px;
   }
 
-  .picker-sheet {
-    width: 100vw !important;
-    max-width: 100vw !important;
-    min-width: 100vw !important;
-
-    margin: 0 !important;
-    border-radius: 18px 18px 0 0 !important;
-
-    display: flex !important;
-    flex-direction: column !important;
-
-    max-height: 100dvh !important;
-    height: auto !important;
-
-    padding:
-      12px
-      10px
-      calc(12px + env(safe-area-inset-bottom, 0px)) !important;
-
-    overflow: hidden !important;
-    box-sizing: border-box !important;
+  .player-name {
+    font-size: 8.8px;
   }
 
-  .picker-head,
-  .picker-out,
-  .picker-search,
-  .picker-tools {
-    flex-shrink: 0 !important;
+  .player-team {
+    font-size: 7.8px;
   }
 
-  .picker-head {
-    margin: 0 0 10px 0 !important;
-  }
-
-  .picker-list {
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    -webkit-overflow-scrolling: touch !important;
+  .remove-slot,
+  .swap-slot {
+    width: 13px;
+    height: 13px;
+    font-size: 8px;
   }
 }
