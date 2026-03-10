@@ -1796,4 +1796,5 @@ select option {
 .center-center{
   align-items: center;
   justify-content: center;
+  display: flex;
 }
