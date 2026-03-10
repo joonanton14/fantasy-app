@@ -1196,21 +1196,21 @@ select option {
   }
 
   table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(1) {
-    width: 10%;
+    width: 5%;
     text-align: center;
   }
 
   table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(2) {
-    width: 10%;
+    width: 5%;
     text-align: center;
   }
 
   table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(3) {
-    width: 40%;
+    width: 45%;
   }
 
   table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(4) {
-    width: 40%;
+    width: 45%;
     text-align: right;
   }
 }
@@ -1218,106 +1218,85 @@ select option {
 /* Leaderboard mobile */
 @media (max-width: 520px) {
   .app-table-wrap.app-table-wrap--lb {
-    overflow-x: visible !important;
-    overflow-y: visible !important;
-    border: 0 !important;
-    border-radius: 0 !important;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   table.app-table.app-table--lb {
-    min-width: 0 !important;
     width: 100% !important;
-    background: transparent !important;
-    border-collapse: separate !important;
-    border-spacing: 0 10px !important;
+    min-width: 0 !important;
+    table-layout: fixed;
+    border-collapse: collapse !important;
+    border-spacing: 0 !important;
+    background: rgba(3, 7, 18, 0.35) !important;
   }
 
   table.app-table.app-table--lb thead {
-    display: none !important;
+    display: table-header-group !important;
   }
 
-  table.app-table.app-table--lb tbody,
-  table.app-table.app-table--lb tr,
-  table.app-table.app-table--lb td {
-    display: block !important;
-    width: 100% !important;
+  table.app-table.app-table--lb tbody {
+    display: table-row-group !important;
   }
 
   table.app-table.app-table--lb tr {
-    background: rgba(3, 7, 18, 0.45);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    overflow: hidden;
+    display: table-row !important;
+    width: auto !important;
+    background: transparent !important;
+    border: 0 !important;
   }
 
+  table.app-table.app-table--lb th,
   table.app-table.app-table--lb td {
-    white-space: normal !important;
-    overflow: visible !important;
-    text-overflow: unset !important;
-    padding: 10px 12px !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  }
-
-  table.app-table.app-table--lb td:last-child {
-    border-bottom: 0;
-  }
-
-  table.app-table.app-table--lb td:nth-child(1),
-  table.app-table.app-table--lb td:nth-child(2),
-  table.app-table.app-table--lb td:nth-child(3) {
-    display: inline-block !important;
-    vertical-align: middle;
-  }
-
-  table.app-table.app-table--lb td:nth-child(1) {
-    width: 26px !important;
-    text-align: center !important;
-    opacity: 0.9;
-    padding-bottom: 0 !important;
-  }
-
-  table.app-table.app-table--lb td:nth-child(2) {
-    width: 44px !important;
-    font-weight: 900;
-    opacity: 0.9;
-    padding-bottom: 0 !important;
-  }
-
-  table.app-table.app-table--lb td:nth-child(3) {
-    width: calc(100% - 26px - 44px) !important;
-    font-weight: 900;
+    display: table-cell !important;
+    padding: 6px 4px !important;
+    font-size: 10px;
+    line-height: 1.15;
+    white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
-    white-space: nowrap !important;
-    padding-bottom: 0 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   }
 
-  table.app-table.app-table--lb td:nth-child(4),
+  table.app-table.app-table--lb th {
+    font-size: 9px;
+    letter-spacing: 0.2px;
+  }
+
+  table.app-table.app-table--lb td::before {
+    content: none !important;
+  }
+
+  table.app-table.app-table--lb th:nth-child(1),
+  table.app-table.app-table--lb td:nth-child(1) {
+    width: 8%;
+    text-align: center !important;
+  }
+
+  table.app-table.app-table--lb th:nth-child(2),
+  table.app-table.app-table--lb td:nth-child(2) {
+    width: 10%;
+    text-align: center !important;
+  }
+
+  table.app-table.app-table--lb th:nth-child(3),
+  table.app-table.app-table--lb td:nth-child(3) {
+    width: 42%;
+  }
+
+  table.app-table.app-table--lb th:nth-child(4),
+  table.app-table.app-table--lb td:nth-child(4) {
+    width: 20%;
+    text-align: right !important;
+  }
+
+  table.app-table.app-table--lb th:nth-child(5),
   table.app-table.app-table--lb td:nth-child(5) {
-    display: grid !important;
-    grid-template-columns: 1fr auto;
-    gap: 10px;
-    align-items: center;
-    padding-top: 8px !important;
-    text-align: left !important;
-  }
-
-  table.app-table.app-table--lb td:nth-child(4)::before {
-    content: "Viime kierros";
-    color: rgba(229, 231, 235, 0.65);
-    font-weight: 800;
-    font-size: 12px;
-  }
-
-  table.app-table.app-table--lb td:nth-child(5)::before {
-    content: "Yhteensä";
-    color: rgba(229, 231, 235, 0.65);
-    font-weight: 800;
-    font-size: 12px;
-  }
-
-  table.app-table.app-table--lb td:nth-child(5) {
-    font-weight: 900;
+    width: 20%;
+    text-align: right !important;
   }
 }
 
