@@ -1078,7 +1078,7 @@ select option {
 
 /* Players table mobile */
 @media (max-width: 520px) {
-  .app-table-wrap--players {
+  .app-table-wrap.app-table-wrap--fx {
     width: 100%;
     max-width: 100%;
     overflow-x: hidden;
@@ -1086,142 +1086,68 @@ select option {
     border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
-  .app-table--players {
-    width: 100%;
-    min-width: 0;
+  table.app-table.app-table--fx {
+    width: 100% !important;
+    min-width: 0 !important;
     table-layout: fixed;
-    border-collapse: collapse;
-    background: rgba(3, 7, 18, 0.35);
+    border-collapse: collapse !important;
+    border-spacing: 0 !important;
+    background: rgba(3, 7, 18, 0.35) !important;
   }
 
-  .app-table--players thead {
-    display: table-header-group;
+  table.app-table.app-table--fx tbody {
+    display: table-row-group !important;
   }
 
-  .app-table--players tbody {
-    display: table-row-group;
+  table.app-table.app-table--fx tr {
+    display: table-row !important;
+    width: auto !important;
+    background: transparent !important;
+    border: 0 !important;
   }
 
-  .app-table--players tr {
-    display: table-row;
-  }
-
-  .app-table--players th,
-  .app-table--players td {
-    display: table-cell;
-    width: 25%;
-    padding: 6px 4px;
+  table.app-table.app-table--fx td {
+    display: table-cell !important;
+    padding: 6px 4px !important;
     font-size: 10px;
     line-height: 1.15;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   }
 
-  .app-table--players th {
-    font-size: 9px;
-    letter-spacing: 0.2px;
-    padding: 6px 4px;
-  }
-
-  .app-table--players td::before {
+  table.app-table.app-table--fx td::before {
     content: none !important;
   }
 
-  .app-table--players th:nth-child(2),
-  .app-table--players td:nth-child(2) {
+  table.app-table.app-table--fx tr:has(td[colspan]) td {
+    display: table-cell !important;
+    width: auto !important;
+    padding: 8px 4px 4px !important;
+    font-size: 10px;
+    font-weight: 800 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(1) {
+    width: 15%;
     text-align: center;
   }
 
-  .app-table--players th:nth-child(4),
-  .app-table--players td:nth-child(4) {
+  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(2) {
+    width: 15%;
+    text-align: center;
+  }
+
+  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(3) {
+    width: 40%;
+  }
+
+  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(4) {
+    width: 30%;
     text-align: right;
-  }
-}
-
-/* Fixtures mobile */
-@media (max-width: 520px) {
-  .app-table-wrap.app-table-wrap--fx {
-    overflow-x: visible !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-  }
-
-  table.app-table.app-table--fx {
-    min-width: 0 !important;
-    width: 100% !important;
-    background: transparent !important;
-    border-collapse: separate !important;
-    border-spacing: 0 10px !important;
-  }
-
-  table.app-table.app-table--fx tbody,
-  table.app-table.app-table--fx tr,
-  table.app-table.app-table--fx td {
-    display: block !important;
-    width: 100% !important;
-  }
-
-  table.app-table.app-table--fx tr:has(td[colspan]) {
-    background: transparent !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    overflow: visible !important;
-  }
-
-  table.app-table.app-table--fx tr:has(td[colspan]) td {
-    padding: 6px 2px 0 !important;
-    border-bottom: 0 !important;
-    font-weight: 700 !important;
-  }
-
-  table.app-table.app-table--fx tr:not(:has(td[colspan])) {
-    background: rgba(3, 7, 18, 0.45);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    overflow: hidden;
-  }
-
-  table.app-table.app-table--fx tr:not(:has(td[colspan])) td {
-    white-space: normal !important;
-    overflow: visible !important;
-    text-overflow: unset !important;
-    padding: 10px 12px !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  }
-
-  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:last-child {
-    border-bottom: 0;
-  }
-
-  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(1)::before {
-    content: "Kierros";
-  }
-
-  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(2)::before {
-    content: "ID";
-  }
-
-  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(3)::before {
-    content: "Ottelu";
-  }
-
-  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(4)::before {
-    content: "Aika";
-  }
-
-  table.app-table.app-table--fx tr:not(:has(td[colspan])) td {
-    display: grid !important;
-    grid-template-columns: 90px 1fr;
-    gap: 10px;
-    align-items: center;
-  }
-
-  table.app-table.app-table--fx tr:not(:has(td[colspan])) td::before {
-    color: rgba(229, 231, 235, 0.65);
-    font-weight: 800;
-    font-size: 12px;
   }
 }
 
