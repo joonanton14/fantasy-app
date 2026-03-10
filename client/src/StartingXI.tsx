@@ -575,15 +575,6 @@ export const StartingXI: FC<{
           </div>
 
           <div className="starting-xi-controls">
-            {!readOnly && swapSource && (
-              <button
-                type="button"
-                className="xi-cancel-swap"
-                onClick={() => setSwapSource(null)}
-              >
-                Peru vaihto
-              </button>
-            )}
             <div className="star-player-controls">
               <label className="star-pick">
                 <span className="star-pick-label">DEF ★</span>
@@ -601,6 +592,7 @@ export const StartingXI: FC<{
                   ))}
                 </select>
               </label>
+
 
               <label className="star-pick">
                 <span className="star-pick-label">MID ★</span>
@@ -636,6 +628,16 @@ export const StartingXI: FC<{
                 </select>
               </label>
             </div>
+            
+            {!readOnly && swapSource && (
+              <button
+                type="button"
+                className="xi-cancel-swap"
+                onClick={() => setSwapSource(null)}
+              >
+                Peru vaihto
+              </button>
+            )}
             {!readOnly && (
               <button
                 type="button"
