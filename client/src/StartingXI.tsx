@@ -574,7 +574,6 @@ export const StartingXI: FC<{
             </div>
           </div>
 
-        <div className="center-center">
           <div className="starting-xi-controls">
             <div className="xi-action-group">
               {!readOnly && (
@@ -629,7 +628,7 @@ export const StartingXI: FC<{
               </button>
             </div>
 
-            <div className="star-player-controls" style={{ display: "flex", justifyContent: "flex-end" }}>
+            <div className="star-player-controls">
               <label className="star-pick">
                 <span className="star-pick-label">DEF ★</span>
                 <select
@@ -683,7 +682,6 @@ export const StartingXI: FC<{
             </div>
           </div>
         </div>
-      </div>
       </div>
     );
   };

@@ -763,6 +763,15 @@ nav button.active {
   margin-top: 14px;
   flex-wrap: wrap;
   width: 100%;
+  min-width: 0;
+}
+
+.star-player-controls {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
 }
 
 .xi-save {
@@ -1793,8 +1802,3 @@ select option {
   }
 }
 
-.center-center{
-  align-items: center;
-  justify-content: center;
-  display: flex;
-}
