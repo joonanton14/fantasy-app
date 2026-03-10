@@ -1879,8 +1879,10 @@ select option {
 }
 
 @media (max-width: 768px) {
-  .starting-xi-controls {
-    justify-content: center;
+  .starting-star-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
   }
 
   .star-player-controls {
