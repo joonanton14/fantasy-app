@@ -334,6 +334,49 @@ export default function App() {
     }
   }
 
+  const currentRound = useMemo(() => {
+    const now = Date.now();
+
+    const rounds = Array.from(
+      new Set(
+        fixtures
+          .map((f) => f.round)
+          .filter((r): r is number => typeof r === "number")
+      )
+    ).sort((a, b) => a - b);
+
+    for (const round of rounds) {
+      const times = fixtures
+        .filter((f) => f.round === round)
+        .map((f) => new Date(f.date).getTime())
+        .filter((t) => Number.isFinite(t))
+        .sort((a, b) => a - b);
+
+      if (times.length === 0) continue;
+
+      const firstKickoff = times[0];
+      const lastKickoff = times[times.length - 1];
+
+      if (now < firstKickoff) return round;
+      if (now >= firstKickoff && now <= lastKickoff) return round;
+    }
+
+    return rounds.length ? rounds[rounds.length - 1] : null;
+  }, [fixtures]);
+
+  const firstKickoffMs = useMemo(() => {
+    if (currentRound == null) return null;
+
+    const times = fixtures
+      .filter((f) => f.round === currentRound)
+      .map((f) => new Date(f.date).getTime())
+      .filter((t) => Number.isFinite(t));
+
+    if (times.length === 0) return null;
+    return Math.min(...times);
+  }, [fixtures, currentRound]);
+
+  const isTeamLocked = firstKickoffMs != null && Date.now() >= firstKickoffMs;
   async function loadLeaderboard() {
     setLoadingLb(true);
     try {
@@ -557,6 +600,7 @@ export default function App() {
                   teams={teams}
                   squad={squad}
                   budget={INITIAL_BUDGET}
+                  isLocked={isTeamLocked}
                   onCancel={() => setTeamViewTab("startingXI")}
                   onSave={async ({ squad }) => {
                     await saveSquad(squad);
@@ -566,7 +610,11 @@ export default function App() {
               ) : teamViewTab === "startingXI" ? (
                 <div>
                   {loadingSaved && <div className="app-muted">Ladataan tallennettu joukkue…</div>}
-
+                  {isTeamLocked && (
+                    <div className="starting-xi-warning" role="alert">
+                      Kierroksen ensimmäinen ottelu on alkanut — kokoonpanon muutokset ja vaihdot ovat lukittu.
+                    </div>
+                  )}
                   <StartingXI
                     teams={teams}
                     squad={squad}
@@ -575,7 +623,7 @@ export default function App() {
                     initialFormation={savedFormation}
                     initialStarPlayerIds={savedStarPlayerIds}
                     budget={INITIAL_BUDGET}
-                    readOnly={false}
+                    readOnly={isTeamLocked}
                     onSave={async (p) => {
                       await saveXI({
                         formation: p.formation,

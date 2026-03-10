@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { redis, PREFIX } from "../lib/redis";
 import { getSessionFromReq } from "../lib/session";
+import { isTeamChangesLocked } from "../server/src/data";
 
 type FormationKey = "3-5-2" | "3-4-3" | "4-4-2" | "4-3-3" | "4-5-1" | "5-3-2" | "5-4-1";
 
@@ -81,8 +82,8 @@ function validateTeamPayload(body: any): { ok: true; data: SavedTeam } | { ok: f
       const num = parsed === null ? null : Number(parsed);
 
       if (!(parsed === null || (typeof num === "number" && Number.isInteger(num) && num > 0))) {
-      return { ok: false, error: `starPlayerIds.${k} must be a positive integer or null` };
-    }
+        return { ok: false, error: `starPlayerIds.${k} must be a positive integer or null` };
+      }
 
       outStars[k] = num;
     }
@@ -179,7 +180,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method === "POST") {
       const approxSize = JSON.stringify(req.body ?? {}).length;
       if (approxSize > 10_000) return res.status(413).json({ error: "Payload too large" });
-
+      if (isTeamChangesLocked()) {
+        return res.status(403).json({
+          error: "Team changes are locked after the first kickoff of the round",
+        });
+      }
+      
       const result = validateTeamPayload(req.body);
 
       if (!result.ok) {

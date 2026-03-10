@@ -33,6 +33,7 @@ export default function SquadBuilder(props: {
   teams: Team[];
   initialSquad?: Player[];
   budget: number;
+  isLocked?: boolean;
   onSave: (squad: Player[]) => void;
 }) {
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -69,6 +70,13 @@ export default function SquadBuilder(props: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.initialSquad]);
 
+  useEffect(() => {
+    if (props.isLocked) {
+      setPicker(null);
+      setPendingRestore(null);
+    }
+  }, [props.isLocked]);
+
   const picked = useMemo(() => Object.values(assign).filter(Boolean) as Player[], [assign]);
   const pickedIds = useMemo(() => new Set(picked.map((p) => p.id)), [picked]);
 
@@ -76,6 +84,8 @@ export default function SquadBuilder(props: {
   const remainingBudget = props.budget - totalValue;
 
   function assignTo(slotId: string, p: Player) {
+    if (props.isLocked) return;
+
     const current = assign[slotId];
 
     if (pickedIds.has(p.id) && current?.id !== p.id) return;
@@ -99,6 +109,8 @@ export default function SquadBuilder(props: {
   }
 
   function removeFrom(slotId: string) {
+    if (props.isLocked) return;
+
     const removed = assign[slotId];
     if (!removed) return;
 
@@ -222,6 +234,12 @@ export default function SquadBuilder(props: {
           <div className="app-muted" style={{ marginBottom: 8 }}>
             Budjetti jäljellä: <b>{remainingBudget.toFixed(1)} M</b>
           </div>
+
+          {props.isLocked && (
+            <div className="starting-xi-warning" role="alert">
+              Kierroksen ensimmäinen ottelu on alkanut — vaihdot ovat lukittu.
+            </div>
+          )}
         </header>
 
         <div className="pitch">
@@ -239,6 +257,7 @@ export default function SquadBuilder(props: {
                       role="button"
                       tabIndex={0}
                       onClick={() => {
+                        if (props.isLocked) return;
                         setQ("");
                         setOnlySuitable(false);
                         setSortBy("name");
@@ -257,6 +276,7 @@ export default function SquadBuilder(props: {
                             title="Poista"
                             onClick={(e) => {
                               e.stopPropagation();
+                              if (props.isLocked) return;
                               removeFrom(s.id);
                             }}
                           >
@@ -275,12 +295,19 @@ export default function SquadBuilder(props: {
         </div>
 
         <div className="starting-xi-controls" style={{ marginTop: 12 }}>
-          <button className="xi-save" disabled={!canSave} onClick={() => props.onSave(picked)}>
+          <button
+            className="xi-save"
+            disabled={!canSave || !!props.isLocked}
+            onClick={() => {
+              if (props.isLocked) return;
+              props.onSave(picked);
+            }}
+          >
             Tallenna
           </button>
         </div>
 
-        {picker && (
+        {picker && !props.isLocked && (
           <div
             className="picker-backdrop"
             onClick={closePickerAndRestore}

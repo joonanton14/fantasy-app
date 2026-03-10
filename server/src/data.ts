@@ -390,3 +390,51 @@ export const fixtures: Fixture[] = FIXTURE_ROWS.map(([id, dateFi, time, home, aw
   awayTeamId: teamIdByName(away),
   date: toIsoEET(dateFi, time),
 }));
+
+export function getFirstKickoffForRound(round: number): string | null {
+  const times = fixtures
+    .filter((f) => f.round === round)
+    .map((f) => new Date(f.date).getTime())
+    .filter((t) => Number.isFinite(t));
+
+  if (times.length === 0) return null;
+  return new Date(Math.min(...times)).toISOString();
+}
+
+export function getCurrentEditableRound(now = Date.now()): number | null {
+  const rounds = Array.from(
+    new Set(fixtures.map((f) => f.round).filter((r): r is number => typeof r === "number"))
+  ).sort((a, b) => a - b);
+
+  for (const round of rounds) {
+    const roundTimes = fixtures
+      .filter((f) => f.round === round)
+      .map((f) => new Date(f.date).getTime())
+      .filter((t) => Number.isFinite(t))
+      .sort((a, b) => a - b);
+
+    if (roundTimes.length === 0) continue;
+
+    const firstKickoff = roundTimes[0];
+    const lastKickoff = roundTimes[roundTimes.length - 1];
+
+    // before first kickoff of this round -> this round is editable
+    if (now < firstKickoff) return round;
+
+    // during this round -> this round is the active locked round
+    if (now >= firstKickoff && now <= lastKickoff) return round;
+  }
+
+  // season finished
+  return rounds.length ? rounds[rounds.length - 1] : null;
+}
+
+export function isTeamChangesLocked(now = Date.now()): boolean {
+  const round = getCurrentEditableRound(now);
+  if (round == null) return false;
+
+  const firstKickoffIso = getFirstKickoffForRound(round);
+  if (!firstKickoffIso) return false;
+
+  return now >= new Date(firstKickoffIso).getTime();
+}
