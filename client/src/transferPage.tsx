@@ -13,12 +13,6 @@ export default function TransfersPage(props: {
 }) {
   return (
     <div className="app-card">
-      {props.isLocked && (
-        <div className="starting-xi-warning" role="alert" style={{ marginBottom: 12 }}>
-          Kierroksen ensimmäinen ottelu on alkanut — vaihdot ovat lukittu.
-        </div>
-      )}
-
       <SquadBuilder
         players={props.players}
         teams={props.teams}
