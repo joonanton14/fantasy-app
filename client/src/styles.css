@@ -1079,74 +1079,54 @@ select option {
 /* Players table mobile */
 @media (max-width: 520px) {
   .app-table-wrap--players {
-    border-radius: 16px;
-    overflow: visible;
-    border: 0;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .app-table--players {
-    min-width: 0;
     width: 100%;
-    border-collapse: separate;
-    border-spacing: 0 10px;
-    background: transparent;
+    min-width: 520px;
+    border-collapse: collapse;
+    border-spacing: 0;
+    background: rgba(3, 7, 18, 0.35);
   }
 
   .app-table--players thead {
-    display: none;
+    display: table-header-group;
   }
 
-  .app-table--players tbody,
-  .app-table--players tr,
-  .app-table--players td {
-    display: block;
-    width: 100%;
+  .app-table--players tbody {
+    display: table-row-group;
   }
 
   .app-table--players tr {
-    background: rgba(3, 7, 18, 0.45);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    overflow: hidden;
+    display: table-row;
+    background: transparent;
+    border: 0;
   }
 
+  .app-table--players th,
   .app-table--players td {
-    display: grid;
-    grid-template-columns: 110px 1fr;
-    gap: 10px;
-    padding: 10px 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    white-space: normal;
+    display: table-cell;
+    padding: 8px 10px;
+    font-size: 12px;
+    line-height: 1.2;
+    white-space: nowrap;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  .app-table--players td:last-child {
-    border-bottom: 0;
-  }
-
-  .app-table--players td:nth-child(1)::before {
-    content: "Nimi";
-  }
-
-  .app-table--players td:nth-child(2)::before {
-    content: "Pelipaikka";
-  }
-
-  .app-table--players td:nth-child(3)::before {
-    content: "Joukkue";
-  }
-
-  .app-table--players td:nth-child(4)::before {
-    content: "Arvo";
+  .app-table--players th {
+    font-size: 11px;
   }
 
   .app-table--players td::before {
-    color: rgba(229, 231, 235, 0.65);
-    font-weight: 800;
-    font-size: 12px;
-  }
-
-  .app-table--players td:nth-child(4) {
-    font-weight: 900;
+    content: none !important;
   }
 }
 
