@@ -1109,6 +1109,7 @@ select option {
   .app-table--players th,
   .app-table--players td {
     display: table-cell;
+    width: 25%;
     padding: 6px 4px;
     font-size: 10px;
     line-height: 1.15;
@@ -1128,25 +1129,13 @@ select option {
     content: none !important;
   }
 
-  .app-table--players th:nth-child(1),
-  .app-table--players td:nth-child(1) {
-    width: 34%;
-  }
-
   .app-table--players th:nth-child(2),
   .app-table--players td:nth-child(2) {
-    width: 16%;
     text-align: center;
-  }
-
-  .app-table--players th:nth-child(3),
-  .app-table--players td:nth-child(3) {
-    width: 30%;
   }
 
   .app-table--players th:nth-child(4),
   .app-table--players td:nth-child(4) {
-    width: 20%;
     text-align: right;
   }
 }
