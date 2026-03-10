@@ -98,6 +98,9 @@ export const StartingXI: FC<{
   const [benchAssign, setBenchAssign] = useState<Record<string, Player | null>>({});
   const [swapSource, setSwapSource] = useState<SwapSource>(null);
   const [saveFlash, setSaveFlash] = useState<"idle" | "clicked" | "saved">("idle");
+  const [starDEF, setStarDEF] = useState<number | "">("");
+  const [starMID, setStarMID] = useState<number | "">("");
+  const [starFWD, setStarFWD] = useState<number | "">("");
 
   useEffect(() => {
     function handlePointerDown(e: PointerEvent) {
@@ -189,6 +192,16 @@ export const StartingXI: FC<{
     return c;
   }, [xiPlayers]);
 
+  const xiDefs = useMemo(() => xiPlayers.filter((p) => p.position === "DEF"), [xiPlayers]);
+  const xiMids = useMemo(() => xiPlayers.filter((p) => p.position === "MID"), [xiPlayers]);
+  const xiFwds = useMemo(() => xiPlayers.filter((p) => p.position === "FWD"), [xiPlayers]);
+
+  useEffect(() => {
+    if (starDEF !== "" && !xiDefs.some((p) => p.id === starDEF)) setStarDEF("");
+    if (starMID !== "" && !xiMids.some((p) => p.id === starMID)) setStarMID("");
+    if (starFWD !== "" && !xiFwds.some((p) => p.id === starFWD)) setStarFWD("");
+  }, [xiDefs, xiMids, xiFwds, starDEF, starMID, starFWD]);
+  
   function isValid() {
     if (pool.length !== 15) return false;
     if (xiPlayers.length !== 11) return false;
@@ -545,7 +558,58 @@ export const StartingXI: FC<{
               Peru vaihto
             </button>
           )}
+          <div className="star-picks">
+            <label className="star-pick">
+              <span className="star-pick-label">DEF ★</span>
+              <select
+                className="star-pick-select"
+                value={starDEF}
+                onChange={(e) => setStarDEF(e.target.value ? Number(e.target.value) : "")}
+                disabled={readOnly || xiDefs.length === 0}
+              >
+                <option value="">Ei valittu</option>
+                {xiDefs.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {lastName(p.name)}
+                  </option>
+                ))}
+              </select>
+            </label>
 
+            <label className="star-pick">
+              <span className="star-pick-label">MID ★</span>
+              <select
+                className="star-pick-select"
+                value={starMID}
+                onChange={(e) => setStarMID(e.target.value ? Number(e.target.value) : "")}
+                disabled={readOnly || xiMids.length === 0}
+              >
+                <option value="">Ei valittu</option>
+                {xiMids.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {lastName(p.name)}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="star-pick">
+              <span className="star-pick-label">FWD ★</span>
+              <select
+                className="star-pick-select"
+                value={starFWD}
+                onChange={(e) => setStarFWD(e.target.value ? Number(e.target.value) : "")}
+                disabled={readOnly || xiFwds.length === 0}
+              >
+                <option value="">Ei valittu</option>
+                {xiFwds.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {lastName(p.name)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
           {!readOnly && (
             <button
               type="button"

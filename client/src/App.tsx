@@ -1,4 +1,3 @@
-// App.tsx
 import { useEffect, useMemo, useState, JSX } from "react";
 import Login from "./login";
 import AdminPortal from "./adminPortal";
@@ -7,6 +6,7 @@ import { apiCall } from "./api";
 import "./styles.css";
 import { loadSavedTeam, saveStartingXI } from "./userTeam";
 import TransfersPage from "./transferPage";
+import PlayerDetailsModal from "./playerDetails";
 
 interface Player {
   id: number;
@@ -55,6 +55,7 @@ export default function App() {
   const [savedFormation, setSavedFormation] = useState<FormationKey>("4-4-2");
 
   const [error, setError] = useState<string | null>(null);
+  const [detailPlayer, setDetailPlayer] = useState<Player | null>(null);
 
   type Fixture = { id: number; homeTeamId: number; awayTeamId: number; date: string; round?: number };
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
@@ -760,7 +761,7 @@ export default function App() {
                         {filteredPlayers.map((p) => {
                           const teamName = teamsById.get(p.teamId)?.name ?? "";
                           return (
-                            <tr key={p.id}>
+                            <tr key={p.id} className="player-row-clickable" onClick={() => setDetailPlayer(p)}>
                               <td>{p.name}</td>
                               <td>{p.position}</td>
                               <td>{teamName}</td>
@@ -774,6 +775,11 @@ export default function App() {
                 </>
               )}
             </div>
+            <PlayerDetailsModal
+              player={detailPlayer}
+              teams={teams}
+              onClose={() => setDetailPlayer(null)}
+            />
           </div>
         </main>
       </div>
