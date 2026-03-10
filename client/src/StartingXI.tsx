@@ -99,19 +99,19 @@ export const StartingXI: FC<{
   const [swapSource, setSwapSource] = useState<SwapSource>(null);
   const [saveFlash, setSaveFlash] = useState<"idle" | "clicked" | "saved">("idle");
 
-useEffect(() => {
-  function handlePointerDown(e: PointerEvent) {
-    if (!rootRef.current) return;
-    if (!rootRef.current.contains(e.target as Node)) {
-      setSwapSource(null);
+  useEffect(() => {
+    function handlePointerDown(e: PointerEvent) {
+      if (!rootRef.current) return;
+      if (!rootRef.current.contains(e.target as Node)) {
+        setSwapSource(null);
+      }
     }
-  }
 
-  document.addEventListener("pointerdown", handlePointerDown);
-  return () => {
-    document.removeEventListener("pointerdown", handlePointerDown);
-  };
-}, []);
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, []);
 
   const pool = useMemo(() => uniqById(squad), [squad]);
   const poolSet = useMemo(() => new Set(pool.map((p) => p.id)), [pool]);
@@ -403,26 +403,10 @@ useEffect(() => {
         tabIndex={0}
       >
         {assigned ? (
-          <>
-            {!readOnly && !swapSource && (
-              <button
-                type="button"
-                className="swap-slot"
-                title="Vaihda pelaaja"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  beginSwap(area, slotId);
-                }}
-              >
-                ⇄
-              </button>
-            )}
-
-            <div className="player-chip">
-              <div className="player-name">{lastName(assigned.name)}</div>
-              <div className="player-team">{teamName(teams, assigned.teamId)}</div>
-            </div>
-          </>
+          <div className="player-chip">
+            <div className="player-name">{lastName(assigned.name)}</div>
+            <div className="player-team">{teamName(teams, assigned.teamId)}</div>
+          </div>
         ) : (
           <div className="slot-empty">{emptyLabel}</div>
         )}
@@ -447,10 +431,19 @@ useEffect(() => {
               assigned={assigned}
               emptyLabel={s.label}
               onSlotClick={() => {
-                if (readOnly) return;
-                if (swapSource && assigned) {
-                  trySwap("xi", s.id);
+                if (readOnly || !assigned) return;
+
+                if (!swapSource) {
+                  beginSwap("xi", s.id);
+                  return;
                 }
+
+                if (swapSource.area === "xi" && swapSource.slotId === s.id) {
+                  setSwapSource(null);
+                  return;
+                }
+
+                trySwap("xi", s.id);
               }}
             />
           );
@@ -482,10 +475,19 @@ useEffect(() => {
                   assigned={assigned}
                   emptyLabel={s.label}
                   onSlotClick={() => {
-                    if (readOnly) return;
-                    if (swapSource && assigned) {
-                      trySwap("bench", s.id);
+                    if (readOnly || !assigned) return;
+
+                    if (!swapSource) {
+                      beginSwap("bench", s.id);
+                      return;
                     }
+
+                    if (swapSource.area === "bench" && swapSource.slotId === s.id) {
+                      setSwapSource(null);
+                      return;
+                    }
+
+                    trySwap("bench", s.id);
                   }}
                 />
               </div>
