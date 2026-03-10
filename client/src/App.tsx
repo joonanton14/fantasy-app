@@ -249,6 +249,29 @@ export default function App() {
   useEffect(() => {
     let cancelled = false;
 
+    async function run() {
+      try {
+        const res = await apiCall("/admin/fixtures", { method: "GET" });
+        if (!res.ok) return;
+
+        const json = await res.json();
+        if (!cancelled) {
+          setFixtures((json.fixtures ?? []) as Fixture[]);
+        }
+      } catch {
+        // keep silent here, backend save lock still protects
+      }
+    }
+
+    if (isLoggedIn) run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoggedIn]);
+  useEffect(() => {
+    let cancelled = false;
+
     async function load() {
       setError(null);
       try {
@@ -603,8 +626,12 @@ export default function App() {
                   isLocked={isTeamLocked}
                   onCancel={() => setTeamViewTab("startingXI")}
                   onSave={async ({ squad }) => {
-                    await saveSquad(squad);
-                    setTeamViewTab("startingXI");
+                    try {
+                      await saveSquad(squad);
+                      setTeamViewTab("startingXI");
+                    } catch (e) {
+                      setError(e instanceof Error ? e.message : "Tallennus epäonnistui");
+                    }
                   }}
                 />
               ) : teamViewTab === "startingXI" ? (
@@ -625,12 +652,16 @@ export default function App() {
                     budget={INITIAL_BUDGET}
                     readOnly={isTeamLocked}
                     onSave={async (p) => {
-                      await saveXI({
-                        formation: p.formation,
-                        startingXI: p.startingXI,
-                        bench: p.bench,
-                        starPlayerIds: p.starPlayerIds,
-                      });
+                      try {
+                        await saveXI({
+                          formation: p.formation,
+                          startingXI: p.startingXI,
+                          bench: p.bench,
+                          starPlayerIds: p.starPlayerIds,
+                        });
+                      } catch (e) {
+                        setError(e instanceof Error ? e.message : "Tallennus epäonnistui");
+                      }
                     }}
                   />
 
