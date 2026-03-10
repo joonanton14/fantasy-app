@@ -643,9 +643,23 @@ export const StartingXI: FC<{
                 onClick={() => {
                   if (saveDisabled || readOnly) return;
 
+                  const missingStars = [
+                    starDEF === "" ? "DEF" : null,
+                    starMID === "" ? "MID" : null,
+                    starFWD === "" ? "FWD" : null,
+                  ].filter(Boolean) as string[];
+
+                  if (missingStars.length > 0) {
+                    const ok = window.confirm(
+                      `Tähtipelaaja puuttuu pelipaikoilta: ${missingStars.join(", ")}.\n\nHaluatko tallentaa silti?`
+                    );
+                    if (!ok) return;
+                  }
+
                   setSaveFlash("clicked");
                   window.setTimeout(() => setSaveFlash("saved"), 250);
                   window.setTimeout(() => setSaveFlash("idle"), 1400);
+
                   onSave({
                     formation,
                     startingXI: xiPlayers,
