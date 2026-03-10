@@ -207,6 +207,8 @@ function teamIdByName(raw: string): number {
 
 const FIXTURE_ROWS: Array<[number, string, string, string, string, number]> = [
   // Kierros 1
+  // TODO MOVE THIS DATE BACK TO ORIGINAL ONES (these are just placeholders to get the format right)
+  [1, "9.3.2026", "13:00", "FC Inter", "VPS", 1],
   [1, "4.4.2026", "13:00", "FC Inter", "VPS", 1],
   [2, "4.4.2026", "15:00", "HJK", "SJK", 1],
   [3, "4.4.2026", "17:00", "FF Jaro", "FC Lahti", 1],
