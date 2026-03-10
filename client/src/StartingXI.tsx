@@ -575,55 +575,58 @@ export const StartingXI: FC<{
           </div>
 
           <div className="starting-xi-controls">
-            {!readOnly && (
+            <div className="xi-action-group">
+              {!readOnly && (
+                <button
+                  type="button"
+                  className={`xi-save ${saveFlash !== "idle" ? `xi-save--${saveFlash}` : ""}`}
+                  onClick={() => {
+                    if (saveDisabled || readOnly) return;
+
+                    const missingStars = [
+                      starDEF === "" ? "DEF" : null,
+                      starMID === "" ? "MID" : null,
+                      starFWD === "" ? "FWD" : null,
+                    ].filter(Boolean) as string[];
+
+                    if (missingStars.length > 0) {
+                      const ok = window.confirm(
+                        `Tähtipelaaja puuttuu pelipaikoilta: ${missingStars.join(", ")}.\n\nHaluatko tallentaa silti?`
+                      );
+                      if (!ok) return;
+                    }
+
+                    setSaveFlash("clicked");
+                    window.setTimeout(() => setSaveFlash("saved"), 250);
+                    window.setTimeout(() => setSaveFlash("idle"), 1400);
+
+                    onSave({
+                      formation,
+                      startingXI: xiPlayers,
+                      bench: benchPlayers,
+                      starPlayerIds: {
+                        DEF: starDEF === "" ? null : starDEF,
+                        MID: starMID === "" ? null : starMID,
+                        FWD: starFWD === "" ? null : starFWD,
+                      },
+                    });
+                  }}
+                  disabled={saveDisabled}
+                >
+                  {saveFlash === "clicked" ? "Tallennetaan…" : saveFlash === "saved" ? "Tallennettu ✓" : "Tallenna"}
+                </button>
+              )}
+
               <button
                 type="button"
-                className={`xi-save ${saveFlash !== "idle" ? `xi-save--${saveFlash}` : ""}`}
-                onClick={() => {
-                  if (saveDisabled || readOnly) return;
-
-                  const missingStars = [
-                    starDEF === "" ? "DEF" : null,
-                    starMID === "" ? "MID" : null,
-                    starFWD === "" ? "FWD" : null,
-                  ].filter(Boolean) as string[];
-
-                  if (missingStars.length > 0) {
-                    const ok = window.confirm(
-                      `Tähtipelaaja puuttuu pelipaikoilta: ${missingStars.join(", ")}.\n\nHaluatko tallentaa silti?`
-                    );
-                    if (!ok) return;
-                  }
-
-                  setSaveFlash("clicked");
-                  window.setTimeout(() => setSaveFlash("saved"), 250);
-                  window.setTimeout(() => setSaveFlash("idle"), 1400);
-
-                  onSave({
-                    formation,
-                    startingXI: xiPlayers,
-                    bench: benchPlayers,
-                    starPlayerIds: {
-                      DEF: starDEF === "" ? null : starDEF,
-                      MID: starMID === "" ? null : starMID,
-                      FWD: starFWD === "" ? null : starFWD,
-                    },
-                  });
-                }}
-                disabled={saveDisabled}
-              >
-                {saveFlash === "clicked" ? "Tallennetaan…" : saveFlash === "saved" ? "Tallennettu ✓" : "Tallenna"}
-              </button>
-            )}
-            {!readOnly && swapSource && (
-              <button
-                type="button"
-                className="xi-cancel-swap"
+                className={`xi-cancel-swap ${!readOnly && swapSource ? "" : "xi-cancel-swap--hidden"}`}
                 onClick={() => setSwapSource(null)}
+                disabled={!swapSource}
+                aria-hidden={!swapSource}
               >
                 Peru vaihto
               </button>
-            )}
+            </div>
 
             <div className="star-player-controls">
               <label className="star-pick">
@@ -677,7 +680,6 @@ export const StartingXI: FC<{
                 </select>
               </label>
             </div>
-
           </div>
         </div>
       </div>
