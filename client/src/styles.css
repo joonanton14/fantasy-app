@@ -1994,12 +1994,34 @@ select option {
 }
 }
 
-.star-picks {
+.starting-xi-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  width: 100%;
+}
+
+.xi-action-group {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  flex: 0 0 auto;
+}
+
+.xi-cancel-swap--hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.star-player-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
 }
 
 .star-pick {
@@ -2012,48 +2034,24 @@ select option {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.star-pick-label {
-  font-size: 12px;
-  font-weight: 900;
-  color: rgba(229, 231, 235, 0.85);
-  white-space: nowrap;
-}
-
-.star-pick-select {
-  min-width: 110px;
-  min-height: 34px;
-  border-radius: 10px;
-  padding: 6px 28px 6px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(3, 7, 18, 0.55);
-  color: rgba(255, 255, 255, 0.92);
-  font-size: 12px;
-  font-weight: 800;
-}
-
 @media (max-width: 768px) {
   .starting-xi-controls {
+    flex-wrap: wrap;
     justify-content: center;
   }
 
-  .star-picks {
+  .xi-action-group {
     width: 100%;
     justify-content: center;
   }
-}
 
-@media (max-width: 520px) {
-  .star-picks {
-    gap: 8px;
-  }
-
-  .star-pick {
+  .star-player-controls {
     width: 100%;
-    justify-content: space-between;
+    justify-content: center;
+    flex-wrap: wrap;
   }
 
-  .star-pick-select {
-    min-width: 120px;
-    max-width: 55%;
+  .xi-cancel-swap--hidden {
+    display: none;
   }
 }
