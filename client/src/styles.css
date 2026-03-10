@@ -1792,3 +1792,8 @@ select option {
     font-size: 8px;
   }
 }
+
+.center-center{
+  align-items: center;
+  justify-content: center;
+}

@@ -574,6 +574,7 @@ export const StartingXI: FC<{
             </div>
           </div>
 
+        <div className="center-center">
           <div className="starting-xi-controls">
             <div className="xi-action-group">
               {!readOnly && (
@@ -682,6 +683,7 @@ export const StartingXI: FC<{
             </div>
           </div>
         </div>
+      </div>
       </div>
     );
   };
