@@ -574,7 +574,7 @@ export const StartingXI: FC<{
             </div>
           </div>
 
-          <div className="starting-xi-controls">
+          <div className="starting-star-controls">
             <div className="xi-action-group">
               {!readOnly && (
                 <button

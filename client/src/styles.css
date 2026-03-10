@@ -621,11 +621,25 @@ nav button.active {
   margin: 14px 0;
 }
 
-.pitch-row.pitch-cols-1 { grid-template-columns: repeat(1, minmax(0, var(--slot))); }
-.pitch-row.pitch-cols-2 { grid-template-columns: repeat(2, minmax(0, var(--slot))); }
-.pitch-row.pitch-cols-3 { grid-template-columns: repeat(3, minmax(0, var(--slot))); }
-.pitch-row.pitch-cols-4 { grid-template-columns: repeat(4, minmax(0, var(--slot))); }
-.pitch-row.pitch-cols-5 { grid-template-columns: repeat(5, minmax(0, var(--slot))); }
+.pitch-row.pitch-cols-1 {
+  grid-template-columns: repeat(1, minmax(0, var(--slot)));
+}
+
+.pitch-row.pitch-cols-2 {
+  grid-template-columns: repeat(2, minmax(0, var(--slot)));
+}
+
+.pitch-row.pitch-cols-3 {
+  grid-template-columns: repeat(3, minmax(0, var(--slot)));
+}
+
+.pitch-row.pitch-cols-4 {
+  grid-template-columns: repeat(4, minmax(0, var(--slot)));
+}
+
+.pitch-row.pitch-cols-5 {
+  grid-template-columns: repeat(5, minmax(0, var(--slot)));
+}
 
 .slot {
   position: relative;
@@ -732,7 +746,7 @@ nav button.active {
   justify-items: center;
 }
 
-.bench-item > .slot {
+.bench-item>.slot {
   width: 100%;
 }
 
@@ -749,10 +763,21 @@ nav button.active {
   color: rgba(255, 255, 255, 0.92);
 }
 
-.bench-tag-GK  { border-color: rgba(16,185,129,0.35); }
-.bench-tag-DEF { border-color: rgba(59,130,246,0.35); }
-.bench-tag-MID { border-color: rgba(234,179,8,0.35); }
-.bench-tag-FWD { border-color: rgba(239,68,68,0.35); }
+.bench-tag-GK {
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.bench-tag-DEF {
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+.bench-tag-MID {
+  border-color: rgba(234, 179, 8, 0.35);
+}
+
+.bench-tag-FWD {
+  border-color: rgba(239, 68, 68, 0.35);
+}
 
 /* ========================= STARTING XI CONTROLS ========================= */
 .starting-xi-controls {
@@ -763,15 +788,6 @@ nav button.active {
   margin-top: 14px;
   flex-wrap: wrap;
   width: 100%;
-  min-width: 0;
-}
-
-.star-player-controls {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
 }
 
 .xi-save {
@@ -948,10 +964,21 @@ select option {
     border-bottom: 0;
   }
 
-  .app-table--players td:nth-child(1)::before { content: "Nimi"; }
-  .app-table--players td:nth-child(2)::before { content: "Pelipaikka"; }
-  .app-table--players td:nth-child(3)::before { content: "Joukkue"; }
-  .app-table--players td:nth-child(4)::before { content: "Arvo"; }
+  .app-table--players td:nth-child(1)::before {
+    content: "Nimi";
+  }
+
+  .app-table--players td:nth-child(2)::before {
+    content: "Pelipaikka";
+  }
+
+  .app-table--players td:nth-child(3)::before {
+    content: "Joukkue";
+  }
+
+  .app-table--players td:nth-child(4)::before {
+    content: "Arvo";
+  }
 
   .app-table--players td::before {
     color: rgba(229, 231, 235, 0.65);
@@ -1019,10 +1046,21 @@ select option {
     border-bottom: 0;
   }
 
-  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(1)::before { content: "Kierros"; }
-  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(2)::before { content: "ID"; }
-  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(3)::before { content: "Ottelu"; }
-  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(4)::before { content: "Aika"; }
+  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(1)::before {
+    content: "Kierros";
+  }
+
+  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(2)::before {
+    content: "ID";
+  }
+
+  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(3)::before {
+    content: "Ottelu";
+  }
+
+  table.app-table.app-table--fx tr:not(:has(td[colspan])) td:nth-child(4)::before {
+    content: "Aika";
+  }
 
   table.app-table.app-table--fx tr:not(:has(td[colspan])) td {
     display: grid !important;
@@ -1637,11 +1675,30 @@ select option {
     gap: var(--gapRow);
   }
 
-  .pitch-row.pitch-cols-1 { grid-template-columns: repeat(1, var(--slotW)); --gapRow: 14px; }
-  .pitch-row.pitch-cols-2 { grid-template-columns: repeat(2, var(--slotW)); --gapRow: 14px; }
-  .pitch-row.pitch-cols-3 { grid-template-columns: repeat(3, var(--slotW)); --gapRow: 12px; }
-  .pitch-row.pitch-cols-4 { grid-template-columns: repeat(4, var(--slotW)); --gapRow: 10px; }
-  .pitch-row.pitch-cols-5 { grid-template-columns: repeat(5, var(--slotW)); --gapRow: 6px; }
+  .pitch-row.pitch-cols-1 {
+    grid-template-columns: repeat(1, var(--slotW));
+    --gapRow: 14px;
+  }
+
+  .pitch-row.pitch-cols-2 {
+    grid-template-columns: repeat(2, var(--slotW));
+    --gapRow: 14px;
+  }
+
+  .pitch-row.pitch-cols-3 {
+    grid-template-columns: repeat(3, var(--slotW));
+    --gapRow: 12px;
+  }
+
+  .pitch-row.pitch-cols-4 {
+    grid-template-columns: repeat(4, var(--slotW));
+    --gapRow: 10px;
+  }
+
+  .pitch-row.pitch-cols-5 {
+    grid-template-columns: repeat(5, var(--slotW));
+    --gapRow: 6px;
+  }
 
   .slot {
     width: var(--slotW);
@@ -1802,3 +1859,13 @@ select option {
   }
 }
 
+.starting-star-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+  width: 100%;
+  min-width: 0;
+}
