@@ -629,7 +629,7 @@ export const StartingXI: FC<{
               </button>
             </div>
 
-            <div className="star-player-controls">
+            <div className="star-player-controls" style={{ display: "flex", justifyContent: "flex-end" }}>
               <label className="star-pick">
                 <span className="star-pick-label">DEF ★</span>
                 <select
