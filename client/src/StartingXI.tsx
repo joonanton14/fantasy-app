@@ -584,7 +584,7 @@ export const StartingXI: FC<{
                 Peru vaihto
               </button>
             )}
-            <div className="star-picks">
+            <div className="star-player-controls">
               <label className="star-pick">
                 <span className="star-pick-label">DEF ★</span>
                 <select
