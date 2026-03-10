@@ -1869,3 +1869,23 @@ select option {
   width: 100%;
   min-width: 0;
 }
+
+.star-player-controls {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .starting-xi-controls {
+    justify-content: center;
+  }
+
+  .star-player-controls {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+  }
+}
