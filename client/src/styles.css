@@ -1081,17 +1081,16 @@ select option {
   .app-table-wrap--players {
     width: 100%;
     max-width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    border-radius: 14px;
+    overflow-x: hidden;
+    border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .app-table--players {
     width: 100%;
-    min-width: 520px;
+    min-width: 0;
+    table-layout: fixed;
     border-collapse: collapse;
-    border-spacing: 0;
     background: rgba(3, 7, 18, 0.35);
   }
 
@@ -1105,28 +1104,50 @@ select option {
 
   .app-table--players tr {
     display: table-row;
-    background: transparent;
-    border: 0;
   }
 
   .app-table--players th,
   .app-table--players td {
     display: table-cell;
-    padding: 8px 10px;
-    font-size: 12px;
-    line-height: 1.2;
+    padding: 6px 4px;
+    font-size: 10px;
+    line-height: 1.15;
     white-space: nowrap;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     overflow: hidden;
     text-overflow: ellipsis;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .app-table--players th {
-    font-size: 11px;
+    font-size: 9px;
+    letter-spacing: 0.2px;
+    padding: 6px 4px;
   }
 
   .app-table--players td::before {
     content: none !important;
+  }
+
+  .app-table--players th:nth-child(1),
+  .app-table--players td:nth-child(1) {
+    width: 34%;
+  }
+
+  .app-table--players th:nth-child(2),
+  .app-table--players td:nth-child(2) {
+    width: 16%;
+    text-align: center;
+  }
+
+  .app-table--players th:nth-child(3),
+  .app-table--players td:nth-child(3) {
+    width: 30%;
+  }
+
+  .app-table--players th:nth-child(4),
+  .app-table--players td:nth-child(4) {
+    width: 20%;
+    text-align: right;
   }
 }
 
