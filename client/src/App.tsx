@@ -26,6 +26,11 @@ type SavedTeamData = {
   squadIds?: number[];
   startingXIIds?: number[];
   benchIds?: number[];
+  starPlayerIds?: {
+    DEF?: number | null;
+    MID?: number | null;
+    FWD?: number | null;
+  };
 };
 
 const INITIAL_BUDGET = 100;
@@ -61,7 +66,11 @@ export default function App() {
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
   const [fixturesErr, setFixturesErr] = useState<string | null>(null);
   const [loadingFixtures, setLoadingFixtures] = useState(false);
-
+  const [savedStarPlayerIds, setSavedStarPlayerIds] = useState<{
+    DEF?: number | null;
+    MID?: number | null;
+    FWD?: number | null;
+  }>({});
   const [teamViewTab, setTeamViewTab] =
     useState<"startingXI" | "players" | "leaderboard" | "fixtures" | "transfers">("startingXI");
 
@@ -197,7 +206,7 @@ export default function App() {
 
         const formation = (data?.formation ?? "4-4-2") as FormationKey;
         setSavedFormation(formation);
-
+        setSavedStarPlayerIds(data?.starPlayerIds ?? {});
         const squadIds = data?.squadIds ?? [];
         const xiIds = data?.startingXIIds ?? [];
         const benchIds = data?.benchIds ?? [];
@@ -274,7 +283,7 @@ export default function App() {
 
         const formation = (data?.formation ?? "4-4-2") as FormationKey;
         setSavedFormation(formation);
-
+        setSavedStarPlayerIds(data?.starPlayerIds ?? {});
         const squadIds = data?.squadIds ?? [];
         const xiIds = data?.startingXIIds ?? [];
         const benchIds = data?.benchIds ?? [];
@@ -439,14 +448,23 @@ export default function App() {
     } as any);
   }
 
-  const saveXI = async (payload: { startingXI: Player[]; bench: Player[]; formation: FormationKey }) => {
+  const saveXI = async (payload: {
+    startingXI: Player[];
+    bench: Player[];
+    formation: FormationKey;
+    starPlayerIds: {
+      DEF: number | null;
+      MID: number | null;
+      FWD: number | null;
+    };
+  }) => {
     const xi = payload.startingXI;
     const b = payload.bench;
 
     setStartingXI(xi);
     setBench(b);
     setSavedFormation(payload.formation);
-
+    setSavedStarPlayerIds(payload.starPlayerIds);
     const squadIds =
       squad.length === 15
         ? squad.map((p) => p.id)
@@ -457,6 +475,7 @@ export default function App() {
       squadIds,
       startingXIIds: xi.map((p) => p.id),
       benchIds: b.map((p) => p.id),
+      starPlayerIds: payload.starPlayerIds,
     } as any);
   };
 
@@ -554,12 +573,19 @@ export default function App() {
                     initialXI={startingXI}
                     initialBench={bench}
                     initialFormation={savedFormation}
+                    initialStarPlayerIds={savedStarPlayerIds}
                     budget={INITIAL_BUDGET}
                     readOnly={false}
                     onSave={async (p) => {
-                      await saveXI({ formation: p.formation, startingXI: p.startingXI, bench: p.bench });
+                      await saveXI({
+                        formation: p.formation,
+                        startingXI: p.startingXI,
+                        bench: p.bench,
+                        starPlayerIds: p.starPlayerIds,
+                      });
                     }}
                   />
+
                 </div>
               ) : teamViewTab === "fixtures" ? (
                 <div>

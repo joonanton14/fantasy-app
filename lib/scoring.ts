@@ -2,9 +2,16 @@ export type Position = "GK" | "DEF" | "MID" | "FWD";
 
 export type PlayerLite = { id: number; position: Position };
 
+export type StarPlayers = {
+  DEF?: number | null;
+  MID?: number | null;
+  FWD?: number | null;
+};
+
 export type TeamData = {
   startingXIIds: number[];
   benchIds: number[];
+  starPlayerIds?: StarPlayers;
 };
 
 export type MinutesBucket = "0" | "1_59" | "60+";
@@ -46,32 +53,26 @@ function played(ev?: PlayerEventInput | null) {
 export function calcPoints(pos: Position, ev: PlayerEventInput): number {
   let pts = 0;
 
-  // minutes played
   if (ev.minutes === "1_59") pts += 1;
   if (ev.minutes === "60+") pts += 2;
 
-  // goals
   if (ev.goals > 0) {
     if (pos === "GK") pts += ev.goals * 10;
     else if (pos === "DEF") pts += ev.goals * 6;
     else if (pos === "MID") pts += ev.goals * 5;
-    else pts += ev.goals * 4; // FWD
+    else pts += ev.goals * 4;
   }
 
-  // assists
   pts += ev.assists * 3;
 
-  // clean sheets
   if (ev.cleanSheet) {
     if (pos === "GK" || pos === "DEF") pts += 4;
     else if (pos === "MID") pts += 1;
   }
 
-  // pens
   pts += ev.penSaved * (pos === "GK" ? 3 : 0);
   pts += ev.penMissed * -2;
 
-  // discipline / misc
   pts += ev.yellow * -1;
   pts += ev.red * -3;
   pts += ev.ownGoals * -2;
@@ -79,10 +80,31 @@ export function calcPoints(pos: Position, ev: PlayerEventInput): number {
   return pts;
 }
 
+function applyStarMultiplier(
+  basePoints: number,
+  playerId: number,
+  finalPos: Position,
+  stars: StarPlayers
+): number {
+  const starId =
+    finalPos === "DEF"
+      ? stars.DEF
+      : finalPos === "MID"
+        ? stars.MID
+        : finalPos === "FWD"
+          ? stars.FWD
+          : null;
+
+  if (starId !== playerId) return basePoints;
+  return Math.round(basePoints * 1.5);
+}
+
 type Counts = { GK: number; DEF: number; MID: number; FWD: number };
+
 function emptyCounts(): Counts {
   return { GK: 0, DEF: 0, MID: 0, FWD: 0 };
 }
+
 function addCount(c: Counts, pos: Position, delta: number) {
   c[pos] += delta;
 }
@@ -108,11 +130,11 @@ export function scoreTeamForGameWithAutosub(args: {
   eventsById: Record<string, PlayerEventInput>;
 }) {
   const { team, playersById, eventsById } = args;
-
+  const starPlayerIds = team.starPlayerIds ?? {};
   const starters = team.startingXIIds ?? [];
   const bench = team.benchIds ?? [];
 
-  const usedSubs = new Set<number>()
+  const usedSubs = new Set<number>();
   const subsOut = new Set<number>();
   let total = 0;
 
@@ -124,13 +146,10 @@ export function scoreTeamForGameWithAutosub(args: {
   const getEv = (id: number) => eventsById[String(id)];
   const getPos = (id: number) => playersById.get(id)?.position ?? null;
 
-  // Identify starter GK (should be exactly one in valid teams)
   const starterGK = starters.find((id) => getPos(id) === "GK") ?? null;
-
-  // Bench GK is the GK in bench (if any)
   const benchGK = bench.find((id) => getPos(id) === "GK") ?? null;
 
-  // --- 1) Handle GK slot ---
+  // GK slot
   if (starterGK) {
     const ev = getEv(starterGK);
     if (played(ev)) {
@@ -138,11 +157,9 @@ export function scoreTeamForGameWithAutosub(args: {
       addCount(counts, "GK", 1);
       total += calcPoints("GK", ev);
     } else {
-      // starter GK did not play -> try bench GK
       if (benchGK) {
         const bev = getEv(benchGK);
         if (played(bev)) {
-          // sub in bench GK
           usedSubs.add(benchGK);
           subsOut.add(starterGK);
 
@@ -150,19 +167,15 @@ export function scoreTeamForGameWithAutosub(args: {
           addCount(counts, "GK", 1);
           total += calcPoints("GK", bev);
 
-          // move starter GK "to bench" (conceptually) -> put them into the GK bench slot
-          // and remove benchGK from bench
           for (let i = 0; i < finalBench.length; i++) {
             if (finalBench[i] === benchGK) finalBench[i] = starterGK;
           }
-        } else {
-          // no GK played -> no GK points
         }
       }
     }
   }
 
-  // --- 2) Process outfield starters: keep those who played, track DNP by position ---
+  // Outfield starters
   const dnpOutfield: Record<"DEF" | "MID" | "FWD", number[]> = { DEF: [], MID: [], FWD: [] };
 
   for (const sid of starters) {
@@ -173,13 +186,15 @@ export function scoreTeamForGameWithAutosub(args: {
     if (played(ev)) {
       finalXI.push(sid);
       addCount(counts, pos, 1);
-      total += calcPoints(pos, ev);
+
+      const base = calcPoints(pos, ev);
+      total += applyStarMultiplier(base, sid, pos, starPlayerIds);
     } else {
       dnpOutfield[pos].push(sid);
     }
   }
 
-  // --- 3) Sub in bench outfield in bench order, respecting formation max and min reachability ---
+  // Bench autosubs
   const benchOutfield = bench.filter((id) => getPos(id) !== "GK");
 
   for (const bid of benchOutfield) {
@@ -194,19 +209,14 @@ export function scoreTeamForGameWithAutosub(args: {
     const missingNow = dnpOutfield.DEF.length + dnpOutfield.MID.length + dnpOutfield.FWD.length;
     if (missingNow <= 0) break;
 
-    // try add this bench player to XI
     const next: Counts = { ...counts };
     addCount(next, pos, 1);
 
-    // must not violate max limits
     if (!withinMax(next)) continue;
 
-    // must still be possible to reach minimums with remaining subs
     const remainingSlots = missingNow - 1;
     if (!canReachMins(next, remainingSlots)) continue;
 
-    // choose which DNP starter slot gets replaced:
-    // prefer same position; otherwise fallback order
     const order =
       pos === "DEF"
         ? (["DEF", "MID", "FWD"] as const)
@@ -226,7 +236,6 @@ export function scoreTeamForGameWithAutosub(args: {
     const outId = dnpOutfield[replacedPos].shift()!;
     subsOut.add(outId);
 
-    // Commit the sub:
     usedSubs.add(bid);
     finalXI.push(bid);
 
@@ -234,10 +243,9 @@ export function scoreTeamForGameWithAutosub(args: {
     counts.MID = next.MID;
     counts.FWD = next.FWD;
 
-    total += calcPoints(pos, ev);
+    const base = calcPoints(pos, ev);
+    total += applyStarMultiplier(base, bid, pos, starPlayerIds);
 
-    // Conceptual "move outId to bench" and remove bid from bench:
-    // replace the bench slot containing bid with outId
     for (let i = 0; i < finalBench.length; i++) {
       if (finalBench[i] === bid) {
         finalBench[i] = outId;
@@ -246,8 +254,6 @@ export function scoreTeamForGameWithAutosub(args: {
     }
   }
 
-  // final XI should be <= 11 depending on whether user saved correctly.
-  // If you want strict behavior: only count first 11 (and ignore extras). But ideally it’s always 11.
   const finalStartingXIIds = finalXI.slice(0, 11);
   const finalBenchIds = finalBench;
 

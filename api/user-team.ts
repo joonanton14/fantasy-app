@@ -4,12 +4,27 @@ import { getSessionFromReq } from "../lib/session";
 
 type FormationKey = "3-5-2" | "3-4-3" | "4-4-2" | "4-3-3" | "4-5-1" | "5-3-2" | "5-4-1";
 
+type StarPlayers = {
+  DEF?: number | null;
+  MID?: number | null;
+  FWD?: number | null;
+};
+
 type SavedTeam = {
   squadIds?: number[];
   startingXIIds?: number[];
   benchIds?: number[];
   formation?: FormationKey;
+  starPlayerIds?: StarPlayers;
 };
+
+function isPosKey(v: unknown): v is "DEF" | "MID" | "FWD" {
+  return v === "DEF" || v === "MID" || v === "FWD";
+}
+
+function isNullablePositiveInt(v: unknown): v is number | null {
+  return v === null || (typeof v === "number" && Number.isInteger(v) && v > 0);
+}
 
 function isInt(n: unknown): n is number {
   return typeof n === "number" && Number.isInteger(n);
@@ -42,12 +57,38 @@ function validateTeamPayload(body: any): { ok: true; data: SavedTeam } | { ok: f
   const benchIds = data.benchIds;
   const formation = data.formation;
 
-  const hasAnything =
-    squadIds !== undefined || startingXIIds !== undefined || benchIds !== undefined || formation !== undefined;
-  if (!hasAnything) return { ok: false, error: "Nothing to save" };
-
+  const starPlayerIds = data.starPlayerIds;
   const out: SavedTeam = {};
 
+  const hasAnything =
+    squadIds !== undefined ||
+    startingXIIds !== undefined ||
+    benchIds !== undefined ||
+    formation !== undefined ||
+    starPlayerIds !== undefined;
+
+  if (starPlayerIds !== undefined) {
+    if (!starPlayerIds || typeof starPlayerIds !== "object" || Array.isArray(starPlayerIds)) {
+      return { ok: false, error: "starPlayerIds must be an object" };
+    }
+
+    const outStars: StarPlayers = {};
+
+    for (const [k, v] of Object.entries(starPlayerIds)) {
+      if (!isPosKey(k)) return { ok: false, error: "Invalid starPlayerIds key" };
+
+      const parsed = v === "" ? null : v;
+      const num = parsed === null ? null : Number(parsed);
+
+      if (!(parsed === null || (typeof num === "number" && Number.isInteger(num) && num > 0))) {
+      return { ok: false, error: `starPlayerIds.${k} must be a positive integer or null` };
+    }
+
+      outStars[k] = num;
+    }
+
+    out.starPlayerIds = outStars;
+  }
   if (squadIds !== undefined) {
     if (!Array.isArray(squadIds)) return { ok: false, error: "squadIds must be an array" };
 
@@ -105,6 +146,17 @@ function validateTeamPayload(body: any): { ok: true; data: SavedTeam } | { ok: f
     const all = [...(out.startingXIIds ?? []), ...(out.benchIds ?? [])];
     for (const id of all) {
       if (!squadSet.has(id)) return { ok: false, error: "startingXIIds/benchIds must be within squadIds" };
+    }
+  }
+
+  if (out.starPlayerIds && out.startingXIIds) {
+    const xiSet = new Set(out.startingXIIds);
+
+    for (const [pos, id] of Object.entries(out.starPlayerIds) as Array<["DEF" | "MID" | "FWD", number | null | undefined]>) {
+      if (id == null) continue;
+      if (!xiSet.has(id)) {
+        return { ok: false, error: `starPlayerIds.${pos} must be in startingXIIds` };
+      }
     }
   }
 
