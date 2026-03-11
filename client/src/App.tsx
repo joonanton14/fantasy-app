@@ -31,12 +31,20 @@ type SavedTeamData = {
     MID?: number | null;
     FWD?: number | null;
   };
+  transfers?: {
+    round?: number;
+    used?: number;
+    limit?: number;
+  };
+};
+
+type SavedTeamResponse = {
+  data?: SavedTeamData | null;
 };
 
 const INITIAL_BUDGET = 100;
 
 export default function App() {
-  // -------------------- STATE --------------------
   const [authChecked, setAuthChecked] = useState(false);
 
   type LeaderboardRow = { username: string; total: number; last: number };
@@ -78,6 +86,12 @@ export default function App() {
   const [filterPositions, setFilterPositions] = useState<Set<"GK" | "DEF" | "MID" | "FWD">>(
     new Set(["GK", "DEF", "MID", "FWD"])
   );
+
+  const [savedTransfers, setSavedTransfers] = useState<{
+    round?: number;
+    used?: number;
+    limit?: number;
+  }>({});
 
   const [loadingSaved, setLoadingSaved] = useState(false);
 
@@ -145,7 +159,6 @@ export default function App() {
     async function bootstrap() {
       setError(null);
 
-      // Optional: quick UI hydration from localStorage (does NOT decide auth)
       const saved = localStorage.getItem("session");
       if (saved) {
         try {
@@ -160,10 +173,8 @@ export default function App() {
       }
 
       try {
-        // 1) Verify server session (cookie)
         const meRes = await apiCall("/auth/me", { method: "GET" });
         if (!meRes.ok) {
-          // don't “force logout” here if you don't want—just show login screen as not logged in
           if (!cancelled) {
             setIsLoggedIn(false);
             setAuthChecked(true);
@@ -175,7 +186,7 @@ export default function App() {
         if (cancelled) return;
 
         setIsLoggedIn(true);
-        setUserId(null); // /auth/me doesn't include id (fine)
+        setUserId(null);
         setUserName(me.name ?? null);
         setIsAdmin(!!me.isAdmin);
         setPage(me.isAdmin ? "admin" : "builder");
@@ -185,11 +196,10 @@ export default function App() {
           JSON.stringify({ userId: null, userName: me.name, isAdmin: !!me.isAdmin })
         );
 
-        // 2) Load base data (players, teams) + saved team
         const [playersRes, teamsRes, savedTeam] = await Promise.all([
           apiCall("/players", { method: "GET" }),
           apiCall("/teams", { method: "GET" }),
-          loadSavedTeam(), // GET /user-team (cookie-based)
+          loadSavedTeam(),
         ]);
 
         if (cancelled) return;
@@ -199,14 +209,15 @@ export default function App() {
         setPlayers(playersData);
         setTeams(teamsData);
 
-        // 3) Apply saved team -> state
-        const data = (savedTeam ?? null) as SavedTeamData | null;
+        const data = ((savedTeam as SavedTeamResponse | null)?.data ?? null) as SavedTeamData | null;
         const byId = new Map(playersData.map((p) => [p.id, p] as const));
         const mapIds = (ids: number[]) => ids.map((id) => byId.get(id)).filter(Boolean) as Player[];
 
         const formation = (data?.formation ?? "4-4-2") as FormationKey;
         setSavedFormation(formation);
         setSavedStarPlayerIds(data?.starPlayerIds ?? {});
+        setSavedTransfers(data?.transfers ?? {});
+
         const squadIds = data?.squadIds ?? [];
         const xiIds = data?.startingXIIds ?? [];
         const benchIds = data?.benchIds ?? [];
@@ -230,10 +241,9 @@ export default function App() {
           }
           return merged;
         });
-      } catch (e) {
+      } catch {
         if (!cancelled) {
           setError("Alustus epäonnistui. Päivitä sivu tai kirjaudu uudelleen.");
-          // keep whatever UI state you had; no forced logout
         }
       } finally {
         if (!cancelled) setAuthChecked(true);
@@ -259,7 +269,7 @@ export default function App() {
           setFixtures((json.fixtures ?? []) as Fixture[]);
         }
       } catch {
-        // keep silent here, backend save lock still protects
+        // keep silent
       }
     }
 
@@ -269,6 +279,7 @@ export default function App() {
       cancelled = true;
     };
   }, [isLoggedIn]);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -298,15 +309,18 @@ export default function App() {
     async function run() {
       setLoadingSaved(true);
       try {
-        const data = (await loadSavedTeam()) as SavedTeamData | null;
+        const savedTeam = await loadSavedTeam();
         if (cancelled) return;
 
+        const data = ((savedTeam as SavedTeamResponse | null)?.data ?? null) as SavedTeamData | null;
         const byId = new Map(players.map((p) => [p.id, p]));
         const mapIds = (ids: number[]) => ids.map((id) => byId.get(id)).filter(Boolean) as Player[];
 
         const formation = (data?.formation ?? "4-4-2") as FormationKey;
         setSavedFormation(formation);
         setSavedStarPlayerIds(data?.starPlayerIds ?? {});
+        setSavedTransfers(data?.transfers ?? {});
+
         const squadIds = data?.squadIds ?? [];
         const xiIds = data?.startingXIIds ?? [];
         const benchIds = data?.benchIds ?? [];
@@ -331,6 +345,7 @@ export default function App() {
           return merged;
         });
       } catch {
+        // ignore
       } finally {
         if (!cancelled) setLoadingSaved(false);
       }
@@ -400,6 +415,7 @@ export default function App() {
   }, [fixtures, currentRound]);
 
   const isTeamLocked = firstKickoffMs != null && Date.now() >= firstKickoffMs;
+
   async function loadLeaderboard() {
     setLoadingLb(true);
     try {
@@ -442,7 +458,6 @@ export default function App() {
     setIsLoggedIn(true);
     setPage(isAdmin ? "admin" : "builder");
 
-    // only store if userId looks valid
     if (Number.isFinite(userId) && userId > 0) {
       localStorage.setItem("session", JSON.stringify({ userId, userName, isAdmin }));
     }
@@ -451,7 +466,7 @@ export default function App() {
   async function handleLogout() {
     try {
       await apiCall("/auth/logout", { method: "POST" });
-    } catch { }
+    } catch {}
 
     setIsLoggedIn(false);
     setUserId(null);
@@ -462,6 +477,7 @@ export default function App() {
     setSquad([]);
     setStartingXI([]);
     setBench([]);
+    setSavedTransfers({});
 
     setPage("builder");
     setTeamViewTab("startingXI");
@@ -498,20 +514,21 @@ export default function App() {
 
     setFilterPositions((prev) => {
       const isOnlyThis = prev.size === 1 && prev.has(pos);
-
-      // If already filtering only this position -> reset to all
       if (isOnlyThis) return new Set(ALL);
-
-      // Otherwise -> filter to only this position
       return new Set([pos]);
     });
   }
 
   async function saveSquad(nextSquad: Player[]) {
-    setSquad(nextSquad);
-    await saveStartingXI({
+    const res = await saveStartingXI({
       squadIds: nextSquad.map((p) => p.id),
     } as any);
+
+    setSquad(nextSquad);
+
+    if (res?.data?.transfers) {
+      setSavedTransfers(res.data.transfers);
+    }
   }
 
   const saveXI = async (payload: {
@@ -527,22 +544,27 @@ export default function App() {
     const xi = payload.startingXI;
     const b = payload.bench;
 
-    setStartingXI(xi);
-    setBench(b);
-    setSavedFormation(payload.formation);
-    setSavedStarPlayerIds(payload.starPlayerIds);
     const squadIds =
       squad.length === 15
         ? squad.map((p) => p.id)
         : Array.from(new Set([...xi.map((p) => p.id), ...b.map((p) => p.id)]));
 
-    await saveStartingXI({
+    const res = await saveStartingXI({
       formation: payload.formation,
       squadIds,
       startingXIIds: xi.map((p) => p.id),
       benchIds: b.map((p) => p.id),
       starPlayerIds: payload.starPlayerIds,
     } as any);
+
+    setStartingXI(xi);
+    setBench(b);
+    setSavedFormation(payload.formation);
+    setSavedStarPlayerIds(payload.starPlayerIds);
+
+    if (res?.data?.transfers) {
+      setSavedTransfers(res.data.transfers);
+    }
   };
 
   if (!authChecked) {
@@ -624,6 +646,8 @@ export default function App() {
                   squad={squad}
                   budget={INITIAL_BUDGET}
                   isLocked={isTeamLocked}
+                  transferLimit={savedTransfers.limit ?? 3}
+                  transferUsed={savedTransfers.used ?? 0}
                   onCancel={() => setTeamViewTab("startingXI")}
                   onSave={async ({ squad }) => {
                     try {
@@ -664,7 +688,6 @@ export default function App() {
                       }
                     }}
                   />
-
                 </div>
               ) : teamViewTab === "fixtures" ? (
                 <div>
@@ -788,7 +811,6 @@ export default function App() {
                   <div className="app-section" style={{ marginBottom: 12 }}>
                     <h2 className="app-h2">Suodattimet</h2>
 
-                    {/* Admin-style top row */}
                     <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
                       <input
                         className="app-btn"
@@ -835,7 +857,6 @@ export default function App() {
                       </select>
                     </div>
 
-                    {/* Keep your position buttons (user-only feature) */}
                     <div className="filter-row">
                       <label>Pelipaikat:</label>
                       <div className="position-buttons">

@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { redis, PREFIX } from "../lib/redis";
 import { getSessionFromReq } from "../lib/session";
-import { isTeamChangesLocked } from "../server/src/data";
+import { fixtures, getCurrentEditableRound, isTeamChangesLocked } from "../server/src/data";
 
 type FormationKey = "3-5-2" | "3-4-3" | "4-4-2" | "4-3-3" | "4-5-1" | "5-3-2" | "5-4-1";
 
@@ -11,12 +11,19 @@ type StarPlayers = {
   FWD?: number | null;
 };
 
+type TransferState = {
+  round: number;
+  used: number;
+  limit: number;
+};
+
 type SavedTeam = {
   squadIds?: number[];
   startingXIIds?: number[];
   benchIds?: number[];
   formation?: FormationKey;
   starPlayerIds?: StarPlayers;
+  transfers?: TransferState;
 };
 
 function isPosKey(v: unknown): v is "DEF" | "MID" | "FWD" {
@@ -173,31 +180,82 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const key = `${PREFIX}:team:${username}`;
 
     if (req.method === "GET") {
-      const data = await redis.get(key);
-      return res.status(200).json({ data: data ?? null });
+      const data = ((await redis.get<SavedTeam>(key)) ?? null) as SavedTeam | null;
+
+      const currentRound = getCurrentEditableRound();
+
+      if (!data || currentRound == null) {
+        return res.status(200).json({ data: data ?? null });
+      }
+
+      const normalized: SavedTeam = {
+        ...data,
+        transfers: normalizeTransfers(data.transfers, currentRound),
+      };
+
+      return res.status(200).json({ data: normalized });
     }
 
     if (req.method === "POST") {
       const approxSize = JSON.stringify(req.body ?? {}).length;
       if (approxSize > 10_000) return res.status(413).json({ error: "Payload too large" });
-      if (isTeamChangesLocked()) {
-        return res.status(403).json({
-          error: "Team changes are locked after the first kickoff of the round",
-        });
-      }
-      
+
       const result = validateTeamPayload(req.body);
 
       if (!result.ok) {
         return res.status(400).json({ error: ("error" in result ? result.error : "Invalid payload") });
       }
 
-      // merge with existing so partial updates don't erase other parts
       const prev = ((await redis.get<SavedTeam>(key)) ?? {}) as SavedTeam;
-      const next: SavedTeam = { ...prev, ...result.data };
+      const nextPartial = result.data;
+
+      const currentRound = getCurrentEditableRound();
+
+      if (currentRound == null) {
+        return res.status(500).json({ error: "Current round unavailable" });
+      }
+
+      const prevTransfers = normalizeTransfers(prev.transfers, currentRound);
+
+      const oldSquadIds = prev.squadIds ?? [];
+      const newSquadIds = nextPartial.squadIds ?? oldSquadIds;
+
+      const squadChanged = !sameIds(oldSquadIds, newSquadIds);
+
+      if (squadChanged && isTeamChangesLocked()) {
+        return res.status(403).json({
+          error: "Team changes are locked after the first kickoff of the round",
+        });
+      }
+
+      let transfersMade = 0;
+
+      if (squadChanged) {
+        transfersMade = countTransfers(oldSquadIds, newSquadIds);
+
+        if (prevTransfers.used + transfersMade > prevTransfers.limit) {
+          return res.status(400).json({
+            error: `Transfer limit reached. Remaining: ${Math.max(0, prevTransfers.limit - prevTransfers.used)}`,
+          });
+        }
+      }
+
+      const next: SavedTeam = {
+        ...prev,
+        ...nextPartial,
+        transfers: {
+          round: currentRound,
+          used: prevTransfers.used + transfersMade,
+          limit: 3,
+        },
+      };
 
       await redis.set(key, next);
-      return res.status(200).json({ ok: true });
+
+      return res.status(200).json({
+        ok: true,
+        data: next,
+      });
     }
 
     return res.status(405).json({ error: "Method not allowed" });
@@ -206,4 +264,53 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const message = e instanceof Error ? e.message : "Server error";
     return res.status(500).json({ error: message });
   }
+}
+
+function normalizeTransfers(
+  transfers: Partial<TransferState> | undefined,
+  currentRound: number
+): TransferState {
+  const round = transfers?.round;
+  const used = transfers?.used ?? 0;
+  const limit = transfers?.limit ?? 3;
+
+  if (round !== currentRound) {
+    return {
+      round: currentRound,
+      used: 0,
+      limit: 3,
+    };
+  }
+
+  return {
+    round: currentRound,
+    used,
+    limit,
+  };
+}
+
+function countTransfers(oldSquadIds: number[], newSquadIds: number[]) {
+  const oldSet = new Set(oldSquadIds);
+  const newSet = new Set(newSquadIds);
+
+  const outgoing = oldSquadIds.filter((id) => !newSet.has(id));
+  const incoming = newSquadIds.filter((id) => !oldSet.has(id));
+
+  if (outgoing.length !== incoming.length) {
+    throw new Error("Invalid transfer set");
+  }
+
+  return outgoing.length;
+}
+
+function sameIds(a: number[] = [], b: number[] = []) {
+  if (a.length !== b.length) return false;
+  const as = [...a].sort((x, y) => x - y);
+  const bs = [...b].sort((x, y) => x - y);
+
+  for (let i = 0; i < as.length; i++) {
+    if (as[i] !== bs[i]) return false;
+  }
+
+  return true;
 }

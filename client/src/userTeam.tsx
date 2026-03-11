@@ -12,23 +12,45 @@ export type SavedTeamData = {
     MID?: number | null;
     FWD?: number | null;
   };
+  transfers?: {
+    round?: number;
+    used?: number;
+    limit?: number;
+  };
 };
 
-export async function loadSavedTeam(): Promise<SavedTeamData | null> {
+export type LoadSavedTeamResponse = {
+  data: SavedTeamData | null;
+};
+
+export type SaveStartingXIResponse = {
+  ok: true;
+  data: SavedTeamData;
+};
+
+export async function loadSavedTeam(): Promise<LoadSavedTeamResponse> {
   const res = await apiCall("/user-team", { method: "GET" });
-  if (!res.ok) return null;
   const json = await res.json();
-  return (json?.data ?? null) as SavedTeamData | null;
+
+  if (!res.ok) {
+    throw new Error((json as any)?.error || "Failed to load team");
+  }
+
+  return json as LoadSavedTeamResponse;
 }
 
-export async function saveStartingXI(data: SavedTeamData): Promise<void> {
+export async function saveStartingXI(data: SavedTeamData): Promise<SaveStartingXIResponse> {
   const res = await apiCall("/user-team", {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ data }),
   });
 
+  const json = await res.json().catch(() => ({}));
+
   if (!res.ok) {
-    const j = await res.json().catch(() => ({}));
-    throw new Error((j as any)?.error || "Failed to save team");
+    throw new Error((json as any)?.error || "Failed to save team");
   }
+
+  return json as SaveStartingXIResponse;
 }

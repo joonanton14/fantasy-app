@@ -34,6 +34,8 @@ export default function SquadBuilder(props: {
   initialSquad?: Player[];
   budget: number;
   isLocked?: boolean;
+  transferLimit: number;
+  transferUsed: number;
   onSave: (squad: Player[]) => void;
 }) {
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -44,6 +46,20 @@ export default function SquadBuilder(props: {
     for (const s of slots) map[s.id] = null;
     return map;
   });
+
+  function countTransfers(oldSquadIds: number[], newSquadIds: number[]) {
+    const oldSet = new Set(oldSquadIds);
+    const newSet = new Set(newSquadIds);
+
+    const outgoing = oldSquadIds.filter((id) => !newSet.has(id));
+    const incoming = newSquadIds.filter((id) => !oldSet.has(id));
+
+    if (outgoing.length !== incoming.length) {
+      return 999;
+    }
+
+    return outgoing.length;
+  }
 
   const [picker, setPicker] = useState<{ slotId: string; pos: Position } | null>(null);
   const [q, setQ] = useState("");
@@ -82,7 +98,25 @@ export default function SquadBuilder(props: {
 
   const totalValue = useMemo(() => picked.reduce((s, p) => s + p.value, 0), [picked]);
   const remainingBudget = props.budget - totalValue;
+  const initialSquadIds = useMemo(
+    () => (props.initialSquad ?? []).map((p) => p.id),
+    [props.initialSquad]
+  );
 
+  const pickedSquadIds = useMemo(
+    () => picked.map((p) => p.id),
+    [picked]
+  );
+
+  const plannedTransfers = useMemo(
+    () => countTransfers(initialSquadIds, pickedSquadIds),
+    [initialSquadIds, pickedSquadIds]
+  );
+
+  const transferLimitValue = props.transferLimit ?? 3;
+  const transferUsedValue = props.transferUsed ?? 0;
+  const remainingTransfers = Math.max(0, transferLimitValue - transferUsedValue);
+  const overTransferLimit = plannedTransfers > remainingTransfers;
   function assignTo(slotId: string, p: Player) {
     if (props.isLocked) return;
 
@@ -223,7 +257,10 @@ export default function SquadBuilder(props: {
     return rows;
   }, [picker, assign, q, props.players, pickedIds, transferBudget, onlySuitable, sortBy, props.teams, pendingRestore]);
 
-  const canSave = picked.length === 15 && remainingBudget >= 0;
+  const canSave =
+    picked.length === 15 &&
+    remainingBudget >= 0 &&
+    !overTransferLimit;
 
   return (
     <div ref={rootRef} className="starting-xi-root squad-builder">
@@ -234,6 +271,24 @@ export default function SquadBuilder(props: {
           <div className="app-muted" style={{ marginBottom: 8 }}>
             Budjetti jäljellä: <b>{remainingBudget.toFixed(1)} M</b>
           </div>
+
+          <div className="app-muted" style={{ marginBottom: 8 }}>
+            Vaihtoja käytetty: <b>{transferUsedValue}</b> / {transferLimitValue}
+          </div>
+
+          <div className="app-muted" style={{ marginBottom: 8 }}>
+            Vaihtoja jäljellä: <b>{remainingTransfers}</b>
+          </div>
+
+          <div className="app-muted" style={{ marginBottom: 8 }}>
+            Suunnitellut vaihdot: <b>{plannedTransfers}</b>
+          </div>
+
+          {overTransferLimit && !props.isLocked && (
+            <div className="starting-xi-warning" role="alert">
+              Voit tehdä enää {remainingTransfers} vaihtoa tällä kierroksella.
+            </div>
+          )}
 
           {props.isLocked && (
             <div className="starting-xi-warning" role="alert">
