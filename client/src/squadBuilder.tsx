@@ -221,11 +221,11 @@ export default function SquadBuilder(props: {
           disabled,
           suitable: !disabled,
           reason: isPickedElsewhere
-            ? "Jo valittu"
+            ? "Valittuna joukkueessa"
             : teamLimitExceeded
               ? "3 pelaajaa jo tästä joukkueesta"
               : tooExpensive
-                ? "Ei riitä budjetti"
+                ? "Ei riittävästi rahaa tähän siirtoon"
                 : null,
         };
       });

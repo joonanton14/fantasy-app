@@ -1973,33 +1973,24 @@ select option {
 
 @media (max-width: 640px) {
   .squad-meta {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 6px;
-    margin: 8px 0 6px;
   }
 
   .squad-meta-pill {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 8px 10px;
-    border-radius: 10px;
+    padding: 7px 8px;
+    border-radius: 9px;
   }
 
   .squad-meta-label {
-    font-size: 10px;
-    letter-spacing: 0.03em;
+    font-size: 9px;
   }
 
   .squad-meta-value {
-    font-size: 15px;
-    line-height: 1;
-    white-space: nowrap;
-    text-align: right;
+    font-size: 13px;
   }
 
   .squad-meta-total {
-    font-size: 11px;
+    font-size: 9px;
   }
 }
