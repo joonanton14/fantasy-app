@@ -399,7 +399,7 @@ export default function SquadBuilder(props: {
               </div>
 
               <div className="app-muted" style={{ marginBottom: 10 }}>
-                Rahaa käytettävissä tähän siirtoon: <b>{transferBudget.toFixed(1)} M</b>
+                Rahaa käytettävissä siirtoon: <b>{transferBudget.toFixed(1)} M</b>
               </div>
 
               <input
