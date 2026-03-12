@@ -117,8 +117,9 @@ export default function SquadBuilder(props: {
   const transferUsedValue = props.transferUsed ?? 0;
   const remainingTransfers = Math.max(0, transferLimitValue - transferUsedValue);
   const overTransferLimit = plannedTransfers > remainingTransfers;
+
   function assignTo(slotId: string, p: Player) {
-    if (props.isLocked) return;
+    if (transfersBlocked) return;
 
     const current = assign[slotId];
 
@@ -143,7 +144,7 @@ export default function SquadBuilder(props: {
   }
 
   function removeFrom(slotId: string) {
-    if (props.isLocked) return;
+    if (transfersBlocked) return;
 
     const removed = assign[slotId];
     if (!removed) return;
@@ -262,6 +263,9 @@ export default function SquadBuilder(props: {
     remainingBudget >= 0 &&
     !overTransferLimit;
 
+  const noTransfersLeft = remainingTransfers <= 0;
+  const transfersBlocked = !props.isLocked && noTransfersLeft;
+
   return (
     <div ref={rootRef} className="starting-xi-root squad-builder">
       <div className="starting-xi-card">
@@ -287,6 +291,12 @@ export default function SquadBuilder(props: {
               Kierroksen ensimmäinen ottelu on alkanut — vaihdot ovat lukittu.
             </div>
           )}
+
+          {noTransfersLeft && !props.isLocked && (
+            <div className="starting-xi-warning" role="alert">
+              Sinulla ei ole enää vaihtoja tälle kierrokselle.
+            </div>
+          )}
         </header>
 
         <div className="pitch">
@@ -304,13 +314,14 @@ export default function SquadBuilder(props: {
                       role="button"
                       tabIndex={0}
                       onClick={() => {
-                        if (props.isLocked) return;
+                        if (transfersBlocked) return;
                         setQ("");
                         setOnlySuitable(false);
                         setSortBy("name");
                         setPendingRestore(null);
                         setPicker({ slotId: s.id, pos: s.position });
                       }}
+
                     >
                       {assigned ? (
                         <div className="player-chip">
@@ -321,9 +332,10 @@ export default function SquadBuilder(props: {
                             type="button"
                             className="remove-slot"
                             title="Poista"
+                            disabled={transfersBlocked}
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (props.isLocked) return;
+                              if (transfersBlocked) return;
                               removeFrom(s.id);
                             }}
                           >
