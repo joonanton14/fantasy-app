@@ -1972,6 +1972,10 @@ select option {
 }
 
 @media (max-width: 640px) {
+  .starting-xi-header {
+    margin-bottom: 12px;
+  }
+
   .starting-xi-header h3 {
     margin-bottom: 8px;
     font-size: 18px;
@@ -1984,24 +1988,25 @@ select option {
   }
 
   .squad-meta-pill {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
     padding: 10px 12px;
     border-radius: 12px;
   }
 
   .squad-meta-label {
-    font-size: 11px;
+    font-size: 10px;
   }
 
   .squad-meta-value {
-    font-size: 17px;
-    text-align: right;
-    white-space: nowrap;
+    font-size: 18px;
   }
 
   .squad-meta-total {
-    font-size: 12px;
+    font-size: 13px;
+  }
+
+  .starting-xi-warning {
+    margin-top: 8px;
+    font-size: 13px;
+    line-height: 1.35;
   }
 }
