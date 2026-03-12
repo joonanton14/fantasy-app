@@ -560,7 +560,7 @@ export const StartingXI: FC<{
               </div>
             </div>
 
-            {!isValid() && <div className="starting-xi-warning" role="alert">Kokoonpano ei ole kelvollinen.</div>}
+            {!isValid() && <div className="starting-xi-warning" role="alert">Kokoonpano ei ole kelvollinen. Lisää pelaajia vaihdot kohdasta</div>}
           </header>
 
           <div className="pitch">
@@ -591,7 +591,7 @@ export const StartingXI: FC<{
 
                     if (missingStars.length > 0) {
                       const ok = window.confirm(
-                        `Tähtipelaaja puuttuu pelipaikoilta: ${missingStars.join(", ")}.\n\nHaluatko tallentaa silti?`
+                        `Tähtipelaaja puuttuu: ${missingStars.join(", ")}.\n\nHaluatko tallentaa silti?`
                       );
                       if (!ok) return;
                     }
@@ -630,7 +630,7 @@ export const StartingXI: FC<{
 
             <div className="star-player-controls">
               <label className="star-pick">
-                <span className="star-pick-label">DEF ★</span>
+                <span className="star-pick-label">P ★</span>
                 <select
                   className="star-pick-select"
                   value={starDEF}
@@ -647,7 +647,7 @@ export const StartingXI: FC<{
               </label>
 
               <label className="star-pick">
-                <span className="star-pick-label">MID ★</span>
+                <span className="star-pick-label">KK ★</span>
                 <select
                   className="star-pick-select"
                   value={starMID}
@@ -664,7 +664,7 @@ export const StartingXI: FC<{
               </label>
 
               <label className="star-pick">
-                <span className="star-pick-label">FWD ★</span>
+                <span className="star-pick-label">H ★</span>
                 <select
                   className="star-pick-select"
                   value={starFWD}

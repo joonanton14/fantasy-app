@@ -36,6 +36,7 @@ export default function SquadBuilder(props: {
   isLocked?: boolean;
   transferLimit: number;
   transferUsed: number;
+  transfersUnlimited?: boolean;
   onSave: (squad: Player[]) => void;
 }) {
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -115,8 +116,18 @@ export default function SquadBuilder(props: {
 
   const transferLimitValue = props.transferLimit ?? 3;
   const transferUsedValue = props.transferUsed ?? 0;
-  const remainingTransfers = Math.max(0, transferLimitValue - transferUsedValue);
-  const overTransferLimit = plannedTransfers > remainingTransfers;
+  const transfersUnlimited = !!props.transfersUnlimited;
+
+  const remainingTransfers = transfersUnlimited
+    ? Infinity
+    : Math.max(0, transferLimitValue - transferUsedValue);
+
+  const overTransferLimit = transfersUnlimited
+    ? false
+    : plannedTransfers > remainingTransfers;
+
+  const noTransfersLeft = !transfersUnlimited && remainingTransfers <= 0;
+  const transfersBlocked = !!props.isLocked || noTransfersLeft;
 
   function assignTo(slotId: string, p: Player) {
     if (transfersBlocked) return;
@@ -263,9 +274,6 @@ export default function SquadBuilder(props: {
     remainingBudget >= 0 &&
     !overTransferLimit;
 
-  const noTransfersLeft = remainingTransfers <= 0;
-  const transfersBlocked = !props.isLocked && noTransfersLeft;
-
   return (
     <div ref={rootRef} className="starting-xi-root squad-builder">
       <div className="starting-xi-card">
@@ -281,7 +289,11 @@ export default function SquadBuilder(props: {
             <div className="squad-meta-pill">
               <span className="squad-meta-label">Vaihdot</span>
               <span className="squad-meta-value">
-                {remainingTransfers} <span className="squad-meta-total">/ {transferLimitValue}</span>
+                {transfersUnlimited ? "Rajattomat" : (
+                  <>
+                    {remainingTransfers} <span className="squad-meta-total">/ {transferLimitValue}</span>
+                  </>
+                )}
               </span>
             </div>
           </div>
@@ -399,7 +411,7 @@ export default function SquadBuilder(props: {
               </div>
 
               <div className="app-muted" style={{ marginBottom: 10 }}>
-                Rahaa käytettävissä siirtoon: <b>{transferBudget.toFixed(1)} M</b>
+                Rahaa käytettävissä: <b>{transferBudget.toFixed(1)} M</b>
               </div>
 
               <input

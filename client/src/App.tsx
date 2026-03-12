@@ -67,9 +67,11 @@ export default function App() {
   const [bench, setBench] = useState<Player[]>([]);
   const [savedFormation, setSavedFormation] = useState<FormationKey>("4-4-2");
 
+  // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+  const beforeFirstDeadline = true; // FIX THIS WHEN GAMES STARTS
+
   const [error, setError] = useState<string | null>(null);
   const [detailPlayer, setDetailPlayer] = useState<Player | null>(null);
-
   type Fixture = { id: number; homeTeamId: number; awayTeamId: number; date: string; round?: number };
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
   const [fixturesErr, setFixturesErr] = useState<string | null>(null);
@@ -603,7 +605,7 @@ export default function App() {
                     className={`app-btn ${teamViewTab === "startingXI" ? "app-btn-active" : ""}`}
                     onClick={() => setTeamViewTab("startingXI")}
                   >
-                    Kokoonpano
+                    Avaus
                   </button>
 
                   <button
@@ -648,6 +650,7 @@ export default function App() {
                   isLocked={isTeamLocked}
                   transferLimit={savedTransfers.limit ?? 3}
                   transferUsed={savedTransfers.used ?? 0}
+                  beforeFirstDeadline={beforeFirstDeadline} // this is not really correct, but it's a placeholder until transfer logic is implemented
                   onCancel={() => setTeamViewTab("startingXI")}
                   onSave={async ({ squad }) => {
                     try {
@@ -845,8 +848,8 @@ export default function App() {
                         style={{ minWidth: 190 }}
                         title="Järjestä"
                       >
-                        <option value="value_desc">Arvo (kallein→ halvin)</option>
-                        <option value="value_asc">Arvo (halvin → kallein)</option>
+                        <option value="value_desc">Arvo (kallein →)</option>
+                        <option value="value_asc">Arvo (halvin →)</option>
                         <option value="name_asc">Nimi (A →)</option>
                         <option value="name_desc">Nimi (Ö →)</option>
                         <option value="team_asc">Joukkue (A →)</option>
@@ -899,7 +902,7 @@ export default function App() {
                 </>
               )}
             </div>
-            <PlayerDetailsModal //TODO this doesn yet do anythin, but it's a starting point for showing player details and stats in the future
+            <PlayerDetailsModal //TODO this doesnt yet do anythin, but it's a starting point for showing player details and stats in the future
               player={detailPlayer}
               teams={teams}
               onClose={() => setDetailPlayer(null)}

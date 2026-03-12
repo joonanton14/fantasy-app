@@ -10,6 +10,7 @@ export default function TransfersPage(props: {
   isLocked: boolean;
   transferLimit: number;
   transferUsed: number;
+  beforeFirstDeadline: boolean;
   onCancel: () => void;
   onSave: (payload: { squad: Player[] }) => Promise<void> | void;
 }) {
@@ -23,6 +24,7 @@ export default function TransfersPage(props: {
         isLocked={props.isLocked}
         transferLimit={props.transferLimit}
         transferUsed={props.transferUsed}
+        transfersUnlimited={props.beforeFirstDeadline}
         onSave={(squad) => props.onSave({ squad })}
       />
     </div>
