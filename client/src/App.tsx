@@ -617,7 +617,7 @@ export default function App() {
                     className={`app-btn ${teamViewTab === "leaderboard" ? "app-btn-active" : ""}`}
                     onClick={() => {
                       setTeamViewTab("leaderboard");
-                      loadLeaderboard();
+                      loadLeaderboard(); // maybe these could be loaded when logging in so it will be faster to use
                     }}
                   >
                     Tulostaulu
@@ -627,7 +627,7 @@ export default function App() {
                     className={`app-btn ${teamViewTab === "fixtures" ? "app-btn-active" : ""}`}
                     onClick={() => {
                       setTeamViewTab("fixtures");
-                      loadFixtures();
+                      loadFixtures(); // maybe these could be loaded when logging in so it will be faster to use
                     }}
                   >
                     Ottelut
@@ -852,8 +852,6 @@ export default function App() {
                         <option value="team_asc">Joukkue (A →)</option>
                         <option value="team_desc">Joukkue (Ö →)</option>
                         <option value="pos_asc">Pelipaikka</option>
-                        <option value="id_desc">Uusimmat</option>
-                        <option value="id_asc">Vanhimmat</option>
                       </select>
                     </div>
 
@@ -901,7 +899,7 @@ export default function App() {
                 </>
               )}
             </div>
-            <PlayerDetailsModal
+            <PlayerDetailsModal //TODO this doesn yet do anythin, but it's a starting point for showing player details and stats in the future
               player={detailPlayer}
               teams={teams}
               onClose={() => setDetailPlayer(null)}

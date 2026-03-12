@@ -52,7 +52,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         <header className="auth-header">
           <div className="brand">
             <div className="brand-text">
-              <h1>Veikkausliigapörssi</h1>
+              <h2>Veikkausliigapörssi</h2>
             </div>
           </div>
 
@@ -121,7 +121,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
             )}
           </button>
 
-          <p className="fineprint">Tämä on pelin beta versio ja ominaisuudet voivat muuttua.</p>
+          <p className="fineprint">Tämä on pelin beta versio ja tarkoitettu vain karjuille</p>
         </form>
 
         <footer className="auth-footer">
