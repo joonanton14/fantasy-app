@@ -268,16 +268,18 @@ export default function SquadBuilder(props: {
         <header className="starting-xi-header">
           <h3>Joukkue</h3>
 
-          <div className="app-muted" style={{ marginBottom: 8 }}>
-            Budjetti jäljellä: <b>{remainingBudget.toFixed(1)} M</b>
-          </div>
+          <div className="squad-meta">
+            <div className="squad-meta-pill">
+              <span className="squad-meta-label">Budjetti</span>
+              <span className="squad-meta-value">{remainingBudget.toFixed(1)} M</span>
+            </div>
 
-          <div className="transfer-pill">
-            Vaihdot: <b>{remainingTransfers}</b> / {transferLimitValue}
-          </div>
-
-          <div className={`transfer-plan ${overTransferLimit ? "is-danger" : ""}`}>
-            Suunniteltu: <b>{plannedTransfers}</b>
+            <div className="squad-meta-pill">
+              <span className="squad-meta-label">Vaihdot</span>
+              <span className="squad-meta-value">
+                {remainingTransfers} <span className="squad-meta-total">/ {transferLimitValue}</span>
+              </span>
+            </div>
           </div>
 
           {props.isLocked && (

@@ -1931,3 +1931,48 @@ select option {
 .transfer-plan.is-danger {
   color: #fb7185;
 }
+
+.squad-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 12px 0 8px;
+}
+
+.squad-meta-pill {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+.squad-meta-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.squad-meta-value {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #fff;
+}
+
+.squad-meta-total {
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+@media (max-width: 640px) {
+  .squad-meta {
+    grid-template-columns: 1fr;
+  }
+}
