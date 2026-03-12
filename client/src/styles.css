@@ -1825,6 +1825,7 @@ select option {
     margin-bottom: 5px;
   }
 
+@media (max-width: 520px) {
   .picker-backdrop {
     padding: 0;
     align-items: flex-end;
@@ -1832,14 +1833,17 @@ select option {
 
   .picker-sheet {
     width: 100%;
-    height: 100%;
     min-width: 100%;
     max-width: 100%;
-    height: 92svh;
-    max-height: 92svh;
+    height: 75svh;
+    max-height: 75svh;
     border-radius: 18px 18px 0 0;
     padding: 10px 10px calc(14px + env(safe-area-inset-bottom, 0px));
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
+}
 
   .picker-title {
     font-size: 15px;
