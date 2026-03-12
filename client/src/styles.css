@@ -1827,6 +1827,11 @@ select option {
 
 @media (max-width: 520px) {
   .picker-backdrop {
+    position: fixed;
+    top: 76px;
+    right: 0;
+    bottom: 0;
+    left: 0;
     padding: 0;
     align-items: flex-end;
   }
@@ -1835,8 +1840,8 @@ select option {
     width: 100%;
     min-width: 100%;
     max-width: 100%;
-    height: 75svh;
-    max-height: 75svh;
+    height: 72svh;
+    max-height: 72svh;
     border-radius: 18px 18px 0 0;
     padding: 10px 10px calc(14px + env(safe-area-inset-bottom, 0px));
     overflow: hidden;

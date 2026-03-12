@@ -292,7 +292,7 @@ export default function SquadBuilder(props: {
             <div className="squad-meta-pill">
               <span className="squad-meta-label">Vaihdot</span>
               <span className="squad-meta-value">
-                {transfersUnlimited ? "Rajattomat" : (
+                {transfersUnlimited ? "∞" : (
                   <>
                     {remainingTransfers} <span className="squad-meta-total">/ {transferLimitValue}</span>
                   </>
