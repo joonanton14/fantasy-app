@@ -1340,8 +1340,8 @@ select option {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 5px;
+  margin-bottom: 5px;
   flex-shrink: 0;
 }
 
@@ -1373,8 +1373,8 @@ select option {
 
 .picker-out {
   display: grid;
-  gap: 6px;
-  margin-bottom: 10px;
+  gap: 2px;
+  margin-bottom: 2px;
   flex-shrink: 0;
 }
 
