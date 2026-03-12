@@ -1902,3 +1902,32 @@ select option {
     font-size: 8px;
   }
 }
+
+.transfer-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.transfer-pill b {
+  color: #fff;
+  font-size: 15px;
+}
+
+.transfer-plan {
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.transfer-plan.is-danger {
+  color: #fb7185;
+}

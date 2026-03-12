@@ -272,23 +272,13 @@ export default function SquadBuilder(props: {
             Budjetti jäljellä: <b>{remainingBudget.toFixed(1)} M</b>
           </div>
 
-          <div className="app-muted" style={{ marginBottom: 8 }}>
-            Vaihtoja käytetty: <b>{transferUsedValue}</b> / {transferLimitValue}
+          <div className="transfer-pill">
+            Vaihdot: <b>{remainingTransfers}</b> / {transferLimitValue}
           </div>
 
-          <div className="app-muted" style={{ marginBottom: 8 }}>
-            Vaihtoja jäljellä: <b>{remainingTransfers}</b>
+          <div className={`transfer-plan ${overTransferLimit ? "is-danger" : ""}`}>
+            Suunniteltu: <b>{plannedTransfers}</b>
           </div>
-
-          <div className="app-muted" style={{ marginBottom: 8 }}>
-            Suunnitellut vaihdot: <b>{plannedTransfers}</b>
-          </div>
-
-          {overTransferLimit && !props.isLocked && (
-            <div className="starting-xi-warning" role="alert">
-              Voit tehdä enää {remainingTransfers} vaihtoa tällä kierroksella.
-            </div>
-          )}
 
           {props.isLocked && (
             <div className="starting-xi-warning" role="alert">
