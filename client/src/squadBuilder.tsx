@@ -67,6 +67,7 @@ export default function SquadBuilder(props: {
   const [pendingRestore, setPendingRestore] = useState<{ slotId: string; player: Player } | null>(null);
   const [onlySuitable, setOnlySuitable] = useState(false);
   const [sortBy, setSortBy] = useState<"name" | "price-asc" | "price-desc" | "team">("name");
+  const [filterTeamId, setFilterTeamId] = useState<number | null>(null);
 
   useEffect(() => {
     const map: Record<string, Player | null> = {};
@@ -178,6 +179,7 @@ export default function SquadBuilder(props: {
 
     setPendingRestore(null);
     setPicker(null);
+    setFilterTeamId(null);
     setQ("");
   }
 
@@ -217,6 +219,7 @@ export default function SquadBuilder(props: {
       .filter((p) => p.position === picker.pos)
       .filter((p) => !qq || p.name.toLowerCase().includes(qq))
       .filter((p) => p.id !== removedForThisSlot?.id)
+      .filter((p) => !filterTeamId || p.teamId === filterTeamId)
       .map((p) => {
         const isSameCurrent = p.id === slotAssigned?.id;
         const isPickedElsewhere = pickedIds.has(p.id) && !isSameCurrent;
@@ -267,7 +270,7 @@ export default function SquadBuilder(props: {
     });
 
     return rows;
-  }, [picker, assign, q, props.players, pickedIds, transferBudget, onlySuitable, sortBy, props.teams, pendingRestore]);
+  }, [picker, assign, q, props.players, pickedIds, transferBudget, onlySuitable, sortBy, props.teams, pendingRestore, filterTeamId]);
 
   const canSave =
     picked.length === 15 &&
@@ -420,6 +423,22 @@ export default function SquadBuilder(props: {
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
               />
+              <select
+                className="picker-team-filter"
+                value={filterTeamId ?? ""}
+                onChange={(e) => setFilterTeamId(e.target.value ? Number(e.target.value) : null)}
+                title="Suodata joukkueella"
+              >
+              <option value="">Kaikki joukkueet</option>
+                {props.teams
+                  .slice()
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+              </select>
 
               <div className="picker-tools">
                 <label className="picker-toggle">

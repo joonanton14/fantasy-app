@@ -2022,3 +2022,23 @@ select option {
     border-radius: 9px;
   }
 }
+
+.picker-team-filter {
+  width: 100%;
+  border-radius: 14px;
+  padding: 11px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(3, 7, 18, 0.55);
+  color: #fff;
+  outline: none;
+  margin-bottom: 10px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 520px) {
+  .picker-team-filter {
+    padding: 10px 12px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+  }
+}
