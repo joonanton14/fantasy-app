@@ -216,7 +216,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       const prevTransfers = normalizeTransfers(prev.transfers, currentRound);
-
       const oldSquadIds = prev.squadIds ?? [];
       const newSquadIds = nextPartial.squadIds ?? oldSquadIds;
 
@@ -231,7 +230,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       let transfersMade = 0;
 
       if (squadChanged) {
-        transfersMade = countTransfers(oldSquadIds, newSquadIds);
+        const isInitialSave = oldSquadIds.length === 0 && newSquadIds.length === 15;
+
+        if (isInitialSave) {
+          transfersMade = 0;
+        } else {
+          transfersMade = countTransfers(oldSquadIds, newSquadIds);
+        }
 
         if (prevTransfers.used + transfersMade > prevTransfers.limit) {
           return res.status(400).json({
@@ -290,6 +295,14 @@ function normalizeTransfers(
 }
 
 function countTransfers(oldSquadIds: number[], newSquadIds: number[]) {
+  if (oldSquadIds.length === 0 && newSquadIds.length === 15) {
+    return 0;
+  }
+
+  if (oldSquadIds.length !== newSquadIds.length) {
+    throw new Error("Invalid transfer set");
+  }
+
   const oldSet = new Set(oldSquadIds);
   const newSet = new Set(newSquadIds);
 
