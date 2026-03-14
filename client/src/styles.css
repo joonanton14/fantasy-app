@@ -1839,16 +1839,17 @@ select option {
     justify-content: center;
   }
 
+ @media (max-width: 520px) {
   .picker-sheet {
     width: 100vw;
     min-width: 100vw;
     max-width: 100vw;
-    height: 84dvh;
-    max-height: 84dvh;
+    height: 90dvh;
+    max-height: 90dvh;
     border-radius: 18px 18px 0 0;
     padding: 10px 10px calc(14px + env(safe-area-inset-bottom, 0px));
   }
-
+}
   .picker-title {
     font-size: 15px;
   }
