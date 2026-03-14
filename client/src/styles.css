@@ -754,7 +754,7 @@ nav button.active {
   justify-items: center;
 }
 
-.bench-item > .slot {
+.bench-item>.slot {
   width: 100%;
 }
 
@@ -1774,14 +1774,15 @@ select option {
     min-width: 0;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
+    justify-content: center;
     align-items: center;
     gap: 1px;
-    padding: 0 2px 2px;
+    padding: 2px;
   }
 
   .player-name,
-  .player-team {
+  .player-team,
+  .player-value {
     width: 100%;
     max-width: 100%;
     text-align: center;
@@ -1797,9 +1798,16 @@ select option {
   }
 
   .player-team {
-    font-size: 8px;
+    font-size: 7px;
     line-height: 1;
     opacity: 0.85;
+  }
+
+  .player-value {
+    font-size: 7px;
+    line-height: 1;
+    font-weight: 800;
+    opacity: 0.95;
   }
 
   .swap-slot,
@@ -1839,17 +1847,18 @@ select option {
     justify-content: center;
   }
 
- @media (max-width: 520px) {
-  .picker-sheet {
-    width: 100vw;
-    min-width: 100vw;
-    max-width: 100vw;
-    height: 90dvh;
-    max-height: 90dvh;
-    border-radius: 18px 18px 0 0;
-    padding: 10px 10px calc(14px + env(safe-area-inset-bottom, 0px));
+  @media (max-width: 520px) {
+    .picker-sheet {
+      width: 100vw;
+      min-width: 100vw;
+      max-width: 100vw;
+      height: 90dvh;
+      max-height: 90dvh;
+      border-radius: 18px 18px 0 0;
+      padding: 10px 10px calc(14px + env(safe-area-inset-bottom, 0px));
+    }
   }
-}
+
   .picker-title {
     font-size: 15px;
   }
@@ -2057,4 +2066,13 @@ select option {
     border-radius: 12px;
     margin-bottom: 8px;
   }
+}
+
+.player-value {
+  font-size: 11px;
+  font-weight: 800;
+  color: rgba(229, 231, 235, 0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

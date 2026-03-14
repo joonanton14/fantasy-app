@@ -85,6 +85,7 @@ export default function SquadBuilder(props: {
     setPendingRestore(null);
     setOnlySuitable(false);
     setSortBy("name");
+    setFilterTeamId(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.initialSquad]);
 
@@ -100,15 +101,13 @@ export default function SquadBuilder(props: {
 
   const totalValue = useMemo(() => picked.reduce((s, p) => s + p.value, 0), [picked]);
   const remainingBudget = props.budget - totalValue;
+
   const initialSquadIds = useMemo(
     () => (props.initialSquad ?? []).map((p) => p.id),
     [props.initialSquad]
   );
 
-  const pickedSquadIds = useMemo(
-    () => picked.map((p) => p.id),
-    [picked]
-  );
+  const pickedSquadIds = useMemo(() => picked.map((p) => p.id), [picked]);
 
   const plannedTransfers = useMemo(
     () => countTransfers(initialSquadIds, pickedSquadIds),
@@ -153,20 +152,6 @@ export default function SquadBuilder(props: {
     if (pendingRestore?.slotId === slotId) {
       setPendingRestore(null);
     }
-  }
-
-  function removeFrom(slotId: string) {
-    if (transfersBlocked) return;
-
-    const removed = assign[slotId];
-    if (!removed) return;
-
-    setPendingRestore({ slotId, player: removed });
-    setAssign((prev) => ({ ...prev, [slotId]: null }));
-    setQ("");
-    setOnlySuitable(false);
-    setSortBy("name");
-    setPicker({ slotId, pos: removed.position });
   }
 
   function closePickerAndRestore() {
@@ -270,7 +255,19 @@ export default function SquadBuilder(props: {
     });
 
     return rows;
-  }, [picker, assign, q, props.players, pickedIds, transferBudget, onlySuitable, sortBy, props.teams, pendingRestore, filterTeamId]);
+  }, [
+    picker,
+    assign,
+    q,
+    props.players,
+    pickedIds,
+    transferBudget,
+    onlySuitable,
+    sortBy,
+    props.teams,
+    pendingRestore,
+    filterTeamId,
+  ]);
 
   const canSave =
     picked.length === 15 &&
@@ -333,29 +330,27 @@ export default function SquadBuilder(props: {
                         setQ("");
                         setOnlySuitable(false);
                         setSortBy("name");
-                        setPendingRestore(null);
+                        setPendingRestore(assigned ? { slotId: s.id, player: assigned } : null);
+                        setFilterTeamId(null);
                         setPicker({ slotId: s.id, pos: s.position });
                       }}
-
+                      onKeyDown={(e) => {
+                        if (e.key !== "Enter" && e.key !== " ") return;
+                        e.preventDefault();
+                        if (transfersBlocked) return;
+                        setQ("");
+                        setOnlySuitable(false);
+                        setSortBy("name");
+                        setPendingRestore(assigned ? { slotId: s.id, player: assigned } : null);
+                        setFilterTeamId(null);
+                        setPicker({ slotId: s.id, pos: s.position });
+                      }}
                     >
                       {assigned ? (
                         <div className="player-chip">
                           <div className="player-name">{assigned.name}</div>
                           <div className="player-team">{teamName(props.teams, assigned.teamId)}</div>
-
-                          <button
-                            type="button"
-                            className="remove-slot"
-                            title="Poista"
-                            disabled={transfersBlocked}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (transfersBlocked) return;
-                              removeFrom(s.id);
-                            }}
-                          >
-                            ×
-                          </button>
+                          <div className="player-value">{assigned.value.toFixed(1)} M</div>
                         </div>
                       ) : (
                         <div className="slot-empty">{s.label}</div>
@@ -423,13 +418,14 @@ export default function SquadBuilder(props: {
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
               />
+
               <select
                 className="picker-team-filter"
                 value={filterTeamId ?? ""}
                 onChange={(e) => setFilterTeamId(e.target.value ? Number(e.target.value) : null)}
                 title="Suodata joukkueella"
               >
-              <option value="">Kaikki joukkueet</option>
+                <option value="">Kaikki joukkueet</option>
                 {props.teams
                   .slice()
                   .sort((a, b) => a.name.localeCompare(b.name))
@@ -474,6 +470,7 @@ export default function SquadBuilder(props: {
                       setPendingRestore(null);
                       setPicker(null);
                       setQ("");
+                      setFilterTeamId(null);
                     }}
                   >
                     <div className="picker-row-main">
