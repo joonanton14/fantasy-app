@@ -1149,7 +1149,7 @@ select option {
 }
 
 /* Fixtures mobile */
- @media (max-width: 520px) {
+@media (max-width: 520px) {
   .app-table-wrap.app-table-wrap--fx {
     width: 100%;
     max-width: 100%;
@@ -1823,10 +1823,7 @@ select option {
   }
 
   .picker-backdrop {
-    top: 100px;
-    right: 0;
-    bottom: 0;
-    left: 0;
+    inset: 0;
     padding: 0;
     align-items: flex-end;
   }
@@ -1876,7 +1873,7 @@ select option {
   .player-modal-name {
     font-size: 18px;
   }
-  
+
   .xi-save,
   .xi-cancel-swap {
     flex: 1 1 auto;
