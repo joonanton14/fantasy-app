@@ -62,6 +62,11 @@ export default function SquadBuilder(props: {
     return outgoing.length;
   }
 
+  function shortPlayerName(name: string) {
+  const parts = name.trim().split(/\s+/);
+  return parts[parts.length - 1] ?? name;
+}
+
   const [picker, setPicker] = useState<{ slotId: string; pos: Position } | null>(null);
   const [q, setQ] = useState("");
   const [pendingRestore, setPendingRestore] = useState<{ slotId: string; player: Player } | null>(null);
@@ -348,7 +353,7 @@ export default function SquadBuilder(props: {
                     >
                       {assigned ? (
                         <div className="player-chip">
-                          <div className="player-name">{assigned.name}</div>
+                          <div className="player-name">{shortPlayerName(assigned.name)}</div>
                           <div className="player-team">{teamName(props.teams, assigned.teamId)}</div>
                           <div className="player-value">{assigned.value.toFixed(1)} M</div>
                         </div>
