@@ -1632,6 +1632,13 @@ select option {
     gap: 10px;
     justify-content: stretch;
   }
+
+  /* FIX: don't let the app card trap the mobile picker */
+  .app-card:has(.picker-backdrop) {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    overflow: visible;
+  }
 }
 
 @media (max-width: 520px) {
@@ -1823,17 +1830,21 @@ select option {
   }
 
   .picker-backdrop {
+    position: fixed;
     inset: 0;
+    width: 100vw;
+    height: 100dvh;
     padding: 0;
     align-items: flex-end;
+    justify-content: center;
   }
 
   .picker-sheet {
-    width: 100%;
-    min-width: 100%;
-    max-width: 100%;
-    height: 72svh;
-    max-height: 72svh;
+    width: 100vw;
+    min-width: 100vw;
+    max-width: 100vw;
+    height: 84dvh;
+    max-height: 84dvh;
     border-radius: 18px 18px 0 0;
     padding: 10px 10px calc(14px + env(safe-area-inset-bottom, 0px));
   }
@@ -1889,6 +1900,13 @@ select option {
     min-width: 0;
     width: 52%;
     max-width: 160px;
+  }
+
+  /* FIX: same picker trapping issue on very small screens */
+  .app-card:has(.picker-backdrop) {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    overflow: visible;
   }
 }
 
