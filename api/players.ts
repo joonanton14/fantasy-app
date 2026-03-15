@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { players, fixtures } from "../server/src/data";
+import { players } from "../server/src/data";
 import { redis, PREFIX } from "../lib/redis";
 
 type PlayerEventInput = {
@@ -52,69 +52,16 @@ function calcPoints(
   return pts;
 }
 
-function getLastFinishedRound(): number | null {
-  const now = Date.now();
-
-  const rounds = Array.from(
-    new Set(
-      fixtures
-        .map((f) => f.round)
-        .filter((r): r is number => typeof r === "number")
-    )
-  ).sort((a, b) => a - b);
-
-  let lastFinished: number | null = null;
-
-  for (const round of rounds) {
-    const times = fixtures
-      .filter((f) => f.round === round)
-      .map((f) => new Date(f.date).getTime())
-      .filter((t) => Number.isFinite(t));
-
-    if (times.length === 0) continue;
-
-    const lastKickoff = Math.max(...times);
-    if (now > lastKickoff) {
-      lastFinished = round;
-    }
-  }
-
-  return lastFinished;
-}
-
 export default async function handler(_req: VercelRequest, res: VercelResponse) {
   try {
-    const round = getLastFinishedRound();
+    const gameKey = `${PREFIX}:game:1:events`;
 
-    if (!round) {
-      return res.json(
-        players.map((p) => ({
-          ...p,
-          lastGwPoints: 0,
-        }))
-      );
-    }
-
-    const roundGameIds = fixtures
-      .filter((f) => f.round === round)
-      .map((f) => f.id);
-
-    const pointsByPlayerId: Record<number, number> = {};
-
-    for (const gameId of roundGameIds) {
-      const gameKey = `${PREFIX}:game:${gameId}:events`;
-      const gameStats =
-        (await redis.get<Record<string, PlayerEventInput>>(gameKey)) ?? {};
-
-      for (const p of players) {
-        const pts = calcPoints(p.position, gameStats[String(p.id)]);
-        pointsByPlayerId[p.id] = (pointsByPlayerId[p.id] ?? 0) + pts;
-      }
-    }
+    const gameStats =
+      (await redis.get<Record<string, PlayerEventInput>>(gameKey)) ?? {};
 
     const playersWithPoints = players.map((p) => ({
       ...p,
-      lastGwPoints: pointsByPlayerId[p.id] ?? 0,
+      lastGwPoints: calcPoints(p.position, gameStats[String(p.id)]),
     }));
 
     return res.json(playersWithPoints);
