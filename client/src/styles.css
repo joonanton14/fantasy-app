@@ -1913,7 +1913,6 @@ select option {
     max-width: 160px;
   }
 
-  /* FIX: same picker trapping issue on very small screens */
   .app-card:has(.picker-backdrop) {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
@@ -1936,7 +1935,7 @@ select option {
   }
 
   .player-points {
-  font-size: 7px;
+  font-size: 4px;
   line-height: 1;
   font-weight: 800;
   opacity: 0.95;

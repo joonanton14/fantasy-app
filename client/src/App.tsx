@@ -67,9 +67,13 @@ export default function App() {
   const [bench, setBench] = useState<Player[]>([]);
   const [savedFormation, setSavedFormation] = useState<FormationKey>("4-4-2");
 
+
+
   // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
   const beforeFirstDeadline = true; // FIX THIS WHEN GAMES STARTS
 
+
+  const [lastGwPointsByPlayerId, setLastGwPointsByPlayerId] = useState<Record<number, number>>({});
   const [error, setError] = useState<string | null>(null);
   const [detailPlayer, setDetailPlayer] = useState<Player | null>(null);
   type Fixture = { id: number; homeTeamId: number; awayTeamId: number; date: string; round?: number };
@@ -468,7 +472,7 @@ export default function App() {
   async function handleLogout() {
     try {
       await apiCall("/auth/logout", { method: "POST" });
-    } catch {}
+    } catch { }
 
     setIsLoggedIn(false);
     setUserId(null);
@@ -678,6 +682,7 @@ export default function App() {
                     initialStarPlayerIds={savedStarPlayerIds}
                     budget={INITIAL_BUDGET}
                     readOnly={isTeamLocked}
+                    lastGwPointsByPlayerId={lastGwPointsByPlayerId}
                     onSave={async (p) => {
                       try {
                         await saveXI({
