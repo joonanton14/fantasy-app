@@ -1,131 +1,118 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { players, fixtures } from "../server/src/data";
 import { redis, PREFIX } from "../lib/redis";
+import { getSessionFromReq } from "../lib/session";
 
-type PlayerEventInput = {
-  minutes?: "0" | "<60" | "60+";
-  goals?: number;
-  assists?: number;
-  cleanSheet?: boolean;
-  penMissed?: number;
-  penSaved?: number;
-  yellow?: number;
-  red?: number;
-  ownGoals?: number;
-};
+type Row = { username: string; total: number; last: number };
 
-function calcPoints(
-  position: "GK" | "DEF" | "MID" | "FWD",
-  e?: PlayerEventInput
-) {
-  if (!e) return 0;
+async function scanKeys(match: string): Promise<string[]> {
+  const keys: string[] = [];
+  let cursor = "0";
 
-  let pts = 0;
+  do {
+    const resp = await redis.scan(cursor, { match, count: 200 });
+    // Upstash REST returns tuple: [nextCursor, keys]
+    const nextCursor = resp[0];
+    const batch = resp[1];
+    cursor = String(nextCursor);
+    keys.push(...(batch ?? []));
+  } while (cursor !== "0");
 
-  if (e.minutes === "<60") pts += 1;
-  if (e.minutes === "60+") pts += 2;
-
-  const goals = e.goals ?? 0;
-  const assists = e.assists ?? 0;
-  const cleanSheet = !!e.cleanSheet;
-  const penMissed = e.penMissed ?? 0;
-  const penSaved = e.penSaved ?? 0;
-  const yellow = e.yellow ?? 0;
-  const red = e.red ?? 0;
-  const ownGoals = e.ownGoals ?? 0;
-
-  if (position === "GK" || position === "DEF") pts += goals * 6;
-  else if (position === "MID") pts += goals * 5;
-  else pts += goals * 4;
-
-  pts += assists * 3;
-
-  if ((position === "GK" || position === "DEF") && cleanSheet) pts += 4;
-  if (position === "MID" && cleanSheet) pts += 1;
-
-  pts -= penMissed * 2;
-  if (position === "GK") pts += penSaved * 5;
-  pts -= yellow;
-  pts -= red * 3;
-  pts -= ownGoals * 2;
-
-  return pts;
+  return keys;
 }
 
-function getLastFinishedRound(): number | null {
-  const now = Date.now();
+function parseHashTeam(teamHash: Record<string, string> | null) {
+  if (!teamHash) return null;
 
-  const rounds = Array.from(
-    new Set(
-      fixtures
-        .map((f) => f.round)
-        .filter((r): r is number => typeof r === "number")
-    )
-  ).sort((a, b) => a - b);
+  const s = teamHash.startingXIIds ?? teamHash.starting ?? "";
+  const b = teamHash.benchIds ?? teamHash.bench ?? "";
 
-  let lastFinished: number | null = null;
-
-  for (const round of rounds) {
-    const times = fixtures
-      .filter((f) => f.round === round)
-      .map((f) => new Date(f.date).getTime())
-      .filter((t) => Number.isFinite(t));
-
-    if (times.length === 0) continue;
-
-    const lastKickoff = Math.max(...times);
-    if (now > lastKickoff) {
-      lastFinished = round;
-    }
-  }
-
-  return lastFinished;
-}
-
-export default async function handler(_req: VercelRequest, res: VercelResponse) {
-  try {
-    const round = getLastFinishedRound();
-
-    if (!round) {
-      return res.json(
-        players.map((p) => ({
-          ...p,
-          lastGwPoints: 0,
-        }))
-      );
-    }
-
-    const roundGameIds = fixtures
-      .filter((f) => f.round === round)
-      .map((f) => f.id);
-
-    const pointsByPlayerId: Record<number, number> = {};
-
-    for (const gameId of roundGameIds) {
-      const gameKey = `${PREFIX}:game:${gameId}:events`;
-      const gameStats =
-        (await redis.get<Record<string, PlayerEventInput>>(gameKey)) ?? {};
-
-      for (const p of players) {
-        const pts = calcPoints(p.position, gameStats[String(p.id)]);
-        pointsByPlayerId[p.id] = (pointsByPlayerId[p.id] ?? 0) + pts;
+  const toArr = (v: string) => {
+    const trimmed = (v ?? "").trim();
+    if (!trimmed) return [];
+    if (trimmed.startsWith("[")) {
+      try {
+        const arr = JSON.parse(trimmed);
+        return Array.isArray(arr) ? arr.map(Number).filter(Number.isFinite) : [];
+      } catch {
+        return [];
       }
     }
+    return trimmed
+      .split(",")
+      .map((x) => Number(x.trim()))
+      .filter(Number.isFinite);
+  };
 
-    const playersWithPoints = players.map((p) => ({
-      ...p,
-      lastGwPoints: pointsByPlayerId[p.id] ?? 0,
-    }));
+  return { startingXIIds: toArr(s), benchIds: toArr(b) };
+}
 
-    return res.json(playersWithPoints);
-  } catch (e) {
-    console.error("PLAYERS_API_CRASH", e);
+async function getPoints(username: string, gameId: number): Promise<number> {
+  const key1 = `${PREFIX}:user:${username}:game:${gameId}:points`;
+  const v1 = await redis.get<number>(key1);
+  if (v1 != null) return Number(v1) || 0;
 
-    return res.json(
-      players.map((p) => ({
-        ...p,
-        lastGwPoints: 0,
-      }))
-    );
+  const lower = username.toLowerCase();
+  if (lower !== username) {
+    const key2 = `${PREFIX}:user:${lower}:game:${gameId}:points`;
+    const v2 = await redis.get<number>(key2);
+    if (v2 != null) return Number(v2) || 0;
+  }
+
+  return 0;
+}
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  try {
+    const session = await getSessionFromReq(req);
+    if (!session) return res.status(401).json({ error: "Unauthorized" });
+    if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
+
+    // discover users who have teams saved
+    const teamKeys = await scanKeys(`${PREFIX}:team:*`);
+    const users = teamKeys.map((k) => k.split(":").pop()!).filter(Boolean);
+
+    // finalized games
+    const finalized = await redis.smembers(`${PREFIX}:games_finalized`);
+    const gameIds = finalized
+      .map((x) => Number(x))
+      .filter((n) => Number.isInteger(n) && n > 0)
+      .sort((a, b) => a - b);
+
+    const lastGameId = gameIds.length ? gameIds[gameIds.length - 1] : null;
+
+    const rows: Row[] = [];
+
+    for (const username of users) {
+      const teamKey = `${PREFIX}:team:${username}`;
+
+      const teamGet = await redis.get<any>(teamKey);
+      let teamExists = !!teamGet;
+
+      if (!teamExists) {
+        const teamHash = await redis.hgetall<Record<string, string>>(teamKey);
+        teamExists = !!parseHashTeam(teamHash);
+      }
+      if (!teamExists) continue;
+
+      let total = 0;
+      for (const gid of gameIds) {
+        total += await getPoints(username, gid);
+      }
+
+      const last = lastGameId == null ? 0 : await getPoints(username, lastGameId);
+
+      rows.push({ username, total, last });
+    }
+
+    rows.sort((a, b) => b.total - a.total);
+
+    return res.status(200).json({
+      rows,
+      gamesFinalized: gameIds.length,
+      lastGameId,
+    });
+  } catch (e: unknown) {
+    console.error("LEADERBOARD_CRASH", e);
+    return res.status(500).json({ error: e instanceof Error ? e.message : "Server error" });
   }
 }
