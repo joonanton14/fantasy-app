@@ -14,6 +14,7 @@ interface Player {
   position: "GK" | "DEF" | "MID" | "FWD";
   teamId: number;
   value: number;
+  lastGwPoints?: number;
 }
 
 interface Team {
@@ -73,7 +74,6 @@ export default function App() {
   const beforeFirstDeadline = true; // FIX THIS WHEN GAMES STARTS
 
 
-  const [lastGwPointsByPlayerId, setLastGwPointsByPlayerId] = useState<Record<number, number>>({});
   const [error, setError] = useState<string | null>(null);
   const [detailPlayer, setDetailPlayer] = useState<Player | null>(null);
   type Fixture = { id: number; homeTeamId: number; awayTeamId: number; date: string; round?: number };
@@ -682,7 +682,7 @@ export default function App() {
                     initialStarPlayerIds={savedStarPlayerIds}
                     budget={INITIAL_BUDGET}
                     readOnly={isTeamLocked}
-                    lastGwPointsByPlayerId={lastGwPointsByPlayerId}
+                    
                     onSave={async (p) => {
                       try {
                         await saveXI({
