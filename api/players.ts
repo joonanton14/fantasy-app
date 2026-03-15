@@ -95,14 +95,26 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
       );
     }
 
-    const gameKey = `${PREFIX}:game:${round}:events`;
+    const roundGameIds = fixtures
+      .filter((f) => f.round === round)
+      .map((f) => f.id);
 
-    const gameStats =
-      (await redis.get<Record<string, PlayerEventInput>>(gameKey)) ?? {};
+    const pointsByPlayerId: Record<number, number> = {};
+
+    for (const gameId of roundGameIds) {
+      const gameKey = `${PREFIX}:game:${gameId}:events`;
+      const gameStats =
+        (await redis.get<Record<string, PlayerEventInput>>(gameKey)) ?? {};
+
+      for (const p of players) {
+        const pts = calcPoints(p.position, gameStats[String(p.id)]);
+        pointsByPlayerId[p.id] = (pointsByPlayerId[p.id] ?? 0) + pts;
+      }
+    }
 
     const playersWithPoints = players.map((p) => ({
       ...p,
-      lastGwPoints: calcPoints(p.position, gameStats[String(p.id)]),
+      lastGwPoints: pointsByPlayerId[p.id] ?? 0,
     }));
 
     return res.json(playersWithPoints);
