@@ -211,8 +211,6 @@ export default function App() {
         if (cancelled) return;
 
         const playersData: Player[] = await playersRes.json();
-        console.log("playersData sample", playersData.slice(0, 5));
-console.log("player 77 from app", playersData.find((p) => p.id === 77));
         const teamsData: Team[] = await teamsRes.json();
         setPlayers(playersData);
         setTeams(teamsData);
