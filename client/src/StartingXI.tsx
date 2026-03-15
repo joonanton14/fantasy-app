@@ -9,6 +9,7 @@ export type Player = {
   position: Position;
   teamId: number;
   value: number;
+  lastGwPoints?: number;
 };
 
 export type Team = { id: number; name: string };
@@ -445,6 +446,7 @@ export const StartingXI: FC<{
             <div className="player-chip">
               <div className="player-name">{lastName(assigned.name)}</div>
               <div className="player-team">{teamName(teams, assigned.teamId)}</div>
+              <div className="player-points">{assigned.lastGwPoints ?? 0} p</div>
             </div>
           ) : (
             <div className="slot-empty">{emptyLabel}</div>

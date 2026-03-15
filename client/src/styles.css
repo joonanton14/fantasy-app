@@ -691,7 +691,8 @@ nav button.active {
 }
 
 .player-name,
-.player-team {
+.player-team,
+.player-points {
   max-width: 100%;
   overflow: hidden;
 }
@@ -1932,6 +1933,13 @@ select option {
 
   .player-team {
     font-size: 7.8px;
+  }
+
+  .player-points {
+  font-size: 7px;
+  line-height: 1;
+  font-weight: 800;
+  opacity: 0.95;
   }
 
   .remove-slot,
