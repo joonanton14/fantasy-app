@@ -71,6 +71,7 @@ function coerceTeamFromHash(obj: any): TeamData | null {
 
   const startingRaw = (obj.startingXIIds ?? obj.startingXI ?? obj.starting ?? null) as any;
   const benchRaw = (obj.benchIds ?? obj.bench ?? null) as any;
+  const starRaw = (obj.starPlayerIds ?? obj.starPlayers ?? null) as any;
 
   const toNumArray = (v: any): number[] => {
     if (Array.isArray(v)) return v.map((x) => Number(x)).filter((n) => Number.isFinite(n));
@@ -78,7 +79,7 @@ function coerceTeamFromHash(obj: any): TeamData | null {
       try {
         const parsed = JSON.parse(v);
         if (Array.isArray(parsed)) return parsed.map((x) => Number(x)).filter((n) => Number.isFinite(n));
-      } catch { }
+      } catch {}
       return v
         .split(",")
         .map((x) => Number(x.trim()))
@@ -87,10 +88,24 @@ function coerceTeamFromHash(obj: any): TeamData | null {
     return [];
   };
 
+  const parseStars = (v: any) => {
+    if (!v) return undefined;
+    if (typeof v === "object") return v;
+    if (typeof v === "string") {
+      try {
+        return JSON.parse(v);
+      } catch {
+        return undefined;
+      }
+    }
+    return undefined;
+  };
+
   const startingXIIds = toNumArray(startingRaw);
   const benchIds = toNumArray(benchRaw);
+  const starPlayerIds = parseStars(starRaw);
 
-  return { startingXIIds, benchIds };
+  return { startingXIIds, benchIds, starPlayerIds };
 }
 
 async function loadTeam(teamKey: string): Promise<{ team: TeamData | null; redisType: string | null }> {
