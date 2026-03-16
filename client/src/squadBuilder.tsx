@@ -37,7 +37,6 @@ export default function SquadBuilder(props: {
   transferLimit: number;
   transferUsed: number;
   transfersUnlimited?: boolean;
-  lastGwPointsByPlayerId?: Record<number, number>;
   onSave: (squad: Player[]) => void;
 }) {
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -64,9 +63,9 @@ export default function SquadBuilder(props: {
   }
 
   function shortPlayerName(name: string) {
-    const parts = name.trim().split(/\s+/);
-    return parts[parts.length - 1] ?? name;
-  }
+  const parts = name.trim().split(/\s+/);
+  return parts[parts.length - 1] ?? name;
+}
 
   const [picker, setPicker] = useState<{ slotId: string; pos: Position } | null>(null);
   const [q, setQ] = useState("");
@@ -105,11 +104,6 @@ export default function SquadBuilder(props: {
   const picked = useMemo(() => Object.values(assign).filter(Boolean) as Player[], [assign]);
   const pickedIds = useMemo(() => new Set(picked.map((p) => p.id)), [picked]);
 
-  const hasStartedPoints = useMemo(() => {
-    const points = props.lastGwPointsByPlayerId ?? {};
-    return picked.some((p) => Number(points[p.id] ?? 0) !== 0);
-  }, [picked, props.lastGwPointsByPlayerId]);
-
   const totalValue = useMemo(() => picked.reduce((s, p) => s + p.value, 0), [picked]);
   const remainingBudget = props.budget - totalValue;
 
@@ -138,7 +132,7 @@ export default function SquadBuilder(props: {
     : plannedTransfers > remainingTransfers;
 
   const noTransfersLeft = !transfersUnlimited && remainingTransfers <= 0;
-  const transfersBlocked = !!props.isLocked || noTransfersLeft || hasStartedPoints;
+  const transfersBlocked = !!props.isLocked || noTransfersLeft;
 
   function assignTo(slotId: string, p: Player) {
     if (transfersBlocked) return;
@@ -283,8 +277,7 @@ export default function SquadBuilder(props: {
   const canSave =
     picked.length === 15 &&
     remainingBudget >= 0 &&
-    !overTransferLimit &&
-    !hasStartedPoints;
+    !overTransferLimit;
 
   return (
     <div ref={rootRef} className="starting-xi-root squad-builder">
@@ -319,12 +312,6 @@ export default function SquadBuilder(props: {
           {noTransfersLeft && !props.isLocked && (
             <div className="starting-xi-warning" role="alert">
               Sinulla ei ole enää vaihtoja tälle kierrokselle.
-            </div>
-          )}
-
-          {hasStartedPoints && !props.isLocked && (
-            <div className="starting-xi-warning" role="alert">
-              Pelaajille on jo lisätty pisteitä — joukkuetta ei voi enää muuttaa.
             </div>
           )}
         </header>
@@ -386,7 +373,7 @@ export default function SquadBuilder(props: {
             className="xi-save"
             disabled={!canSave || !!props.isLocked}
             onClick={() => {
-              if (props.isLocked || hasStartedPoints) return;
+              if (props.isLocked) return;
               props.onSave(picked);
             }}
           >
@@ -394,7 +381,7 @@ export default function SquadBuilder(props: {
           </button>
         </div>
 
-        {picker && !props.isLocked && !hasStartedPoints && (
+        {picker && !props.isLocked && (
           <div
             className="picker-backdrop"
             onClick={closePickerAndRestore}

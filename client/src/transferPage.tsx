@@ -11,7 +11,7 @@ export default function TransfersPage(props: {
   transferLimit: number;
   transferUsed: number;
   beforeFirstDeadline: boolean;
-  lastGwPointsByPlayerId?: Record<number, number>;
+  
   onCancel: () => void;
   onSave: (payload: { squad: Player[] }) => Promise<void> | void;
 }) {
@@ -26,7 +26,6 @@ export default function TransfersPage(props: {
         transferLimit={props.transferLimit}
         transferUsed={props.transferUsed}
         transfersUnlimited={props.beforeFirstDeadline}
-        lastGwPointsByPlayerId={props.lastGwPointsByPlayerId}
         onSave={(squad) => props.onSave({ squad })}
       />
     </div>
