@@ -32,10 +32,11 @@ function scoreTeamForGameNoAutosub(args: {
 
     let pts = calcPoints(player.position, ev);
 
+
     const isStar =
-      (player.position === "DEF" && starPlayerIds.DEF === pid) ||
-      (player.position === "MID" && starPlayerIds.MID === pid) ||
-      (player.position === "FWD" && starPlayerIds.FWD === pid);
+      (player.position === "DEF" && Number(starPlayerIds.DEF) === pid) ||
+      (player.position === "MID" && Number(starPlayerIds.MID) === pid) ||
+      (player.position === "FWD" && Number(starPlayerIds.FWD) === pid);
 
     if (isStar) pts = Math.round(pts * 1.5);
 
@@ -79,7 +80,7 @@ function coerceTeamFromHash(obj: any): TeamData | null {
       try {
         const parsed = JSON.parse(v);
         if (Array.isArray(parsed)) return parsed.map((x) => Number(x)).filter((n) => Number.isFinite(n));
-      } catch {}
+      } catch { }
       return v
         .split(",")
         .map((x) => Number(x.trim()))
@@ -192,7 +193,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const benchIds = team?.benchIds ?? [];
 
         const { total, subsUsed } = scoreTeamForGameNoAutosub({
-          team: { startingXIIds, benchIds },
+          team: team ?? { startingXIIds, benchIds },
           playersById,
           eventsById,
         });
