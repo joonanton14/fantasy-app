@@ -95,124 +95,6 @@ function fmtFixture(f: Fixture, teamsById: Map<number, Team>) {
   return `${f.id} — ${home} vs ${away} — ${dateStr}`;
 }
 
-type EventRowProps = {
-  p: Player;
-  ev: PlayerEventInput;
-  teamName: string;
-  onChange: (next: PlayerEventInput) => void;
-};
-
-const EventRow = React.memo(function EventRow({ p, ev, teamName, onChange }: EventRowProps) {
-  const pts = calcPoints(p.position, ev);
-
-  return (
-    <div className="admin-row">
-      <div style={{ minWidth: 0 }}>
-        <div style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {p.name}
-        </div>
-        <div style={{ fontSize: 12, opacity: 0.75 }}>
-          {teamName} — {p.position}
-        </div>
-      </div>
-
-      <div>
-        <label style={{ fontSize: 12, opacity: 0.75 }}>Minuutit</label>
-        <select
-          className="admin-score-select"
-          value={ev.minutes}
-          onChange={(e) => onChange({ ...ev, minutes: e.target.value as MinutesBucket })}
-          style={{ width: "100%" }}
-        >
-          <option value="0">0</option>
-          <option value="1_59">1-59</option>
-          <option value="60+">60+</option>
-        </select>
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
-        <div>
-          <label style={{ fontSize: 12, opacity: 0.75 }}>G</label>
-          <input
-            className="admin-score-input"
-            value={String(ev.goals)}
-            onChange={(e) => onChange({ ...ev, goals: toInt(e.target.value) })}
-            style={{ width: "100%" }}
-          />
-        </div>
-        <div>
-          <label style={{ fontSize: 12, opacity: 0.75 }}>A</label>
-          <input
-            className="admin-score-input"
-            value={String(ev.assists)}
-            onChange={(e) => onChange({ ...ev, assists: toInt(e.target.value) })}
-            style={{ width: "100%" }}
-          />
-        </div>
-        <div>
-          <label style={{ fontSize: 12, opacity: 0.75 }}>KK</label>
-          <input
-            className="admin-score-input"
-            value={String(ev.yellow)}
-            onChange={(e) => onChange({ ...ev, yellow: toInt(e.target.value) })}
-            style={{ width: "100%" }}
-          />
-        </div>
-        <div>
-          <label style={{ fontSize: 12, opacity: 0.75 }}>PK</label>
-          <input
-            className="admin-score-input"
-            value={String(ev.red)}
-            onChange={(e) => onChange({ ...ev, red: toInt(e.target.value) })}
-            style={{ width: "100%" }}
-          />
-        </div>
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr) 0.9fr", gap: 6, alignItems: "end" }}>
-        <div>
-          <label style={{ fontSize: 12, opacity: 0.75 }}>NP</label>
-          <input
-            type="checkbox"
-            checked={ev.cleanSheet}
-            onChange={(e) => onChange({ ...ev, cleanSheet: e.target.checked })}
-            style={{ width: 18, height: 18 }}
-          />
-        </div>
-        <div>
-          <label style={{ fontSize: 12, opacity: 0.75 }}>OM</label>
-          <input
-            className="admin-score-input"
-            value={String(ev.ownGoals)}
-            onChange={(e) => onChange({ ...ev, ownGoals: toInt(e.target.value) })}
-            style={{ width: "100%" }}
-          />
-        </div>
-        <div>
-          <label style={{ fontSize: 12, opacity: 0.75 }}>ERP</label>
-          <input
-            className="admin-score-input"
-            value={String(ev.penMissed)}
-            onChange={(e) => onChange({ ...ev, penMissed: toInt(e.target.value) })}
-            style={{ width: "100%" }}
-          />
-        </div>
-        <div>
-          <label style={{ fontSize: 12, opacity: 0.75 }}>TRP</label>
-          <input
-            className="admin-score-input"
-            value={String(ev.penSaved)}
-            onChange={(e) => onChange({ ...ev, penSaved: toInt(e.target.value) })}
-            style={{ width: "100%" }}
-          />
-        </div>
-
-        <div style={{ gridColumn: "1 / -1", textAlign: "right", fontWeight: 700 }}>{pts} pts</div>
-      </div>
-    </div>
-  );
-});
-
 export default function AdminPortal() {
   const [tab, setTab] = useState<"players" | "fixtures" | "score">("players");
 
@@ -226,6 +108,7 @@ export default function AdminPortal() {
 
   const [loadingBase, setLoadingBase] = useState(false);
 
+  // scoring state
   const [selectedGameId, setSelectedGameId] = useState<number | null>(null);
   const [selectedRound, setSelectedRound] = useState<number | "all">("all");
   const [manualGameId, setManualGameId] = useState<string>("");
@@ -235,13 +118,15 @@ export default function AdminPortal() {
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
   const [finalizeStatus, setFinalizeStatus] = useState<string | null>(null);
-  const [finalizeResults, setFinalizeResults] = useState<
-    Array<{ gameId: number; savedPlayers: number; missingPlayers: number[] }>
-  >([]);
+  const [finalizeResults, setFinalizeResults] = useState<Array<{ username: string; points: number; subsUsed: number[] }>>(
+    []
+  );
 
+  // ✅ Round finalize
   const [finalizeRoundStatus, setFinalizeRoundStatus] = useState<string | null>(null);
   const [finalizeRoundResults, setFinalizeRoundResults] = useState<Array<{ username: string; points: number }>>([]);
 
+  // player search
   const [playerSearch, setPlayerSearch] = useState("");
   type SortKey = "name_asc" | "name_desc" | "value_desc" | "value_asc" | "newest" | "oldest";
   const [sortKey, setSortKey] = useState<SortKey>("name_asc");
@@ -266,6 +151,7 @@ export default function AdminPortal() {
     }
   }
 
+  // load players + teams
   useEffect(() => {
     let cancelled = false;
 
@@ -293,6 +179,7 @@ export default function AdminPortal() {
     };
   }, []);
 
+  // load fixtures
   useEffect(() => {
     let cancelled = false;
 
@@ -387,7 +274,7 @@ export default function AdminPortal() {
         throw new Error((data as any).error || "Failed to load game events");
       }
       const data = await res.json();
-      setEvents(data.eventsById ?? data.events ?? {});
+      setEvents(data.events ?? {});
       setLoadEventsStatus("Loaded.");
       setTimeout(() => setLoadEventsStatus(null), 1000);
     } catch (e) {
@@ -421,7 +308,7 @@ export default function AdminPortal() {
     setFinalizeRoundResults([]);
 
     try {
-      setFinalizeStatus("Lasketaan ottelun pelaajapisteet…");
+      setFinalizeStatus("Finalizing (autosubs + formation rules)…");
       const res = await apiCall("/admin/finalize-game", {
         method: "POST",
         body: JSON.stringify({ gameId }),
@@ -431,16 +318,15 @@ export default function AdminPortal() {
         throw new Error((data as any).error || "Failed to finalize game");
       }
       const data = await res.json();
-      setFinalizeResults(
-        (data.results ?? []) as Array<{ gameId: number; savedPlayers: number; missingPlayers: number[] }>
-      );
-      setFinalizeStatus("Ottelun pisteet tallennettu ✅");
+      setFinalizeResults((data.results ?? []) as Array<{ username: string; points: number; subsUsed: number[] }>);
+      setFinalizeStatus("Finalized ✅");
       setTimeout(() => setFinalizeStatus(null), 1500);
     } catch (e) {
       setFinalizeStatus(e instanceof Error ? e.message : "Failed to finalize");
     }
   }
 
+  // ✅ Finalize whole round in ONE server call: { round, gameIds }
   async function finalizeSelectedRound() {
     if (selectedRound === "all") return;
 
@@ -460,7 +346,7 @@ export default function AdminPortal() {
     try {
       setFinalizeRoundStatus(`Finalizing round ${round}… (${games.length} games)`);
 
-      const res = await apiCall("/admin/finalize-round", {
+      const res = await apiCall("/admin/finalize-game", {
         method: "POST",
         body: JSON.stringify({
           round,
@@ -495,6 +381,118 @@ export default function AdminPortal() {
   function setEv(pid: number, next: PlayerEventInput) {
     setEvents((prev) => ({ ...prev, [String(pid)]: next }));
   }
+
+  const EventRow = ({ p }: { p: Player }) => {
+    const ev = getEv(p.id);
+    const pts = calcPoints(p.position, ev);
+
+    return (
+      <div className="admin-row">
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {p.name}
+          </div>
+          <div style={{ fontSize: 12, opacity: 0.75 }}>
+            {teamsById.get(p.teamId)?.name ?? p.teamId} — {p.position}
+          </div>
+        </div>
+
+        <div>
+          <label style={{ fontSize: 12, opacity: 0.75 }}>Minuutit</label>
+          <select
+            className="admin-score-select"
+            value={ev.minutes}
+            onChange={(e) => setEv(p.id, { ...ev, minutes: e.target.value as MinutesBucket })}
+            style={{ width: "100%" }}
+          >
+            <option value="0">0</option>
+            <option value="1_59">1-59</option>
+            <option value="60+">60+</option>
+          </select>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
+          <div>
+            <label style={{ fontSize: 12, opacity: 0.75 }}>G</label>
+            <input
+              className="admin-score-input"
+              value={String(ev.goals)}
+              onChange={(e) => setEv(p.id, { ...ev, goals: toInt(e.target.value) })}
+              style={{ width: "100%" }}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, opacity: 0.75 }}>A</label>
+            <input
+              className="admin-score-input"
+              value={String(ev.assists)}
+              onChange={(e) => setEv(p.id, { ...ev, assists: toInt(e.target.value) })}
+              style={{ width: "100%" }}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, opacity: 0.75 }}>KK</label>
+            <input
+              className="admin-score-input"
+              value={String(ev.yellow)}
+              onChange={(e) => setEv(p.id, { ...ev, yellow: toInt(e.target.value) })}
+              style={{ width: "100%" }}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, opacity: 0.75 }}>PK</label>
+            <input
+              className="admin-score-input"
+              value={String(ev.red)}
+              onChange={(e) => setEv(p.id, { ...ev, red: toInt(e.target.value) })}
+              style={{ width: "100%" }}
+            />
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr) 0.9fr", gap: 6, alignItems: "end" }}>
+          <div>
+            <label style={{ fontSize: 12, opacity: 0.75 }}>NP</label>
+            <input
+              type="checkbox"
+              checked={ev.cleanSheet}
+              onChange={(e) => setEv(p.id, { ...ev, cleanSheet: e.target.checked })}
+              style={{ width: 18, height: 18 }}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, opacity: 0.75 }}>OM</label>
+            <input
+              className="admin-score-input"
+              value={String(ev.ownGoals)}
+              onChange={(e) => setEv(p.id, { ...ev, ownGoals: toInt(e.target.value) })}
+              style={{ width: "100%" }}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, opacity: 0.75 }}>ERP</label>
+            <input
+              className="admin-score-input"
+              value={String(ev.penMissed)}
+              onChange={(e) => setEv(p.id, { ...ev, penMissed: toInt(e.target.value) })}
+              style={{ width: "100%" }}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, opacity: 0.75 }}>TRP</label>
+            <input
+              className="admin-score-input"
+              value={String(ev.penSaved)}
+              onChange={(e) => setEv(p.id, { ...ev, penSaved: toInt(e.target.value) })}
+              style={{ width: "100%" }}
+            />
+          </div>
+
+          <div style={{ gridColumn: "1 / -1", textAlign: "right", fontWeight: 700 }}>{pts} pts</div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div>
@@ -659,8 +657,7 @@ export default function AdminPortal() {
         <div className="app-card" style={{ padding: 12 }}>
           <h2 className="app-h2">Pisteet</h2>
           <div className="app-muted" style={{ marginBottom: 10 }}>
-            Tallenna ottelun tapahtumat. Päätä peli laskee ottelun pelaajapisteet. Päätä kierros laskee kierroksen
-            pisteet ja automaattivaihdot.
+            Tallenna ottelun tapahtumat ja päätä peli. Voit myös päättää koko kierroksen.
           </div>
 
           <div style={{ display: "grid", gap: 8, marginBottom: 12 }}>
@@ -698,7 +695,7 @@ export default function AdminPortal() {
                     className="app-btn app-btn-primary"
                     disabled={selectedRound === "all" || fixturesForSelectedRoundOnly.length === 0}
                     onClick={finalizeSelectedRound}
-                    title="Laskee kierroksen pisteet ja automaattivaihdot valituille otteluille."
+                    title="Finalizes all games in the selected round in one request."
                   >
                     Päätä kierros
                   </button>
@@ -778,17 +775,7 @@ export default function AdminPortal() {
                 {homePlayers.length === 0 ? (
                   <div className="app-muted">Ei pelaajia tälle joukkueelle.</div>
                 ) : (
-                  <div style={{ display: "grid", gap: 8 }}>
-                    {homePlayers.map((p) => (
-                      <EventRow
-                        key={p.id}
-                        p={p}
-                        ev={getEv(p.id)}
-                        teamName={teamsById.get(p.teamId)?.name ?? String(p.teamId)}
-                        onChange={(next) => setEv(p.id, next)}
-                      />
-                    ))}
-                  </div>
+                  <div style={{ display: "grid", gap: 8 }}>{homePlayers.map((p) => <EventRow key={p.id} p={p} />)}</div>
                 )}
               </div>
 
@@ -799,17 +786,7 @@ export default function AdminPortal() {
                 {awayPlayers.length === 0 ? (
                   <div className="app-muted">Ei pelaajia tälle joukkueelle.</div>
                 ) : (
-                  <div style={{ display: "grid", gap: 8 }}>
-                    {awayPlayers.map((p) => (
-                      <EventRow
-                        key={p.id}
-                        p={p}
-                        ev={getEv(p.id)}
-                        teamName={teamsById.get(p.teamId)?.name ?? String(p.teamId)}
-                        onChange={(next) => setEv(p.id, next)}
-                      />
-                    ))}
-                  </div>
+                  <div style={{ display: "grid", gap: 8 }}>{awayPlayers.map((p) => <EventRow key={p.id} p={p} />)}</div>
                 )}
               </div>
             </div>
@@ -817,17 +794,7 @@ export default function AdminPortal() {
 
           {!selectedFixture && (
             <div style={{ border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: 10, marginBottom: 12 }}>
-              <div style={{ display: "grid", gap: 8 }}>
-                {filteredPlayers.slice(0, 40).map((p) => (
-                  <EventRow
-                    key={p.id}
-                    p={p}
-                    ev={getEv(p.id)}
-                    teamName={teamsById.get(p.teamId)?.name ?? String(p.teamId)}
-                    onChange={(next) => setEv(p.id, next)}
-                  />
-                ))}
-              </div>
+              <div style={{ display: "grid", gap: 8 }}>{filteredPlayers.slice(0, 40).map((p) => <EventRow key={p.id} p={p} />)}</div>
               {filteredPlayers.length > 40 && (
                 <div className="app-muted" style={{ marginTop: 8 }}>
                   Näytetään vain 40 ensimmäistä tulosta. Rajaa hakua nähdäksesi loput.
@@ -855,25 +822,23 @@ export default function AdminPortal() {
 
           {finalizeResults.length > 0 && (
             <div style={{ marginTop: 12 }}>
-              <h3 className="app-h2">Päätetty ottelu</h3>
+              <h3 className="app-h2">Päätetyt tulokset (peli)</h3>
               <div className="app-table-wrap">
                 <table className="app-table">
                   <thead>
                     <tr>
-                      <th>Peli</th>
-                      <th>Tallennettuja pelaajia</th>
-                      <th>Puuttuvat pelaajat</th>
+                      <th>Käyttäjä</th>
+                      <th>Pisteet</th>
+                      <th>Vaihdot käytetty</th>
                     </tr>
                   </thead>
                   <tbody>
                     {finalizeResults.map((r) => (
-                      <tr key={r.gameId}>
-                        <td>{r.gameId}</td>
-                        <td style={{ fontWeight: 800 }}>{r.savedPlayers}</td>
+                      <tr key={r.username}>
+                        <td>{r.username}</td>
+                        <td style={{ fontWeight: 800 }}>{r.points}</td>
                         <td>
-                          {r.missingPlayers?.length
-                            ? r.missingPlayers.map((id) => playerNameById.get(id) ?? `#${id}`).join(", ")
-                            : "-"}
+                          {r.subsUsed?.length ? r.subsUsed.map((id) => playerNameById.get(id) ?? `#${id}`).join(", ") : "-"}
                         </td>
                       </tr>
                     ))}
