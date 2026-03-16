@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { redis, PREFIX } from "../../lib/redis";
 import { getSessionFromReq } from "../../lib/session";
 import {
-  scoreTeamForGameWithAutosub,
+  calcPoints,
   type TeamData,
   type PlayerLite,
   type PlayerEventInput,
@@ -11,6 +11,39 @@ import {
 import { players } from "../../server/src/data";
 
 type ScanReply = [string, string[]];
+
+function scoreTeamForGameNoAutosub(args: {
+  team: TeamData;
+  playersById: Map<number, PlayerLite>;
+  eventsById: Record<string, PlayerEventInput>;
+}) {
+  const { team, playersById, eventsById } = args;
+  const starPlayerIds = team.starPlayerIds ?? {};
+  const starters = team.startingXIIds ?? [];
+
+  let total = 0;
+
+  for (const pid of starters) {
+    const player = playersById.get(pid);
+    if (!player) continue;
+
+    const ev = eventsById[String(pid)];
+    if (!ev || ev.minutes === "0") continue;
+
+    let pts = calcPoints(player.position, ev);
+
+    const isStar =
+      (player.position === "DEF" && starPlayerIds.DEF === pid) ||
+      (player.position === "MID" && starPlayerIds.MID === pid) ||
+      (player.position === "FWD" && starPlayerIds.FWD === pid);
+
+    if (isStar) pts = Math.round(pts * 1.5);
+
+    total += pts;
+  }
+
+  return { total, subsUsed: [] as number[] };
+}
 
 function normalizeUsername(u: string) {
   return u.trim().toLowerCase();
@@ -45,7 +78,7 @@ function coerceTeamFromHash(obj: any): TeamData | null {
       try {
         const parsed = JSON.parse(v);
         if (Array.isArray(parsed)) return parsed.map((x) => Number(x)).filter((n) => Number.isFinite(n));
-      } catch {}
+      } catch { }
       return v
         .split(",")
         .map((x) => Number(x.trim()))
@@ -77,7 +110,7 @@ async function loadTeam(teamKey: string): Promise<{ team: TeamData | null; redis
     const h = (await (redis as any).hgetall(teamKey)) as any;
     const coerced = coerceTeamFromHash(h);
     if (coerced) return { team: coerced, redisType: t ?? "hash(hgetall)" };
-  } catch {}
+  } catch { }
 
   return { team: null, redisType: t };
 }
@@ -143,7 +176,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const startingXIIds = team?.startingXIIds ?? [];
         const benchIds = team?.benchIds ?? [];
 
-        const { total, subsUsed } = scoreTeamForGameWithAutosub({
+        const { total, subsUsed } = scoreTeamForGameNoAutosub({
           team: { startingXIIds, benchIds },
           playersById,
           eventsById,
