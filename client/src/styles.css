@@ -2083,3 +2083,8 @@ select option {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.player-star {
+  font-weight: 700;
+  margin-left: 4px;
+}

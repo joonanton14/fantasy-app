@@ -81,6 +81,25 @@ function applyLastGwPoints(players: Player[], pointsById?: Record<number, number
   }));
 }
 
+function isStarPlayer(
+  player: Player,
+  starIds: { DEF?: number | null; MID?: number | null; FWD?: number | null }
+) {
+  return (
+    (player.position === "DEF" && Number(starIds.DEF) === player.id) ||
+    (player.position === "MID" && Number(starIds.MID) === player.id) ||
+    (player.position === "FWD" && Number(starIds.FWD) === player.id)
+  );
+}
+
+function getDisplayedPlayerPoints(
+  player: Player,
+  starIds: { DEF?: number | null; MID?: number | null; FWD?: number | null }
+) {
+  const base = player.lastGwPoints ?? 0;
+  return isStarPlayer(player, starIds) ? Math.round(base * 1.5) : base;
+}
+
 type SwapSource = { area: "xi" | "bench"; slotId: string } | null;
 
 export type StartingXISavePayload = {
@@ -146,6 +165,15 @@ export const StartingXI: FC<{
       document.removeEventListener("pointerdown", handlePointerDown);
     };
   }, []);
+
+  const currentStarIds = useMemo(
+    () => ({
+      DEF: starDEF === "" ? null : Number(starDEF),
+      MID: starMID === "" ? null : Number(starMID),
+      FWD: starFWD === "" ? null : Number(starFWD),
+    }),
+    [starDEF, starMID, starFWD]
+  );
 
   const squadWithPoints = useMemo(
     () => applyLastGwPoints(squad, lastGwPointsByPlayerId),
@@ -453,6 +481,8 @@ export const StartingXI: FC<{
       ((swapSource.area === "xi" && area === "bench") || (swapSource.area === "bench" && area === "xi"));
 
     const isTarget = !!swapSource && isValidSwapTarget(area, slotId);
+    const star = assigned ? isStarPlayer(assigned, currentStarIds) : false;
+    const shownPoints = assigned ? getDisplayedPlayerPoints(assigned, currentStarIds) : 0;
 
     return (
       <div
@@ -469,9 +499,11 @@ export const StartingXI: FC<{
       >
         {assigned ? (
           <div className="player-chip">
-            <div className="player-name">{lastName(assigned.name)}</div>
+            <div className="player-name">
+              {lastName(assigned.name)} {star ? <span className="player-star">★</span> : null}
+            </div>
             <div className="player-team">{teamName(teams, assigned.teamId)}</div>
-            <div className="player-points">{assigned.lastGwPoints ?? 0} p</div>
+            <div className="player-points">{shownPoints} p</div>
           </div>
         ) : (
           <div className="slot-empty">{emptyLabel}</div>
