@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { redis, PREFIX } from "../../lib/redis";
 import { getSessionFromReq } from "../../lib/session";
 import {
-  scoreTeamForGameWithAutosub,
+  scoreTeamForRoundWithAutosubFromPoints,
   type TeamData,
   type PlayerLite,
   type PlayerEventInput,
@@ -110,6 +110,18 @@ function mergeEvents(
   return merged;
 }
 
+function mergePoints(all: Record<string, number>[]): Record<string, number> {
+  const merged: Record<string, number> = {};
+
+  for (const gamePoints of all) {
+    for (const [pid, pts] of Object.entries(gamePoints ?? {})) {
+      merged[pid] = Number(merged[pid] ?? 0) + Number(pts ?? 0);
+    }
+  }
+
+  return merged;
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const session = await getSessionFromReq(req);
@@ -132,13 +144,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const allEvents: Record<string, PlayerEventInput>[] = [];
+    const allPoints: Record<string, number>[] = [];
+
     for (const gameId of gameIds) {
       const events =
         (await redis.get<Record<string, PlayerEventInput>>(`${PREFIX}:game:${gameId}:events`)) ?? {};
       allEvents.push(events);
+
+      const points =
+        (await redis.get<Record<string, number>>(`${PREFIX}:game:${gameId}:points`)) ?? {};
+      allPoints.push(points);
     }
 
     const roundEventsById = mergeEvents(allEvents);
+    const roundPointsById = mergePoints(allPoints);
 
     const teamKeys = await redis.keys(`${PREFIX}:team:*`);
     const results: Array<{ username: string; points: number }> = [];
@@ -154,10 +173,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         continue;
       }
 
-      const { total, subsUsed } = scoreTeamForGameWithAutosub({
+      const { total, subsUsed } = scoreTeamForRoundWithAutosubFromPoints({
         team,
         playersById,
         eventsById: roundEventsById,
+        pointsById: roundPointsById,
       });
 
       await redis.set(`${PREFIX}:user:${username}:gw:${round}:points`, total);

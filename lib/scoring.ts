@@ -149,33 +149,29 @@ export function scoreTeamForGameWithAutosub(args: {
   const starterGK = starters.find((id) => getPos(id) === "GK") ?? null;
   const benchGK = bench.find((id) => getPos(id) === "GK") ?? null;
 
-  // GK slot
   if (starterGK) {
     const ev = getEv(starterGK);
     if (played(ev)) {
       finalXI.push(starterGK);
       addCount(counts, "GK", 1);
       total += calcPoints("GK", ev);
-    } else {
-      if (benchGK) {
-        const bev = getEv(benchGK);
-        if (played(bev)) {
-          usedSubs.add(benchGK);
-          subsOut.add(starterGK);
+    } else if (benchGK) {
+      const bev = getEv(benchGK);
+      if (played(bev)) {
+        usedSubs.add(benchGK);
+        subsOut.add(starterGK);
 
-          finalXI.push(benchGK);
-          addCount(counts, "GK", 1);
-          total += calcPoints("GK", bev);
+        finalXI.push(benchGK);
+        addCount(counts, "GK", 1);
+        total += calcPoints("GK", bev);
 
-          for (let i = 0; i < finalBench.length; i++) {
-            if (finalBench[i] === benchGK) finalBench[i] = starterGK;
-          }
+        for (let i = 0; i < finalBench.length; i++) {
+          if (finalBench[i] === benchGK) finalBench[i] = starterGK;
         }
       }
     }
   }
 
-  // Outfield starters
   const dnpOutfield: Record<"DEF" | "MID" | "FWD", number[]> = { DEF: [], MID: [], FWD: [] };
 
   for (const sid of starters) {
@@ -194,7 +190,6 @@ export function scoreTeamForGameWithAutosub(args: {
     }
   }
 
-  // Bench autosubs
   const benchOutfield = bench.filter((id) => getPos(id) !== "GK");
 
   for (const bid of benchOutfield) {
@@ -244,7 +239,7 @@ export function scoreTeamForGameWithAutosub(args: {
     counts.FWD = next.FWD;
 
     const base = calcPoints(pos, ev);
-    total += applyStarMultiplier(base, bid, pos, starPlayerIds);
+    total += base;
 
     for (let i = 0; i < finalBench.length; i++) {
       if (finalBench[i] === bid) {
@@ -263,6 +258,142 @@ export function scoreTeamForGameWithAutosub(args: {
     subsOut: Array.from(subsOut),
     finalStartingXIIds,
     finalBenchIds,
+    counts,
+  };
+}
+
+export function scoreTeamForRoundWithAutosubFromPoints(args: {
+  team: TeamData;
+  playersById: Map<number, PlayerLite>;
+  eventsById: Record<string, PlayerEventInput>;
+  pointsById: Record<string, number>;
+}) {
+  const { team, playersById, eventsById, pointsById } = args;
+  const starPlayerIds = team.starPlayerIds ?? {};
+  const starters = team.startingXIIds ?? [];
+  const bench = team.benchIds ?? [];
+
+  const usedSubs = new Set<number>();
+  const subsOut = new Set<number>();
+  let total = 0;
+
+  const finalXI: number[] = [];
+  const finalBench: number[] = [...bench];
+
+  const counts = emptyCounts();
+
+  const getEv = (id: number) => eventsById[String(id)];
+  const getPos = (id: number) => playersById.get(id)?.position ?? null;
+  const getPts = (id: number) => Number(pointsById[String(id)] ?? 0);
+
+  const starterGK = starters.find((id) => getPos(id) === "GK") ?? null;
+  const benchGK = bench.find((id) => getPos(id) === "GK") ?? null;
+
+  if (starterGK) {
+    const ev = getEv(starterGK);
+    if (played(ev)) {
+      finalXI.push(starterGK);
+      addCount(counts, "GK", 1);
+      total += getPts(starterGK);
+    } else if (benchGK) {
+      const bev = getEv(benchGK);
+      if (played(bev)) {
+        usedSubs.add(benchGK);
+        subsOut.add(starterGK);
+
+        finalXI.push(benchGK);
+        addCount(counts, "GK", 1);
+        total += getPts(benchGK);
+
+        for (let i = 0; i < finalBench.length; i++) {
+          if (finalBench[i] === benchGK) finalBench[i] = starterGK;
+        }
+      }
+    }
+  }
+
+  const dnpOutfield: Record<"DEF" | "MID" | "FWD", number[]> = { DEF: [], MID: [], FWD: [] };
+
+  for (const sid of starters) {
+    const pos = getPos(sid);
+    if (!pos || pos === "GK") continue;
+
+    const ev = getEv(sid);
+    if (played(ev)) {
+      finalXI.push(sid);
+      addCount(counts, pos, 1);
+
+      const base = getPts(sid);
+      total += applyStarMultiplier(base, sid, pos, starPlayerIds);
+    } else {
+      dnpOutfield[pos].push(sid);
+    }
+  }
+
+  const benchOutfield = bench.filter((id) => getPos(id) !== "GK");
+
+  for (const bid of benchOutfield) {
+    if (usedSubs.has(bid)) continue;
+
+    const pos = getPos(bid);
+    if (!pos || pos === "GK") continue;
+
+    const ev = getEv(bid);
+    if (!played(ev)) continue;
+
+    const missingNow = dnpOutfield.DEF.length + dnpOutfield.MID.length + dnpOutfield.FWD.length;
+    if (missingNow <= 0) break;
+
+    const next: Counts = { ...counts };
+    addCount(next, pos, 1);
+
+    if (!withinMax(next)) continue;
+
+    const remainingSlots = missingNow - 1;
+    if (!canReachMins(next, remainingSlots)) continue;
+
+    const order =
+      pos === "DEF"
+        ? (["DEF", "MID", "FWD"] as const)
+        : pos === "MID"
+          ? (["MID", "DEF", "FWD"] as const)
+          : (["FWD", "MID", "DEF"] as const);
+
+    let replacedPos: "DEF" | "MID" | "FWD" | null = null;
+    for (const p of order) {
+      if (dnpOutfield[p].length > 0) {
+        replacedPos = p;
+        break;
+      }
+    }
+    if (!replacedPos) continue;
+
+    const outId = dnpOutfield[replacedPos].shift()!;
+    subsOut.add(outId);
+
+    usedSubs.add(bid);
+    finalXI.push(bid);
+
+    counts.DEF = next.DEF;
+    counts.MID = next.MID;
+    counts.FWD = next.FWD;
+
+    total += getPts(bid);
+
+    for (let i = 0; i < finalBench.length; i++) {
+      if (finalBench[i] === bid) {
+        finalBench[i] = outId;
+        break;
+      }
+    }
+  }
+
+  return {
+    total,
+    subsUsed: Array.from(usedSubs),
+    subsOut: Array.from(subsOut),
+    finalStartingXIIds: finalXI.slice(0, 11),
+    finalBenchIds: finalBench,
     counts,
   };
 }
