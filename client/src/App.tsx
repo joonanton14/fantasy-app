@@ -67,7 +67,7 @@ export default function App() {
   const [startingXI, setStartingXI] = useState<Player[]>([]);
   const [bench, setBench] = useState<Player[]>([]);
   const [savedFormation, setSavedFormation] = useState<FormationKey>("4-4-2");
-
+  const [lastGwPointsByPlayerId, setLastGwPointsByPlayerId] = useState<Record<number, number> | null>(null);
 
 
   // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
@@ -652,6 +652,7 @@ export default function App() {
                   squad={squad}
                   budget={INITIAL_BUDGET}
                   isLocked={isTeamLocked}
+                  lastGwPointsByPlayerId={lastGwPointsByPlayerId ?? undefined}
                   transferLimit={savedTransfers.limit ?? 3}
                   transferUsed={savedTransfers.used ?? 0}
                   beforeFirstDeadline={beforeFirstDeadline} // this is not really correct, but it's a placeholder until transfer logic is implemented
