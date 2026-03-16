@@ -118,11 +118,10 @@ export default function AdminPortal() {
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
   const [finalizeStatus, setFinalizeStatus] = useState<string | null>(null);
-  const [finalizeResults, setFinalizeResults] = useState<Array<{ username: string; points: number; subsUsed: number[] }>>(
-    []
-  );
+  const [finalizeResults, setFinalizeResults] = useState<
+    Array<{ gameId: number; savedPlayers: number; missingPlayers: number[] }>
+  >([]);
 
-  // ✅ Round finalize
   const [finalizeRoundStatus, setFinalizeRoundStatus] = useState<string | null>(null);
   const [finalizeRoundResults, setFinalizeRoundResults] = useState<Array<{ username: string; points: number }>>([]);
 
@@ -151,7 +150,6 @@ export default function AdminPortal() {
     }
   }
 
-  // load players + teams
   useEffect(() => {
     let cancelled = false;
 
@@ -179,7 +177,6 @@ export default function AdminPortal() {
     };
   }, []);
 
-  // load fixtures
   useEffect(() => {
     let cancelled = false;
 
@@ -274,7 +271,7 @@ export default function AdminPortal() {
         throw new Error((data as any).error || "Failed to load game events");
       }
       const data = await res.json();
-      setEvents(data.events ?? {});
+      setEvents(data.eventsById ?? data.events ?? {});
       setLoadEventsStatus("Loaded.");
       setTimeout(() => setLoadEventsStatus(null), 1000);
     } catch (e) {
@@ -308,7 +305,7 @@ export default function AdminPortal() {
     setFinalizeRoundResults([]);
 
     try {
-      setFinalizeStatus("Finalizing (autosubs + formation rules)…");
+      setFinalizeStatus("Lasketaan ottelun pelaajapisteet…");
       const res = await apiCall("/admin/finalize-game", {
         method: "POST",
         body: JSON.stringify({ gameId }),
@@ -318,15 +315,16 @@ export default function AdminPortal() {
         throw new Error((data as any).error || "Failed to finalize game");
       }
       const data = await res.json();
-      setFinalizeResults((data.results ?? []) as Array<{ username: string; points: number; subsUsed: number[] }>);
-      setFinalizeStatus("Finalized ✅");
+      setFinalizeResults(
+        (data.results ?? []) as Array<{ gameId: number; savedPlayers: number; missingPlayers: number[] }>
+      );
+      setFinalizeStatus("Ottelun pisteet tallennettu ✅");
       setTimeout(() => setFinalizeStatus(null), 1500);
     } catch (e) {
       setFinalizeStatus(e instanceof Error ? e.message : "Failed to finalize");
     }
   }
 
-  // ✅ Finalize whole round in ONE server call: { round, gameIds }
   async function finalizeSelectedRound() {
     if (selectedRound === "all") return;
 
@@ -346,7 +344,7 @@ export default function AdminPortal() {
     try {
       setFinalizeRoundStatus(`Finalizing round ${round}… (${games.length} games)`);
 
-      const res = await apiCall("/admin/finalize-game", {
+      const res = await apiCall("/admin/finalize-round", {
         method: "POST",
         body: JSON.stringify({
           round,
@@ -657,7 +655,8 @@ export default function AdminPortal() {
         <div className="app-card" style={{ padding: 12 }}>
           <h2 className="app-h2">Pisteet</h2>
           <div className="app-muted" style={{ marginBottom: 10 }}>
-            Tallenna ottelun tapahtumat ja päätä peli. Voit myös päättää koko kierroksen.
+            Tallenna ottelun tapahtumat. Päätä peli laskee ottelun pelaajapisteet. Päätä kierros laskee kierroksen
+            pisteet ja automaattivaihdot.
           </div>
 
           <div style={{ display: "grid", gap: 8, marginBottom: 12 }}>
@@ -695,7 +694,7 @@ export default function AdminPortal() {
                     className="app-btn app-btn-primary"
                     disabled={selectedRound === "all" || fixturesForSelectedRoundOnly.length === 0}
                     onClick={finalizeSelectedRound}
-                    title="Finalizes all games in the selected round in one request."
+                    title="Laskee kierroksen pisteet ja automaattivaihdot valituille otteluille."
                   >
                     Päätä kierros
                   </button>
@@ -822,23 +821,25 @@ export default function AdminPortal() {
 
           {finalizeResults.length > 0 && (
             <div style={{ marginTop: 12 }}>
-              <h3 className="app-h2">Päätetyt tulokset (peli)</h3>
+              <h3 className="app-h2">Päätetty ottelu</h3>
               <div className="app-table-wrap">
                 <table className="app-table">
                   <thead>
                     <tr>
-                      <th>Käyttäjä</th>
-                      <th>Pisteet</th>
-                      <th>Vaihdot käytetty</th>
+                      <th>Peli</th>
+                      <th>Tallennettuja pelaajia</th>
+                      <th>Puuttuvat pelaajat</th>
                     </tr>
                   </thead>
                   <tbody>
                     {finalizeResults.map((r) => (
-                      <tr key={r.username}>
-                        <td>{r.username}</td>
-                        <td style={{ fontWeight: 800 }}>{r.points}</td>
+                      <tr key={r.gameId}>
+                        <td>{r.gameId}</td>
+                        <td style={{ fontWeight: 800 }}>{r.savedPlayers}</td>
                         <td>
-                          {r.subsUsed?.length ? r.subsUsed.map((id) => playerNameById.get(id) ?? `#${id}`).join(", ") : "-"}
+                          {r.missingPlayers?.length
+                            ? r.missingPlayers.map((id) => playerNameById.get(id) ?? `#${id}`).join(", ")
+                            : "-"}
                         </td>
                       </tr>
                     ))}
