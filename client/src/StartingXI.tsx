@@ -190,6 +190,11 @@ export const StartingXI: FC<{
     [initialBench, lastGwPointsByPlayerId]
   );
 
+  const pointsLocked = useMemo(() => {
+  if (!lastGwPointsByPlayerId) return false;
+  return Object.values(lastGwPointsByPlayerId).some((v) => Number(v ?? 0) !== 0);
+}, [lastGwPointsByPlayerId]);
+
   const pool = useMemo(() => uniqById(squadWithPoints), [squadWithPoints]);
   const poolSet = useMemo(() => new Set(pool.map((p) => p.id)), [pool]);
 
@@ -460,7 +465,7 @@ export const StartingXI: FC<{
     setStarFWD(initialStarPlayerIds?.FWD ?? "");
   }, [initialStarPlayerIds]);
 
-  const saveDisabled = !isValid();
+  const saveDisabled = !isValid() || pointsLocked;
 
   const PlayerSlot = ({
     area,
@@ -694,7 +699,7 @@ export const StartingXI: FC<{
                 className="star-pick-select"
                 value={starDEF}
                 onChange={(e) => setStarDEF(e.target.value ? Number(e.target.value) : "")}
-                disabled={readOnly || xiDefs.length === 0}
+                disabled={readOnly || pointsLocked || xiDefs.length === 0}
               >
                 <option value="">Ei valittu</option>
                 {xiDefs.map((p) => (
@@ -711,7 +716,7 @@ export const StartingXI: FC<{
                 className="star-pick-select"
                 value={starMID}
                 onChange={(e) => setStarMID(e.target.value ? Number(e.target.value) : "")}
-                disabled={readOnly || xiMids.length === 0}
+                disabled={readOnly || pointsLocked || xiMids.length === 0}
               >
                 <option value="">Ei valittu</option>
                 {xiMids.map((p) => (
@@ -728,7 +733,7 @@ export const StartingXI: FC<{
                 className="star-pick-select"
                 value={starFWD}
                 onChange={(e) => setStarFWD(e.target.value ? Number(e.target.value) : "")}
-                disabled={readOnly || xiFwds.length === 0}
+                disabled={readOnly || pointsLocked || xiFwds.length === 0}
               >
                 <option value="">Ei valittu</option>
                 {xiFwds.map((p) => (
