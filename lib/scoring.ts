@@ -95,7 +95,7 @@ function applyStarMultiplier(
           ? stars.FWD
           : null;
 
-  if (starId !== playerId) return basePoints;
+  if (Number(starId) !== playerId) return basePoints;
   return Math.round(basePoints * 1.5);
 }
 
