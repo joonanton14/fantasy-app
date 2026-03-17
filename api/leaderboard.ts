@@ -1,17 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { redis, PREFIX } from "../lib/redis";
 import { getSessionFromReq } from "../lib/session";
-import { fixtures } from "../server/src/data";
 
 type Row = { username: string; total: number; last: number };
-
-const GAME_ROUND = new Map<number, number>(
-  fixtures.map((f) => [f.id, f.round])
-);
-
-async function getGameRound(gameId: number): Promise<number | null> {
-  return GAME_ROUND.get(gameId) ?? null;
-}
 
 async function scanKeys(match: string): Promise<string[]> {
   const keys: string[] = [];
@@ -19,7 +10,6 @@ async function scanKeys(match: string): Promise<string[]> {
 
   do {
     const resp = await redis.scan(cursor, { match, count: 200 });
-    // Upstash REST returns tuple: [nextCursor, keys]
     const nextCursor = resp[0];
     const batch = resp[1];
     cursor = String(nextCursor);
@@ -30,7 +20,7 @@ async function scanKeys(match: string): Promise<string[]> {
 }
 
 function parseHashTeam(teamHash: Record<string, string> | null) {
-  if (!teamHash) return null;
+  if (!teamHash || Object.keys(teamHash).length === 0) return null;
 
   const s = teamHash.startingXIIds ?? teamHash.starting ?? "";
   const b = teamHash.benchIds ?? teamHash.bench ?? "";
@@ -52,19 +42,44 @@ function parseHashTeam(teamHash: Record<string, string> | null) {
       .filter(Number.isFinite);
   };
 
-  return { startingXIIds: toArr(s), benchIds: toArr(b) };
+  const startingXIIds = toArr(s);
+  const benchIds = toArr(b);
+
+  if (startingXIIds.length === 0 && benchIds.length === 0) return null;
+
+  return { startingXIIds, benchIds };
 }
 
 async function getPoints(username: string, gameId: number): Promise<number> {
-  const key1 = `${PREFIX}:user:${username}:game:${gameId}:points`;
-  const v1 = await redis.get<number>(key1);
-  if (v1 != null) return Number(v1) || 0;
+  const candidates = Array.from(new Set([username, username.toLowerCase()]));
 
-  const lower = username.toLowerCase();
-  if (lower !== username) {
-    const key2 = `${PREFIX}:user:${lower}:game:${gameId}:points`;
-    const v2 = await redis.get<number>(key2);
-    if (v2 != null) return Number(v2) || 0;
+  for (const name of candidates) {
+    const key1 = `${PREFIX}:user:${name}:game:${gameId}:points`;
+    const v1 = await redis.get<number | string>(key1);
+    if (v1 != null) {
+      const n = Number(v1);
+      if (Number.isFinite(n)) return n;
+    }
+
+    const key2 = `${PREFIX}:user:${name}:points`;
+    const v2 = await redis.hget<number | string>(key2, String(gameId));
+    if (v2 != null) {
+      const n = Number(v2);
+      if (Number.isFinite(n)) return n;
+    }
+
+    const key3 = `${PREFIX}:points:${name}`;
+    const v3 = await redis.hget<number | string>(key3, String(gameId));
+    if (v3 != null) {
+      const n = Number(v3);
+      if (Number.isFinite(n)) return n;
+    }
+
+    const v4 = await redis.get<Record<string, number> | null>(key2);
+    if (v4 && typeof v4 === "object") {
+      const n = Number(v4[String(gameId)]);
+      if (Number.isFinite(n)) return n;
+    }
   }
 
   return 0;
@@ -74,36 +89,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const session = await getSessionFromReq(req);
     if (!session) return res.status(401).json({ error: "Unauthorized" });
-    if (req.method !== "GET") {
-      return res.status(405).json({ error: "Method not allowed" });
-    }
+    if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
 
-    // discover users who have teams saved
     const teamKeys = await scanKeys(`${PREFIX}:team:*`);
     const users = teamKeys.map((k) => k.split(":").pop()!).filter(Boolean);
 
-    // finalized games
     const finalized = await redis.smembers(`${PREFIX}:games_finalized`);
     const gameIds = finalized
       .map((x) => Number(x))
       .filter((n) => Number.isInteger(n) && n > 0)
       .sort((a, b) => a - b);
 
-    const gameRounds = new Map<number, number>();
-
-    for (const gid of gameIds) {
-      const round = await getGameRound(gid);
-      if (round != null) gameRounds.set(gid, round);
-    }
-
-    const latestRound =
-      gameRounds.size > 0 ? Math.max(...Array.from(gameRounds.values())) : null;
+    const lastGameId = gameIds.length ? gameIds[gameIds.length - 1] : null;
 
     const rows: Row[] = [];
 
     for (const username of users) {
       const teamKey = `${PREFIX}:team:${username}`;
-
       const teamGet = await redis.get<any>(teamKey);
       let teamExists = !!teamGet;
 
@@ -114,18 +116,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!teamExists) continue;
 
       let total = 0;
-      let currentRoundTotal = 0;
-
       for (const gid of gameIds) {
-        const pts = await getPoints(username, gid);
-        total += pts;
-
-        if (latestRound != null && gameRounds.get(gid) === latestRound) {
-          currentRoundTotal += pts;
-        }
+        total += await getPoints(username, gid);
       }
 
-      const last = latestRound == null ? 0 : total - currentRoundTotal;
+      const last = lastGameId == null ? 0 : await getPoints(username, lastGameId);
 
       rows.push({ username, total, last });
     }
@@ -135,12 +130,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({
       rows,
       gamesFinalized: gameIds.length,
-      latestRound,
+      lastGameId,
     });
   } catch (e: unknown) {
     console.error("LEADERBOARD_CRASH", e);
-    return res.status(500).json({
-      error: e instanceof Error ? e.message : "Server error",
-    });
+    return res.status(500).json({ error: e instanceof Error ? e.message : "Server error" });
   }
 }

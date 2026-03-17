@@ -58,7 +58,7 @@ export default function App() {
   const [userId, setUserId] = useState<number | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-
+  const [prevRanks, setPrevRanks] = useState<Record<string, number>>({});
   const [page, setPage] = useState<"builder" | "admin">("builder");
 
   const [players, setPlayers] = useState<Player[]>([]);
@@ -424,13 +424,46 @@ export default function App() {
 
   const isTeamLocked = firstKickoffMs != null && Date.now() >= firstKickoffMs;
 
+      function readSavedRanks(): Record<string, number> {
+      try {
+        return JSON.parse(localStorage.getItem("lb_prev_ranks") || "{}");
+      } catch {
+        return {};
+      }
+    }
+
+    function saveCurrentRanks(rows: Array<{ username: string }>) {
+      const next: Record<string, number> = {};
+      rows.forEach((r, i) => {
+        next[r.username] = i + 1;
+      });
+      localStorage.setItem("lb_prev_ranks", JSON.stringify(next));
+    }
+
+    function rankDiffSymbolFromPrev(
+      prev: Record<string, number>,
+      username: string,
+      currentRank: number
+    ): "up" | "down" | "same" | "new" {
+      const prevRank = prev[username];
+      if (typeof prevRank !== "number") return "new";
+      if (currentRank < prevRank) return "up";
+      if (currentRank > prevRank) return "down";
+      return "same";
+    }
+
   async function loadLeaderboard() {
     setLoadingLb(true);
     try {
+      const oldRanks = readSavedRanks();
+      setPrevRanks(oldRanks);
+
       const res = await apiCall("/leaderboard", { method: "GET" });
       if (!res.ok) return;
+
       const data = await res.json();
       const rows = (data?.rows ?? []) as LeaderboardRow[];
+
       setLeaderboard(rows);
       saveCurrentRanks(rows);
     } finally {
@@ -439,24 +472,8 @@ export default function App() {
   }
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function run() {
-      setLoadingLb(true);
-      try {
-        const res = await apiCall("/leaderboard", { method: "GET" });
-        if (!res.ok) return;
-        const data = await res.json();
-        if (!cancelled) setLeaderboard((data?.rows ?? []) as LeaderboardRow[]);
-      } finally {
-        if (!cancelled) setLoadingLb(false);
-      }
-    }
-
-    if (isLoggedIn) run();
-    return () => {
-      cancelled = true;
-    };
+    if (!isLoggedIn) return;
+    loadLeaderboard();
   }, [isLoggedIn]);
 
   function handleLoginSuccess(userId: number, userName: string, isAdmin: boolean) {
@@ -492,29 +509,6 @@ export default function App() {
     setPlayers([]);
     setTeams([]);
     localStorage.removeItem("session");
-  }
-
-  function rankDiffSymbol(username: string, currentRank: number): "up" | "down" | "same" | "new" {
-    const key = "lb_prev_ranks";
-    let prev: Record<string, number> = {};
-    try {
-      prev = JSON.parse(localStorage.getItem(key) || "{}");
-    } catch {
-      prev = {};
-    }
-
-    const prevRank = prev[username];
-    if (typeof prevRank !== "number") return "new";
-    if (currentRank < prevRank) return "up";
-    if (currentRank > prevRank) return "down";
-    return "same";
-  }
-
-  function saveCurrentRanks(rows: Array<{ username: string }>) {
-    const key = "lb_prev_ranks";
-    const next: Record<string, number> = {};
-    rows.forEach((r, i) => (next[r.username] = i + 1));
-    localStorage.setItem(key, JSON.stringify(next));
   }
 
   function togglePositionFilter(pos: "GK" | "DEF" | "MID" | "FWD") {
@@ -684,7 +678,7 @@ export default function App() {
                     initialStarPlayerIds={savedStarPlayerIds}
                     budget={INITIAL_BUDGET}
                     readOnly={isTeamLocked}
-                    
+
                     onSave={async (p) => {
                       try {
                         await saveXI({
@@ -785,7 +779,7 @@ export default function App() {
                         <tbody>
                           {leaderboard.map((r, idx) => {
                             const rank = idx + 1;
-                            const trend = rankDiffSymbol(r.username, rank);
+                            const trend = rankDiffSymbolFromPrev(prevRanks, r.username, rank);
 
                             const icon =
                               trend === "up" ? "▲" : trend === "down" ? "▼" : trend === "same" ? "•" : "★";
