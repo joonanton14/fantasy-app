@@ -1,4 +1,3 @@
-// adminPortal.tsx
 import React, { JSX, useEffect, useMemo, useState } from "react";
 import { apiCall } from "./api";
 
@@ -72,8 +71,8 @@ function calcPoints(pos: Position, ev: PlayerEventInput): number {
   }
 
   if (pos === "GK") pts += ev.penSaved * 3;
-  pts += ev.penMissed * -2;
 
+  pts += ev.penMissed * -2;
   pts += ev.yellow * -1;
   pts += ev.red * -3;
   pts += ev.ownGoals * -2;
@@ -92,43 +91,244 @@ function fmtFixture(f: Fixture, teamsById: Map<number, Team>) {
   const away = teamsById.get(f.awayTeamId)?.name ?? `#${f.awayTeamId}`;
   const d = new Date(f.date);
   const dateStr = isNaN(d.getTime()) ? f.date : d.toLocaleString();
+
   return `${f.id} — ${home} vs ${away} — ${dateStr}`;
+}
+
+type EventRowProps = {
+  p: Player;
+  ev: PlayerEventInput;
+  teamNameText: string;
+  onChange: (next: PlayerEventInput) => void;
+};
+
+function EventRow({ p, ev, teamNameText, onChange }: EventRowProps) {
+  const pts = calcPoints(p.position, ev);
+
+  return (
+    <div className="admin-row">
+      <div style={{ minWidth: 0 }}>
+        <div
+          style={{
+            fontWeight: 600,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {p.name}
+        </div>
+        <div style={{ fontSize: 12, opacity: 0.75 }}>
+          {teamNameText} — {p.position}
+        </div>
+      </div>
+
+      <div>
+        <label style={{ fontSize: 12, opacity: 0.75 }}>Minuutit</label>
+        <select
+          className="admin-score-select"
+          value={ev.minutes}
+          onChange={(e) =>
+            onChange({
+              ...ev,
+              minutes: e.target.value as MinutesBucket,
+            })
+          }
+          style={{ width: "100%" }}
+        >
+          <option value="0">0</option>
+          <option value="1_59">1-59</option>
+          <option value="60+">60+</option>
+        </select>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 1fr)",
+          gap: 6,
+        }}
+      >
+        <div>
+          <label style={{ fontSize: 12, opacity: 0.75 }}>G</label>
+          <input
+            className="admin-score-input"
+            value={String(ev.goals)}
+            onChange={(e) =>
+              onChange({
+                ...ev,
+                goals: toInt(e.target.value),
+              })
+            }
+            style={{ width: "100%" }}
+          />
+        </div>
+
+        <div>
+          <label style={{ fontSize: 12, opacity: 0.75 }}>A</label>
+          <input
+            className="admin-score-input"
+            value={String(ev.assists)}
+            onChange={(e) =>
+              onChange({
+                ...ev,
+                assists: toInt(e.target.value),
+              })
+            }
+            style={{ width: "100%" }}
+          />
+        </div>
+
+        <div>
+          <label style={{ fontSize: 12, opacity: 0.75 }}>KK</label>
+          <input
+            className="admin-score-input"
+            value={String(ev.yellow)}
+            onChange={(e) =>
+              onChange({
+                ...ev,
+                yellow: toInt(e.target.value),
+              })
+            }
+            style={{ width: "100%" }}
+          />
+        </div>
+
+        <div>
+          <label style={{ fontSize: 12, opacity: 0.75 }}>PK</label>
+          <input
+            className="admin-score-input"
+            value={String(ev.red)}
+            onChange={(e) =>
+              onChange({
+                ...ev,
+                red: toInt(e.target.value),
+              })
+            }
+            style={{ width: "100%" }}
+          />
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr) 0.9fr",
+          gap: 6,
+          alignItems: "end",
+        }}
+      >
+        <div>
+          <label style={{ fontSize: 12, opacity: 0.75 }}>NP</label>
+          <input
+            type="checkbox"
+            checked={ev.cleanSheet}
+            onChange={(e) =>
+              onChange({
+                ...ev,
+                cleanSheet: e.target.checked,
+              })
+            }
+            style={{ width: 18, height: 18 }}
+          />
+        </div>
+
+        <div>
+          <label style={{ fontSize: 12, opacity: 0.75 }}>OM</label>
+          <input
+            className="admin-score-input"
+            value={String(ev.ownGoals)}
+            onChange={(e) =>
+              onChange({
+                ...ev,
+                ownGoals: toInt(e.target.value),
+              })
+            }
+            style={{ width: "100%" }}
+          />
+        </div>
+
+        <div>
+          <label style={{ fontSize: 12, opacity: 0.75 }}>ERP</label>
+          <input
+            className="admin-score-input"
+            value={String(ev.penMissed)}
+            onChange={(e) =>
+              onChange({
+                ...ev,
+                penMissed: toInt(e.target.value),
+              })
+            }
+            style={{ width: "100%" }}
+          />
+        </div>
+
+        <div>
+          <label style={{ fontSize: 12, opacity: 0.75 }}>TRP</label>
+          <input
+            className="admin-score-input"
+            value={String(ev.penSaved)}
+            onChange={(e) =>
+              onChange({
+                ...ev,
+                penSaved: toInt(e.target.value),
+              })
+            }
+            style={{ width: "100%" }}
+          />
+        </div>
+
+        <div style={{ gridColumn: "1 / -1", textAlign: "right", fontWeight: 700 }}>
+          {pts} pts
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function AdminPortal() {
   const [tab, setTab] = useState<"players" | "fixtures" | "score">("players");
-
   const [players, setPlayers] = useState<Player[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
-  const playerNameById = useMemo(() => new Map(players.map((p) => [p.id, p.name])), [players]);
+  const playerNameById = useMemo(
+    () => new Map(players.map((p) => [p.id, p.name])),
+    [players]
+  );
 
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
   const [fixturesErr, setFixturesErr] = useState<string | null>(null);
-
   const [loadingBase, setLoadingBase] = useState(false);
 
   // scoring state
   const [selectedGameId, setSelectedGameId] = useState<number | null>(null);
   const [selectedRound, setSelectedRound] = useState<number | "all">("all");
   const [manualGameId, setManualGameId] = useState<string>("");
-
   const [events, setEvents] = useState<Record<string, PlayerEventInput>>({});
   const [loadEventsStatus, setLoadEventsStatus] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
-
   const [finalizeStatus, setFinalizeStatus] = useState<string | null>(null);
-  const [finalizeResults, setFinalizeResults] = useState<Array<{ username: string; points: number; subsUsed: number[] }>>(
-    []
-  );
+  const [finalizeResults, setFinalizeResults] = useState<
+    Array<{ username: string; points: number; subsUsed: number[] }>
+  >([]);
 
   // ✅ Round finalize
   const [finalizeRoundStatus, setFinalizeRoundStatus] = useState<string | null>(null);
-  const [finalizeRoundResults, setFinalizeRoundResults] = useState<Array<{ username: string; points: number }>>([]);
+  const [finalizeRoundResults, setFinalizeRoundResults] = useState<
+    Array<{ username: string; points: number }>
+  >([]);
 
   // player search
   const [playerSearch, setPlayerSearch] = useState("");
-  type SortKey = "name_asc" | "name_desc" | "value_desc" | "value_asc" | "newest" | "oldest";
+
+  type SortKey =
+    | "name_asc"
+    | "name_desc"
+    | "value_desc"
+    | "value_asc"
+    | "newest"
+    | "oldest";
+
   const [sortKey, setSortKey] = useState<SortKey>("name_asc");
   const [filterTeam, setFilterTeam] = useState<number | "all">("all");
 
@@ -158,22 +358,31 @@ export default function AdminPortal() {
     async function load() {
       setLoadingBase(true);
       try {
-        const [pRes, tRes] = await Promise.all([apiCall("/players"), apiCall("/teams")]);
+        const [pRes, tRes] = await Promise.all([
+          apiCall("/players"),
+          apiCall("/teams"),
+        ]);
+
         if (!pRes.ok) throw new Error("Failed to load players");
         if (!tRes.ok) throw new Error("Failed to load teams");
+
         const p = (await pRes.json()) as Player[];
         const t = (await tRes.json()) as Team[];
+
         if (cancelled) return;
         setPlayers(p);
         setTeams(t);
       } catch (e) {
-        if (!cancelled) setFixturesErr(e instanceof Error ? e.message : "Failed to load base data");
+        if (!cancelled) {
+          setFixturesErr(e instanceof Error ? e.message : "Failed to load base data");
+        }
       } finally {
         if (!cancelled) setLoadingBase(false);
       }
     }
 
     load();
+
     return () => {
       cancelled = true;
     };
@@ -188,15 +397,20 @@ export default function AdminPortal() {
       try {
         const res = await apiCall("/admin/fixtures", { method: "GET" });
         if (!res.ok) throw new Error("Failed to load fixtures (admin)");
+
         const json = await res.json();
         const fx = (json.fixtures ?? []) as Fixture[];
+
         if (!cancelled) setFixtures(fx);
       } catch (e) {
-        if (!cancelled) setFixturesErr(e instanceof Error ? e.message : "Failed to load fixtures");
+        if (!cancelled) {
+          setFixturesErr(e instanceof Error ? e.message : "Failed to load fixtures");
+        }
       }
     }
 
     loadFx();
+
     return () => {
       cancelled = true;
     };
@@ -240,12 +454,16 @@ export default function AdminPortal() {
 
   const homePlayers = useMemo(() => {
     if (!homeTeamId) return [];
-    return players.filter((p) => p.teamId === homeTeamId).sort((a, b) => a.name.localeCompare(b.name));
+    return players
+      .filter((p) => p.teamId === homeTeamId)
+      .sort((a, b) => a.name.localeCompare(b.name));
   }, [players, homeTeamId]);
 
   const awayPlayers = useMemo(() => {
     if (!awayTeamId) return [];
-    return players.filter((p) => p.teamId === awayTeamId).sort((a, b) => a.name.localeCompare(b.name));
+    return players
+      .filter((p) => p.teamId === awayTeamId)
+      .sort((a, b) => a.name.localeCompare(b.name));
   }, [players, awayTeamId]);
 
   const filteredPlayers = useMemo(() => {
@@ -268,11 +486,19 @@ export default function AdminPortal() {
 
     try {
       setLoadEventsStatus("Loading saved events…");
-      const res = await apiCall(`/admin/game-events?gameId=${encodeURIComponent(String(gameId))}`, { method: "GET" });
+
+      const res = await apiCall(
+        `/admin/game-events?gameId=${encodeURIComponent(String(gameId))}`,
+        {
+          method: "GET",
+        }
+      );
+
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error((data as any).error || "Failed to load game events");
       }
+
       const data = await res.json();
       setEvents(data.events ?? {});
       setLoadEventsStatus("Loaded.");
@@ -284,16 +510,20 @@ export default function AdminPortal() {
 
   async function saveGameEvents(gameId: number) {
     setSaveStatus(null);
+
     try {
       setSaveStatus("Saving…");
+
       const res = await apiCall("/admin/game-events", {
         method: "POST",
         body: JSON.stringify({ gameId, events }),
       });
+
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error((data as any).error || "Failed to save events");
       }
+
       setSaveStatus("Saved ✅");
       setTimeout(() => setSaveStatus(null), 1200);
     } catch (e) {
@@ -308,17 +538,26 @@ export default function AdminPortal() {
     setFinalizeRoundResults([]);
 
     try {
-      setFinalizeStatus("Finalizing (autosubs + formation rules)…");
+      setFinalizeStatus("Finalizing (autosubs + formation rules)...");
+
       const res = await apiCall("/admin/finalize-game", {
         method: "POST",
         body: JSON.stringify({ gameId }),
       });
+
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error((data as any).error || "Failed to finalize game");
       }
+
       const data = await res.json();
-      setFinalizeResults((data.results ?? []) as Array<{ username: string; points: number; subsUsed: number[] }>);
+      setFinalizeResults(
+        (data.results ?? []) as Array<{
+          username: string;
+          points: number;
+          subsUsed: number[];
+        }>
+      );
       setFinalizeStatus("Finalized ✅");
       setTimeout(() => setFinalizeStatus(null), 1500);
     } catch (e) {
@@ -360,17 +599,27 @@ export default function AdminPortal() {
       }
 
       const data = await res.json();
-
-      const rows = (data.results ?? []) as Array<{ username: string; points: number }>;
+      const rows = (data.results ?? []) as Array<{
+        username: string;
+        points: number;
+      }>;
 
       setFinalizeRoundResults(
-        rows.slice().sort((a, b) => (b.points ?? 0) - (a.points ?? 0) || a.username.localeCompare(b.username))
+        rows
+          .slice()
+          .sort(
+            (a, b) =>
+              (b.points ?? 0) - (a.points ?? 0) ||
+              a.username.localeCompare(b.username)
+          )
       );
 
       setFinalizeRoundStatus(`Round ${round} finalized ✅`);
       setTimeout(() => setFinalizeRoundStatus(null), 2000);
     } catch (e) {
-      setFinalizeRoundStatus(e instanceof Error ? e.message : "Failed to finalize round");
+      setFinalizeRoundStatus(
+        e instanceof Error ? e.message : "Failed to finalize round"
+      );
     }
   }
 
@@ -382,128 +631,27 @@ export default function AdminPortal() {
     setEvents((prev) => ({ ...prev, [String(pid)]: next }));
   }
 
-  const EventRow = ({ p }: { p: Player }) => {
-    const ev = getEv(p.id);
-    const pts = calcPoints(p.position, ev);
-
-    return (
-      <div className="admin-row">
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {p.name}
-          </div>
-          <div style={{ fontSize: 12, opacity: 0.75 }}>
-            {teamsById.get(p.teamId)?.name ?? p.teamId} — {p.position}
-          </div>
-        </div>
-
-        <div>
-          <label style={{ fontSize: 12, opacity: 0.75 }}>Minuutit</label>
-          <select
-            className="admin-score-select"
-            value={ev.minutes}
-            onChange={(e) => setEv(p.id, { ...ev, minutes: e.target.value as MinutesBucket })}
-            style={{ width: "100%" }}
-          >
-            <option value="0">0</option>
-            <option value="1_59">1-59</option>
-            <option value="60+">60+</option>
-          </select>
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
-          <div>
-            <label style={{ fontSize: 12, opacity: 0.75 }}>G</label>
-            <input
-              className="admin-score-input"
-              value={String(ev.goals)}
-              onChange={(e) => setEv(p.id, { ...ev, goals: toInt(e.target.value) })}
-              style={{ width: "100%" }}
-            />
-          </div>
-          <div>
-            <label style={{ fontSize: 12, opacity: 0.75 }}>A</label>
-            <input
-              className="admin-score-input"
-              value={String(ev.assists)}
-              onChange={(e) => setEv(p.id, { ...ev, assists: toInt(e.target.value) })}
-              style={{ width: "100%" }}
-            />
-          </div>
-          <div>
-            <label style={{ fontSize: 12, opacity: 0.75 }}>KK</label>
-            <input
-              className="admin-score-input"
-              value={String(ev.yellow)}
-              onChange={(e) => setEv(p.id, { ...ev, yellow: toInt(e.target.value) })}
-              style={{ width: "100%" }}
-            />
-          </div>
-          <div>
-            <label style={{ fontSize: 12, opacity: 0.75 }}>PK</label>
-            <input
-              className="admin-score-input"
-              value={String(ev.red)}
-              onChange={(e) => setEv(p.id, { ...ev, red: toInt(e.target.value) })}
-              style={{ width: "100%" }}
-            />
-          </div>
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr) 0.9fr", gap: 6, alignItems: "end" }}>
-          <div>
-            <label style={{ fontSize: 12, opacity: 0.75 }}>NP</label>
-            <input
-              type="checkbox"
-              checked={ev.cleanSheet}
-              onChange={(e) => setEv(p.id, { ...ev, cleanSheet: e.target.checked })}
-              style={{ width: 18, height: 18 }}
-            />
-          </div>
-          <div>
-            <label style={{ fontSize: 12, opacity: 0.75 }}>OM</label>
-            <input
-              className="admin-score-input"
-              value={String(ev.ownGoals)}
-              onChange={(e) => setEv(p.id, { ...ev, ownGoals: toInt(e.target.value) })}
-              style={{ width: "100%" }}
-            />
-          </div>
-          <div>
-            <label style={{ fontSize: 12, opacity: 0.75 }}>ERP</label>
-            <input
-              className="admin-score-input"
-              value={String(ev.penMissed)}
-              onChange={(e) => setEv(p.id, { ...ev, penMissed: toInt(e.target.value) })}
-              style={{ width: "100%" }}
-            />
-          </div>
-          <div>
-            <label style={{ fontSize: 12, opacity: 0.75 }}>TRP</label>
-            <input
-              className="admin-score-input"
-              value={String(ev.penSaved)}
-              onChange={(e) => setEv(p.id, { ...ev, penSaved: toInt(e.target.value) })}
-              style={{ width: "100%" }}
-            />
-          </div>
-
-          <div style={{ gridColumn: "1 / -1", textAlign: "right", fontWeight: 700 }}>{pts} pts</div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div>
       <div className="app-actions">
-        <button className={`app-btn ${tab === "players" ? "app-btn-active" : ""}`} onClick={() => setTab("players")}>
+        <button
+          className={`app-btn ${tab === "players" ? "app-btn-active" : ""}`}
+          onClick={() => setTab("players")}
+        >
           Pelaajat
         </button>
-        <button className={`app-btn ${tab === "fixtures" ? "app-btn-active" : ""}`} onClick={() => setTab("fixtures")}>
+
+        <button
+          className={`app-btn ${tab === "fixtures" ? "app-btn-active" : ""}`}
+          onClick={() => setTab("fixtures")}
+        >
           Ottelut
         </button>
-        <button className={`app-btn ${tab === "score" ? "app-btn-active" : ""}`} onClick={() => setTab("score")}>
+
+        <button
+          className={`app-btn ${tab === "score" ? "app-btn-active" : ""}`}
+          onClick={() => setTab("score")}
+        >
           Otteluiden pisteet
         </button>
       </div>
@@ -514,7 +662,14 @@ export default function AdminPortal() {
         <div className="app-card" style={{ padding: 12 }}>
           <h2 className="app-h2">Pelaajat</h2>
 
-          <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              marginBottom: 10,
+              flexWrap: "wrap",
+            }}
+          >
             <input
               className="app-btn"
               placeholder="Hae pelaajia…"
@@ -592,11 +747,13 @@ export default function AdminPortal() {
       {tab === "fixtures" && (
         <div className="app-card" style={{ padding: 12 }}>
           <h2 className="app-h2">Ottelut</h2>
+
           {fixturesErr && <div className="app-alert">{fixturesErr}</div>}
 
           {fixtures.length === 0 ? (
             <div className="app-muted">
-              No fixtures loaded. You can still use the scoring tab and type a gameId manually.
+              No fixtures loaded. You can still use the scoring tab and type a
+              gameId manually.
             </div>
           ) : (
             <div className="app-table-wrap">
@@ -605,7 +762,10 @@ export default function AdminPortal() {
                   {(() => {
                     const sorted = fixtures
                       .slice()
-                      .sort((a, b) => (a.round ?? 999) - (b.round ?? 999) || a.id - b.id);
+                      .sort(
+                        (a, b) =>
+                          (a.round ?? 999) - (b.round ?? 999) || a.id - b.id
+                      );
 
                     let lastRound: number | undefined;
 
@@ -656,8 +816,10 @@ export default function AdminPortal() {
       {tab === "score" && (
         <div className="app-card" style={{ padding: 12 }}>
           <h2 className="app-h2">Pisteet</h2>
+
           <div className="app-muted" style={{ marginBottom: 10 }}>
-            Tallenna ottelun tapahtumat ja päätä peli. Voit myös päättää koko kierroksen.
+            Tallenna ottelun tapahtumat ja päätä peli. Voit myös päättää koko
+            kierroksen.
           </div>
 
           <div style={{ display: "grid", gap: 8, marginBottom: 12 }}>
@@ -671,7 +833,6 @@ export default function AdminPortal() {
                     onChange={(e) => {
                       const v = e.target.value;
                       const nextRound = v === "all" ? "all" : Number(v);
-
                       setSelectedRound(nextRound);
                       setSelectedGameId(null);
                       setManualGameId("");
@@ -693,7 +854,10 @@ export default function AdminPortal() {
 
                   <button
                     className="app-btn app-btn-primary"
-                    disabled={selectedRound === "all" || fixturesForSelectedRoundOnly.length === 0}
+                    disabled={
+                      selectedRound === "all" ||
+                      fixturesForSelectedRoundOnly.length === 0
+                    }
                     onClick={finalizeSelectedRound}
                     title="Finalizes all games in the selected round in one request."
                   >
@@ -709,7 +873,6 @@ export default function AdminPortal() {
                     onChange={(e) => {
                       const v = e.target.value;
                       const id = v ? Number(v) : null;
-
                       setSelectedGameId(id);
                       setManualGameId("");
                       setEvents({});
@@ -719,7 +882,9 @@ export default function AdminPortal() {
                     style={{ flex: 1 }}
                     disabled={fixturesForRound.length === 0}
                   >
-                    <option value="">{fixturesForRound.length === 0 ? "Ei pelejä" : "Valitse…"}</option>
+                    <option value="">
+                      {fixturesForRound.length === 0 ? "Ei pelejä" : "Valitse…"}
+                    </option>
                     {fixturesForRound
                       .slice()
                       .sort((a, b) => a.id - b.id)
@@ -763,41 +928,104 @@ export default function AdminPortal() {
             )}
 
             {loadEventsStatus && <div className="app-muted">{loadEventsStatus}</div>}
-            {finalizeRoundStatus && <div className="app-muted">{finalizeRoundStatus}</div>}
+            {finalizeRoundStatus && (
+              <div className="app-muted">{finalizeRoundStatus}</div>
+            )}
           </div>
 
           {selectedFixture && (
             <div className="admin-two-col">
-              <div style={{ border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: 10 }}>
+              <div
+                style={{
+                  border: "1px solid rgba(0,0,0,0.08)",
+                  borderRadius: 12,
+                  padding: 10,
+                }}
+              >
                 <div style={{ fontWeight: 800, marginBottom: 8 }}>
-                  Koti: {teamsById.get(selectedFixture.homeTeamId)?.name ?? selectedFixture.homeTeamId}
+                  Koti:{" "}
+                  {teamsById.get(selectedFixture.homeTeamId)?.name ??
+                    selectedFixture.homeTeamId}
                 </div>
+
                 {homePlayers.length === 0 ? (
                   <div className="app-muted">Ei pelaajia tälle joukkueelle.</div>
                 ) : (
-                  <div style={{ display: "grid", gap: 8 }}>{homePlayers.map((p) => <EventRow key={p.id} p={p} />)}</div>
+                  <div style={{ display: "grid", gap: 8 }}>
+                    {homePlayers.map((p) => (
+                      <EventRow
+                        key={p.id}
+                        p={p}
+                        ev={getEv(p.id)}
+                        teamNameText={
+                          teamsById.get(p.teamId)?.name ?? String(p.teamId)
+                        }
+                        onChange={(next) => setEv(p.id, next)}
+                      />
+                    ))}
+                  </div>
                 )}
               </div>
 
-              <div style={{ border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: 10 }}>
+              <div
+                style={{
+                  border: "1px solid rgba(0,0,0,0.08)",
+                  borderRadius: 12,
+                  padding: 10,
+                }}
+              >
                 <div style={{ fontWeight: 800, marginBottom: 8 }}>
-                  Vieras: {teamsById.get(selectedFixture.awayTeamId)?.name ?? selectedFixture.awayTeamId}
+                  Vieras:{" "}
+                  {teamsById.get(selectedFixture.awayTeamId)?.name ??
+                    selectedFixture.awayTeamId}
                 </div>
+
                 {awayPlayers.length === 0 ? (
                   <div className="app-muted">Ei pelaajia tälle joukkueelle.</div>
                 ) : (
-                  <div style={{ display: "grid", gap: 8 }}>{awayPlayers.map((p) => <EventRow key={p.id} p={p} />)}</div>
+                  <div style={{ display: "grid", gap: 8 }}>
+                    {awayPlayers.map((p) => (
+                      <EventRow
+                        key={p.id}
+                        p={p}
+                        ev={getEv(p.id)}
+                        teamNameText={
+                          teamsById.get(p.teamId)?.name ?? String(p.teamId)
+                        }
+                        onChange={(next) => setEv(p.id, next)}
+                      />
+                    ))}
+                  </div>
                 )}
               </div>
             </div>
           )}
 
           {!selectedFixture && (
-            <div style={{ border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: 10, marginBottom: 12 }}>
-              <div style={{ display: "grid", gap: 8 }}>{filteredPlayers.slice(0, 40).map((p) => <EventRow key={p.id} p={p} />)}</div>
+            <div
+              style={{
+                border: "1px solid rgba(0,0,0,0.08)",
+                borderRadius: 12,
+                padding: 10,
+                marginBottom: 12,
+              }}
+            >
+              <div style={{ display: "grid", gap: 8 }}>
+                {filteredPlayers.slice(0, 40).map((p) => (
+                  <EventRow
+                    key={p.id}
+                    p={p}
+                    ev={getEv(p.id)}
+                    teamNameText={teamsById.get(p.teamId)?.name ?? String(p.teamId)}
+                    onChange={(next) => setEv(p.id, next)}
+                  />
+                ))}
+              </div>
+
               {filteredPlayers.length > 40 && (
                 <div className="app-muted" style={{ marginTop: 8 }}>
-                  Näytetään vain 40 ensimmäistä tulosta. Rajaa hakua nähdäksesi loput.
+                  Näytetään vain 40 ensimmäistä tulosta. Rajaa hakua nähdäksesi
+                  loput.
                 </div>
               )}
             </div>
@@ -812,7 +1040,11 @@ export default function AdminPortal() {
               Tallenna
             </button>
 
-            <button className="app-btn" disabled={!effectiveGameId} onClick={() => effectiveGameId && finalizeGame(effectiveGameId)}>
+            <button
+              className="app-btn"
+              disabled={!effectiveGameId}
+              onClick={() => effectiveGameId && finalizeGame(effectiveGameId)}
+            >
               Päätä peli
             </button>
 
@@ -838,7 +1070,11 @@ export default function AdminPortal() {
                         <td>{r.username}</td>
                         <td style={{ fontWeight: 800 }}>{r.points}</td>
                         <td>
-                          {r.subsUsed?.length ? r.subsUsed.map((id) => playerNameById.get(id) ?? `#${id}`).join(", ") : "-"}
+                          {r.subsUsed?.length
+                            ? r.subsUsed
+                              .map((id) => playerNameById.get(id) ?? `#${id}`)
+                              .join(", ")
+                            : "-"}
                         </td>
                       </tr>
                     ))}
@@ -869,6 +1105,7 @@ export default function AdminPortal() {
                   </tbody>
                 </table>
               </div>
+
               <div className="app-muted" style={{ marginTop: 6 }}>
                 Kierroksen pisteet tulevat kaikista kierroksen otteluista.
               </div>
