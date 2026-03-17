@@ -566,7 +566,7 @@ export default function AdminPortal() {
     try {
       setFinalizeRoundStatus(`Finalizing round ${round}… (${games.length} games)`);
 
-      const res = await apiCall("/admin/finalize-game", {
+      const res = await apiCall("/admin/finalize-round", {
         method: "POST",
         body: JSON.stringify({
           round,
