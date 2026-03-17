@@ -138,7 +138,8 @@ export function scoreTeamForGameWithAutosub(args: {
   const subsOut = new Set<number>();
   let total = 0;
 
-  const finalXI: number[] = [];
+  // Keep original XI intact
+  const finalStartingXIIds: number[] = [...starters];
   const finalBench: number[] = [...bench];
 
   const counts = emptyCounts();
@@ -146,33 +147,45 @@ export function scoreTeamForGameWithAutosub(args: {
   const getEv = (id: number) => eventsById[String(id)];
   const getPos = (id: number) => playersById.get(id)?.position ?? null;
 
+  const swapBenchPlayer = (benchId: number, outId: number) => {
+    for (let i = 0; i < finalBench.length; i++) {
+      if (finalBench[i] === benchId) {
+        finalBench[i] = outId;
+        break;
+      }
+    }
+  };
+
   const starterGK = starters.find((id) => getPos(id) === "GK") ?? null;
   const benchGK = bench.find((id) => getPos(id) === "GK") ?? null;
 
   if (starterGK) {
     const ev = getEv(starterGK);
+
     if (played(ev)) {
-      finalXI.push(starterGK);
       addCount(counts, "GK", 1);
       total += calcPoints("GK", ev);
     } else if (benchGK) {
       const bev = getEv(benchGK);
-      if (played(bev)) {
+      const benchPoints = played(bev) ? calcPoints("GK", bev) : 0;
+
+      if (played(bev) && benchPoints > 0) {
         usedSubs.add(benchGK);
         subsOut.add(starterGK);
 
-        finalXI.push(benchGK);
         addCount(counts, "GK", 1);
-        total += calcPoints("GK", bev);
+        total += benchPoints;
 
-        for (let i = 0; i < finalBench.length; i++) {
-          if (finalBench[i] === benchGK) finalBench[i] = starterGK;
-        }
+        swapBenchPlayer(benchGK, starterGK);
       }
     }
   }
 
-  const dnpOutfield: Record<"DEF" | "MID" | "FWD", number[]> = { DEF: [], MID: [], FWD: [] };
+  const dnpOutfield: Record<"DEF" | "MID" | "FWD", number[]> = {
+    DEF: [],
+    MID: [],
+    FWD: [],
+  };
 
   for (const sid of starters) {
     const pos = getPos(sid);
@@ -180,7 +193,6 @@ export function scoreTeamForGameWithAutosub(args: {
 
     const ev = getEv(sid);
     if (played(ev)) {
-      finalXI.push(sid);
       addCount(counts, pos, 1);
 
       const base = calcPoints(pos, ev);
@@ -201,7 +213,12 @@ export function scoreTeamForGameWithAutosub(args: {
     const ev = getEv(bid);
     if (!played(ev)) continue;
 
-    const missingNow = dnpOutfield.DEF.length + dnpOutfield.MID.length + dnpOutfield.FWD.length;
+    const base = calcPoints(pos, ev);
+    if (base <= 0) continue;
+
+    const missingNow =
+      dnpOutfield.DEF.length + dnpOutfield.MID.length + dnpOutfield.FWD.length;
+
     if (missingNow <= 0) break;
 
     const next: Counts = { ...counts };
@@ -230,34 +247,23 @@ export function scoreTeamForGameWithAutosub(args: {
 
     const outId = dnpOutfield[replacedPos].shift()!;
     subsOut.add(outId);
-
     usedSubs.add(bid);
-    finalXI.push(bid);
 
     counts.DEF = next.DEF;
     counts.MID = next.MID;
     counts.FWD = next.FWD;
 
-    const base = calcPoints(pos, ev);
     total += base;
 
-    for (let i = 0; i < finalBench.length; i++) {
-      if (finalBench[i] === bid) {
-        finalBench[i] = outId;
-        break;
-      }
-    }
+    swapBenchPlayer(bid, outId);
   }
-
-  const finalStartingXIIds = finalXI.slice(0, 11);
-  const finalBenchIds = finalBench;
 
   return {
     total,
     subsUsed: Array.from(usedSubs),
     subsOut: Array.from(subsOut),
     finalStartingXIIds,
-    finalBenchIds,
+    finalBenchIds: finalBench,
     counts,
   };
 }
