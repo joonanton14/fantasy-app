@@ -95,6 +95,21 @@ function fmtFixture(f: Fixture, teamsById: Map<number, Team>) {
   return `${f.id} — ${home} vs ${away} — ${dateStr}`;
 }
 
+function positionOrder(position: Position): number {
+  switch (position) {
+    case "GK":
+      return 0;
+    case "DEF":
+      return 1;
+    case "MID":
+      return 2;
+    case "FWD":
+      return 3;
+    default:
+      return 99;
+  }
+}
+
 type EventRowProps = {
   p: Player;
   ev: PlayerEventInput;
@@ -456,14 +471,22 @@ export default function AdminPortal() {
     if (!homeTeamId) return [];
     return players
       .filter((p) => p.teamId === homeTeamId)
-      .sort((a, b) => a.name.localeCompare(b.name));
+      .sort(
+        (a, b) =>
+          positionOrder(a.position) - positionOrder(b.position) ||
+          a.name.localeCompare(b.name)
+      );
   }, [players, homeTeamId]);
 
   const awayPlayers = useMemo(() => {
     if (!awayTeamId) return [];
     return players
       .filter((p) => p.teamId === awayTeamId)
-      .sort((a, b) => a.name.localeCompare(b.name));
+      .sort(
+        (a, b) =>
+          positionOrder(a.position) - positionOrder(b.position) ||
+          a.name.localeCompare(b.name)
+      );
   }, [players, awayTeamId]);
 
   const filteredPlayers = useMemo(() => {
