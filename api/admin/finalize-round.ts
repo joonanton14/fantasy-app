@@ -9,8 +9,33 @@ import {
 } from "../../lib/scoring";
 import { players } from "../../server/src/data";
 
+type ScanReply = [string, string[]];
+
 function normalizeUsername(u: string) {
   return u.trim().toLowerCase();
+}
+
+async function scanAllTeamKeys(): Promise<string[]> {
+  const match = `${PREFIX}:team:*`;
+  let cursor = "0";
+  const keysAll: string[] = [];
+
+  while (true) {
+    const reply = (await (redis as any).scan(cursor, {
+      match,
+      count: 200,
+    })) as ScanReply;
+
+    const nextCursor = reply[0];
+    const keys = reply[1] ?? [];
+
+    keysAll.push(...keys);
+    cursor = nextCursor;
+
+    if (cursor === "0") break;
+  }
+
+  return Array.from(new Set(keysAll));
 }
 
 function coerceTeamFromHash(obj: any): TeamData | null {
@@ -21,7 +46,9 @@ function coerceTeamFromHash(obj: any): TeamData | null {
   const starRaw = obj.starPlayerIds ?? obj.starPlayers ?? null;
 
   const toNumArray = (v: any): number[] => {
-    if (Array.isArray(v)) return v.map(Number).filter(Number.isFinite);
+    if (Array.isArray(v)) {
+      return v.map(Number).filter(Number.isFinite);
+    }
 
     if (typeof v === "string") {
       try {
@@ -77,6 +104,17 @@ async function loadTeam(teamKey: string): Promise<TeamData | null> {
   }
 }
 
+function toIntArray(v: any): number[] {
+  if (!Array.isArray(v)) return [];
+
+  const out: number[] = [];
+  for (const x of v) {
+    const n = Number(x);
+    if (Number.isInteger(n) && n > 0) out.push(n);
+  }
+  return out;
+}
+
 function mergeEvents(
   all: Record<string, PlayerEventInput>[]
 ): Record<string, PlayerEventInput> {
@@ -89,13 +127,9 @@ function mergeEvents(
       } else {
         const cur = merged[pid];
 
-        if (cur.minutes === "60+" || ev.minutes === "60+") {
-          cur.minutes = "60+";
-        } else if (cur.minutes === "1_59" || ev.minutes === "1_59") {
-          cur.minutes = "1_59";
-        } else {
-          cur.minutes = "0";
-        }
+        if (cur.minutes === "60+" || ev.minutes === "60+") cur.minutes = "60+";
+        else if (cur.minutes === "1_59" || ev.minutes === "1_59") cur.minutes = "1_59";
+        else cur.minutes = "0";
 
         cur.goals += ev.goals ?? 0;
         cur.assists += ev.assists ?? 0;
@@ -116,18 +150,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const session = await getSessionFromReq(req);
 
-    if (!session || !session.isAdmin) {
-      return res.status(403).json({ error: "Forbidden" });
-    }
-
+    if (!session) return res.status(401).json({ error: "Unauthorized" });
+    if (!session.isAdmin) return res.status(403).json({ error: "Forbidden" });
     if (req.method !== "POST") {
       return res.status(405).json({ error: "Method not allowed" });
     }
 
-    const { round, gameIds } = req.body as { round: number; gameIds: number[] };
+    const gameIds = toIntArray(req.body?.gameIds);
+    const roundRaw = req.body?.round;
+    const roundNum = Number.isInteger(Number(roundRaw)) ? Number(roundRaw) : null;
 
-    if (!round || !Array.isArray(gameIds) || gameIds.length === 0) {
-      return res.status(400).json({ error: "Invalid input" });
+    if (!roundNum || gameIds.length === 0) {
+      return res.status(400).json({ error: "Provide round and gameIds[]" });
     }
 
     const playersById = new Map<number, PlayerLite>();
@@ -141,23 +175,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         (await redis.get<Record<string, PlayerEventInput>>(
           `${PREFIX}:game:${gameId}:events`
         )) ?? {};
-
       allEvents.push(events);
     }
 
     const roundEventsById = mergeEvents(allEvents);
+    const teamKeys = await scanAllTeamKeys();
 
-    const teamKeys = await redis.keys(`${PREFIX}:team:*`);
-    const results: Array<{ username: string; points: number }> = [];
+    const results: Array<{ username: string; points: number; subsUsed: number[] }> = [];
 
     for (const teamKey of teamKeys) {
-      const username = normalizeUsername(teamKey.split(":").pop()!);
+      const username = normalizeUsername(String(teamKey).split(":").pop() ?? "");
       const team = await loadTeam(teamKey);
 
       if (!team) {
-        await redis.set(`${PREFIX}:user:${username}:gw:${round}:points`, 0);
-        await redis.set(`${PREFIX}:user:${username}:gw:${round}:subs`, []);
-        results.push({ username, points: 0 });
+        await redis.set(`${PREFIX}:user:${username}:gw:${roundNum}:points`, 0);
+        await redis.set(`${PREFIX}:user:${username}:gw:${roundNum}:subs`, []);
+        results.push({ username, points: 0, subsUsed: [] });
         continue;
       }
 
@@ -167,16 +200,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         eventsById: roundEventsById,
       });
 
-      await redis.set(`${PREFIX}:user:${username}:gw:${round}:points`, total);
-      await redis.set(`${PREFIX}:user:${username}:gw:${round}:subs`, subsUsed);
+      await redis.set(`${PREFIX}:user:${username}:gw:${roundNum}:points`, total);
+      await redis.set(`${PREFIX}:user:${username}:gw:${roundNum}:subs`, subsUsed);
 
-      results.push({ username, points: total });
+      results.push({ username, points: total, subsUsed });
     }
 
-    return res.json({ ok: true, round, results });
-  } catch (e: unknown) {
-    console.error("FINALIZE_ROUND_CRASH", e);
+    for (const gameId of gameIds) {
+      await redis.sadd(`${PREFIX}:games_finalized`, String(gameId));
+    }
 
+    return res.status(200).json({
+      ok: true,
+      round: roundNum,
+      gameIds,
+      results,
+    });
+  } catch (e: unknown) {
+    console.error("FINALIZE_GAME_CRASH", e);
     return res.status(500).json({
       error: e instanceof Error ? e.message : "Server error",
     });

@@ -315,25 +315,17 @@ export default function AdminPortal() {
   const [fixturesErr, setFixturesErr] = useState<string | null>(null);
   const [loadingBase, setLoadingBase] = useState(false);
 
-  // scoring state
   const [selectedGameId, setSelectedGameId] = useState<number | null>(null);
   const [selectedRound, setSelectedRound] = useState<number | "all">("all");
   const [manualGameId, setManualGameId] = useState<string>("");
   const [events, setEvents] = useState<Record<string, PlayerEventInput>>({});
   const [loadEventsStatus, setLoadEventsStatus] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
-  const [finalizeStatus, setFinalizeStatus] = useState<string | null>(null);
-  const [finalizeResults, setFinalizeResults] = useState<
-    Array<{ username: string; points: number; subsUsed: number[] }>
-  >([]);
-
-  // ✅ Round finalize
   const [finalizeRoundStatus, setFinalizeRoundStatus] = useState<string | null>(null);
   const [finalizeRoundResults, setFinalizeRoundResults] = useState<
     Array<{ username: string; points: number }>
   >([]);
 
-  // player search
   const [playerSearch, setPlayerSearch] = useState("");
 
   type SortKey =
@@ -366,17 +358,13 @@ export default function AdminPortal() {
     }
   }
 
-  // load players + teams
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
       setLoadingBase(true);
       try {
-        const [pRes, tRes] = await Promise.all([
-          apiCall("/players"),
-          apiCall("/teams"),
-        ]);
+        const [pRes, tRes] = await Promise.all([apiCall("/players"), apiCall("/teams")]);
 
         if (!pRes.ok) throw new Error("Failed to load players");
         if (!tRes.ok) throw new Error("Failed to load teams");
@@ -403,7 +391,6 @@ export default function AdminPortal() {
     };
   }, []);
 
-  // load fixtures
   useEffect(() => {
     let cancelled = false;
 
@@ -499,105 +486,69 @@ export default function AdminPortal() {
     return list.slice().sort((a, b) => comparePlayers(a, b, sortKey));
   }, [players, playerSearch, filterTeam, sortKey]);
 
-async function loadGameEvents(gameId: number) {
-  setLoadEventsStatus(null);
-  setSaveStatus(null);
-  setFinalizeStatus(null);
-  setFinalizeResults([]);
-  setFinalizeRoundStatus(null);
-  setFinalizeRoundResults([]);
-
-  try {
-    setLoadEventsStatus("Loading saved events…");
-
-    const res = await apiCall(
-      `/admin/game-events?gameId=${encodeURIComponent(String(gameId))}`,
-      { method: "GET" }
-    );
-
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      throw new Error((data as any).error || "Failed to load game events");
-    }
-
-    const data = await res.json();
-    const rawEvents = data.eventsById ?? {};
-
-    const normalized: Record<string, PlayerEventInput> = Object.fromEntries(
-      Object.entries(rawEvents).map(([playerId, ev]) => [
-        playerId,
-        { ...DEFAULT_EVENT, ...(ev as Partial<PlayerEventInput>) },
-      ])
-    );
-
-    setEvents(normalized);
-    setLoadEventsStatus("Loaded.");
-    setTimeout(() => setLoadEventsStatus(null), 1000);
-  } catch (e) {
-    setLoadEventsStatus(e instanceof Error ? e.message : "Failed to load events");
-  }
-}
-
-async function saveGameEvents(gameId: number) {
-  setSaveStatus(null);
-
-  try {
-    setSaveStatus("Saving…");
-
-    const res = await apiCall("/admin/game-events", {
-      method: "POST",
-      body: JSON.stringify({
-        gameId,
-        eventsById: events,
-      }),
-    });
-
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      throw new Error((data as any).error || "Failed to save events");
-    }
-
-    setSaveStatus("Saved ✅");
-    setTimeout(() => setSaveStatus(null), 1200);
-  } catch (e) {
-    setSaveStatus(e instanceof Error ? e.message : "Failed to save events");
-  }
-}
-  async function finalizeGame(gameId: number) {
-    setFinalizeStatus(null);
-    setFinalizeResults([]);
+  async function loadGameEvents(gameId: number) {
+    setLoadEventsStatus(null);
+    setSaveStatus(null);
     setFinalizeRoundStatus(null);
     setFinalizeRoundResults([]);
 
     try {
-      setFinalizeStatus("Finalizing (autosubs + formation rules)...");
+      setLoadEventsStatus("Loading saved events…");
 
-      const res = await apiCall("/admin/finalize-game", {
+      const res = await apiCall(
+        `/admin/game-events?gameId=${encodeURIComponent(String(gameId))}`,
+        { method: "GET" }
+      );
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as any).error || "Failed to load game events");
+      }
+
+      const data = await res.json();
+      const rawEvents = data.eventsById ?? {};
+
+      const normalized: Record<string, PlayerEventInput> = Object.fromEntries(
+        Object.entries(rawEvents).map(([playerId, ev]) => [
+          playerId,
+          { ...DEFAULT_EVENT, ...(ev as Partial<PlayerEventInput>) },
+        ])
+      );
+
+      setEvents(normalized);
+      setLoadEventsStatus("Loaded.");
+      setTimeout(() => setLoadEventsStatus(null), 1000);
+    } catch (e) {
+      setLoadEventsStatus(e instanceof Error ? e.message : "Failed to load events");
+    }
+  }
+
+  async function saveGameEvents(gameId: number) {
+    setSaveStatus(null);
+
+    try {
+      setSaveStatus("Saving…");
+
+      const res = await apiCall("/admin/game-events", {
         method: "POST",
-        body: JSON.stringify({ gameId }),
+        body: JSON.stringify({
+          gameId,
+          eventsById: events,
+        }),
       });
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error((data as any).error || "Failed to finalize game");
+        throw new Error((data as any).error || "Failed to save events");
       }
 
-      const data = await res.json();
-      setFinalizeResults(
-        (data.results ?? []) as Array<{
-          username: string;
-          points: number;
-          subsUsed: number[];
-        }>
-      );
-      setFinalizeStatus("Finalized ✅");
-      setTimeout(() => setFinalizeStatus(null), 1500);
+      setSaveStatus("Saved ✅");
+      setTimeout(() => setSaveStatus(null), 1200);
     } catch (e) {
-      setFinalizeStatus(e instanceof Error ? e.message : "Failed to finalize");
+      setSaveStatus(e instanceof Error ? e.message : "Failed to save events");
     }
   }
 
-  // ✅ Finalize whole round in ONE server call: { round, gameIds }
   async function finalizeSelectedRound() {
     if (selectedRound === "all") return;
 
@@ -606,8 +557,6 @@ async function saveGameEvents(gameId: number) {
 
     setFinalizeRoundStatus(null);
     setFinalizeRoundResults([]);
-    setFinalizeStatus(null);
-    setFinalizeResults([]);
 
     if (games.length === 0) {
       setFinalizeRoundStatus(`No games found for round ${round}.`);
@@ -656,8 +605,8 @@ async function saveGameEvents(gameId: number) {
   }
 
   function getEv(pid: number): PlayerEventInput {
-  return events[String(pid)] ?? { ...DEFAULT_EVENT };
-}
+    return events[String(pid)] ?? { ...DEFAULT_EVENT };
+  }
 
   function setEv(pid: number, next: PlayerEventInput) {
     setEvents((prev) => ({ ...prev, [String(pid)]: next }));
@@ -850,8 +799,9 @@ async function saveGameEvents(gameId: number) {
           <h2 className="app-h2">Pisteet</h2>
 
           <div className="app-muted" style={{ marginBottom: 10 }}>
-            Tallenna ottelun tapahtumat ja päätä peli. Voit myös päättää koko
-            kierroksen.
+            Tallenna jokaisen ottelun tapahtumat. Kun kaikki kierroksen ottelut on
+            tallennettu, paina "Päätä kierros" laskeaksesi kierroksen pisteet ja
+            automaattivaihdot.
           </div>
 
           <div style={{ display: "grid", gap: 8, marginBottom: 12 }}>
@@ -869,10 +819,9 @@ async function saveGameEvents(gameId: number) {
                       setSelectedGameId(null);
                       setManualGameId("");
                       setEvents({});
-                      setFinalizeResults([]);
                       setFinalizeRoundResults([]);
                       setFinalizeRoundStatus(null);
-                      setFinalizeStatus(null);
+                      setSaveStatus(null);
                     }}
                     style={{ flex: 1 }}
                   >
@@ -908,8 +857,7 @@ async function saveGameEvents(gameId: number) {
                       setSelectedGameId(id);
                       setManualGameId("");
                       setEvents({});
-                      setFinalizeResults([]);
-                      setFinalizeStatus(null);
+                      setSaveStatus(null);
                     }}
                     style={{ flex: 1 }}
                     disabled={fixturesForRound.length === 0}
@@ -1072,49 +1020,8 @@ async function saveGameEvents(gameId: number) {
               Tallenna
             </button>
 
-            <button
-              className="app-btn"
-              disabled={!effectiveGameId}
-              onClick={() => effectiveGameId && finalizeGame(effectiveGameId)}
-            >
-              Päätä peli
-            </button>
-
             {saveStatus && <span className="app-muted">{saveStatus}</span>}
-            {finalizeStatus && <span className="app-muted">{finalizeStatus}</span>}
           </div>
-
-          {finalizeResults.length > 0 && (
-            <div style={{ marginTop: 12 }}>
-              <h3 className="app-h2">Päätetyt tulokset (peli)</h3>
-              <div className="app-table-wrap">
-                <table className="app-table">
-                  <thead>
-                    <tr>
-                      <th>Käyttäjä</th>
-                      <th>Pisteet</th>
-                      <th>Vaihdot käytetty</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {finalizeResults.map((r) => (
-                      <tr key={r.username}>
-                        <td>{r.username}</td>
-                        <td style={{ fontWeight: 800 }}>{r.points}</td>
-                        <td>
-                          {r.subsUsed?.length
-                            ? r.subsUsed
-                              .map((id) => playerNameById.get(id) ?? `#${id}`)
-                              .join(", ")
-                            : "-"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
 
           {finalizeRoundResults.length > 0 && (
             <div style={{ marginTop: 12 }}>
@@ -1140,6 +1047,8 @@ async function saveGameEvents(gameId: number) {
 
               <div className="app-muted" style={{ marginTop: 6 }}>
                 Kierroksen pisteet tulevat kaikista kierroksen otteluista.
+                Automaattivaihdot tehdään vasta kierroksen päättämisen yhteydessä,
+                eikä yksittäisen ottelun tallennuksessa.
               </div>
             </div>
           )}
