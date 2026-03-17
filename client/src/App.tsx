@@ -53,6 +53,7 @@ export default function App() {
   type LeaderboardRow = { username: string; total: number; last: number };
   const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
   const [loadingLb, setLoadingLb] = useState(false);
+  const [leaderboardMeta, setLeaderboardMeta] = useState<any>(null);
   const [prevRanks, setPrevRanks] = useState<Record<string, number>>({});
 
   const [playerSearch, setPlayerSearch] = useState("");
@@ -450,28 +451,29 @@ export default function App() {
 
   const isTeamLocked = firstKickoffMs != null && Date.now() >= firstKickoffMs;
 
-  async function loadLeaderboard() {
-    setLoadingLb(true);
-    try {
-      const oldRanks = readSavedRanks();
-      setPrevRanks(oldRanks);
-
-      const res = await apiCall("/leaderboard", { method: "GET" });
-      if (!res.ok) {
-        setLeaderboard([]);
-        return;
-      }
-
-      const data = await res.json();
-      const rows = (data?.rows ?? []) as LeaderboardRow[];
-      setLeaderboard(rows);
-      saveCurrentRanks(rows);
-    } catch {
+async function loadLeaderboard() {
+  setLoadingLb(true);
+  try {
+    const res = await apiCall("/leaderboard", { method: "GET" });
+    if (!res.ok) {
       setLeaderboard([]);
-    } finally {
-      setLoadingLb(false);
+      setLeaderboardMeta(null);
+      return;
     }
+
+    const data = await res.json();
+    const rows = (data?.rows ?? []) as LeaderboardRow[];
+
+    setLeaderboard(rows);
+    setLeaderboardMeta(data);
+    saveCurrentRanks(rows);
+  } catch {
+    setLeaderboard([]);
+    setLeaderboardMeta(null);
+  } finally {
+    setLoadingLb(false);
   }
+}
 
   useEffect(() => {
     if (isLoggedIn) {
