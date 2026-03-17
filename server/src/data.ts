@@ -203,11 +203,11 @@ function teamIdByName(raw: string): number {
   return t.id;
 }
 
-
+// HOX HOX HOX CHANGE THIS TO REAL FIXTURE
 
 const FIXTURE_ROWS: Array<[number, string, string, string, string, number]> = [
   // Kierros 1
-  [1, "4.4.2026", "13:00", "FC Inter", "VPS", 1],
+  [1, "16.3.2026", "13:00", "FC Inter", "VPS", 1],
   [2, "4.4.2026", "15:00", "HJK", "SJK", 1],
   [3, "4.4.2026", "17:00", "FF Jaro", "FC Lahti", 1],
   [4, "4.4.2026", "17:00", "IFK Mariehamn", "TPS", 1],
