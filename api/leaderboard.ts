@@ -1,8 +1,13 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { redis, PREFIX } from "../lib/redis";
 import { getSessionFromReq } from "../lib/session";
+import { fixtures } from "../server/src/data";
 
 type Row = { username: string; total: number; last: number };
+
+const GAME_ROUND = new Map<number, number>(
+  fixtures.map((f) => [f.id, f.round])
+);
 
 async function scanKeys(match: string): Promise<string[]> {
   const keys: string[] = [];
@@ -50,47 +55,14 @@ function parseHashTeam(teamHash: Record<string, string> | null) {
   return { startingXIIds, benchIds };
 }
 
-function parsePointsKeyUsername(key: string): string | null {
-  const prefix = `${PREFIX}:user:`;
-  const marker = `:game:`;
-
-  if (!key.startsWith(prefix)) return null;
-  const rest = key.slice(prefix.length);
-  const idx = rest.indexOf(marker);
-  if (idx <= 0) return null;
-
-  const username = rest.slice(0, idx).trim();
-  return username || null;
-}
-
-async function getPoints(username: string, gameId: number): Promise<number> {
+async function getRoundPoints(username: string, roundNum: number): Promise<number> {
   const candidates = Array.from(new Set([username, username.toLowerCase()]));
 
   for (const name of candidates) {
-    const key1 = `${PREFIX}:user:${name}:game:${gameId}:points`;
-    const v1 = await redis.get<number | string>(key1);
-    if (v1 != null) {
-      const n = Number(v1);
-      if (Number.isFinite(n)) return n;
-    }
-
-    const key2 = `${PREFIX}:user:${name}:points`;
-    const v2 = await redis.hget<number | string>(key2, String(gameId));
-    if (v2 != null) {
-      const n = Number(v2);
-      if (Number.isFinite(n)) return n;
-    }
-
-    const key3 = `${PREFIX}:points:${name}`;
-    const v3 = await redis.hget<number | string>(key3, String(gameId));
-    if (v3 != null) {
-      const n = Number(v3);
-      if (Number.isFinite(n)) return n;
-    }
-
-    const v4 = await redis.get<Record<string, number> | null>(key2);
-    if (v4 && typeof v4 === "object") {
-      const n = Number(v4[String(gameId)]);
+    const key = `${PREFIX}:user:${name}:gw:${roundNum}:points`;
+    const v = await redis.get<number | string>(key);
+    if (v != null) {
+      const n = Number(v);
       if (Number.isFinite(n)) return n;
     }
   }
@@ -104,51 +76,46 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!session) return res.status(401).json({ error: "Unauthorized" });
     if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
 
+    const teamKeys = await scanKeys(`${PREFIX}:team:*`);
+    const users = teamKeys.map((k) => k.split(":").pop()!).filter(Boolean);
+
     const finalized = await redis.smembers(`${PREFIX}:games_finalized`);
     const gameIds = finalized
       .map((x) => Number(x))
       .filter((n) => Number.isInteger(n) && n > 0)
       .sort((a, b) => a - b);
 
-    const lastGameId = gameIds.length ? gameIds[gameIds.length - 1] : null;
+    const finalizedRounds = Array.from(
+      new Set(
+        gameIds
+          .map((gid) => GAME_ROUND.get(gid))
+          .filter((r): r is number => Number.isInteger(r))
+      )
+    ).sort((a, b) => a - b);
 
-    // Discover users from teams
-    const teamKeys = await scanKeys(`${PREFIX}:team:*`);
-    const usersFromTeams = teamKeys
-      .map((k) => k.split(":").pop()!)
-      .filter(Boolean);
-
-    // Discover users from saved points
-    const pointKeys = await scanKeys(`${PREFIX}:user:*:game:*:points`);
-    const usersFromPoints = pointKeys
-      .map(parsePointsKeyUsername)
-      .filter((x): x is string => !!x);
-
-    const users = Array.from(new Set([...usersFromTeams, ...usersFromPoints]));
+    const lastRound = finalizedRounds.length
+      ? finalizedRounds[finalizedRounds.length - 1]
+      : null;
 
     const rows: Row[] = [];
 
     for (const username of users) {
-      let teamExists = false;
-
       const teamKey = `${PREFIX}:team:${username}`;
       const teamGet = await redis.get<any>(teamKey);
-      if (teamGet) {
-        teamExists = true;
-      } else {
+      let teamExists = !!teamGet;
+
+      if (!teamExists) {
         const teamHash = await redis.hgetall<Record<string, string>>(teamKey);
         teamExists = !!parseHashTeam(teamHash);
       }
+      if (!teamExists) continue;
 
-      // Allow users with saved points even if current team save format changed
       let total = 0;
-      for (const gid of gameIds) {
-        total += await getPoints(username, gid);
+      for (const roundNum of finalizedRounds) {
+        total += await getRoundPoints(username, roundNum);
       }
 
-      const last = lastGameId == null ? 0 : await getPoints(username, lastGameId);
-
-      if (!teamExists && total === 0 && last === 0) continue;
+      const last = lastRound == null ? 0 : await getRoundPoints(username, lastRound);
 
       rows.push({ username, total, last });
     }
@@ -158,13 +125,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({
       rows,
       gamesFinalized: gameIds.length,
-      lastGameId,
+      lastRound,
       debug: {
-        teamKeysFound: teamKeys.length,
-        pointKeysFound: pointKeys.length,
-        usersFromTeams: usersFromTeams.length,
-        usersFromPoints: usersFromPoints.length,
-        uniqueUsers: users.length,
+        finalizedGameIds: gameIds,
+        finalizedRounds,
+        usersFound: users.length,
       },
     });
   } catch (e: unknown) {
