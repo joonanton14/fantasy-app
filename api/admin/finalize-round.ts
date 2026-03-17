@@ -56,7 +56,7 @@ function coerceTeamFromHash(obj: any): TeamData | null {
         if (Array.isArray(parsed)) {
           return parsed.map(Number).filter(Number.isFinite);
         }
-      } catch {}
+      } catch { }
 
       return v
         .split(",")
@@ -194,7 +194,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         continue;
       }
 
-      const { total, subsUsed } = scoreTeamForGameWithAutosub({
+      const {
+        total,
+        subsUsed,
+        subsOut,
+        finalStartingXIIds,
+        finalBenchIds,
+      } = scoreTeamForGameWithAutosub({
         team,
         playersById,
         eventsById: roundEventsById,
@@ -202,7 +208,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       await redis.set(`${PREFIX}:user:${username}:gw:${roundNum}:points`, total);
       await redis.set(`${PREFIX}:user:${username}:gw:${roundNum}:subs`, subsUsed);
-
+      await redis.set(`${PREFIX}:user:${username}:gw:${roundNum}:subsOut`, subsOut);
+      await redis.set(`${PREFIX}:user:${username}:gw:${roundNum}:finalXI`, finalStartingXIIds);
+      await redis.set(`${PREFIX}:user:${username}:gw:${roundNum}:finalBench`, finalBenchIds);
       results.push({ username, points: total, subsUsed });
     }
 

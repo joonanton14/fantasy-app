@@ -27,6 +27,8 @@ type SavedTeamData = {
   squadIds?: number[];
   startingXIIds?: number[];
   benchIds?: number[];
+  finalXIIds?: number[];
+  finalBenchIds?: number[];
   starPlayerIds?: {
     DEF?: number | null;
     MID?: number | null;
@@ -225,8 +227,8 @@ export default function App() {
         setSavedTransfers(data?.transfers ?? {});
 
         const squadIds = data?.squadIds ?? [];
-        const xiIds = data?.startingXIIds ?? [];
-        const benchIds = data?.benchIds ?? [];
+        const xiIds = data?.finalXIIds?.length ? data.finalXIIds : data?.startingXIIds ?? [];
+        const benchIds = data?.finalBenchIds?.length ? data.finalBenchIds : data?.benchIds ?? [];
 
         const squadPlayers = mapIds(squadIds);
         const xiPlayers = mapIds(xiIds);
@@ -328,8 +330,8 @@ export default function App() {
         setSavedTransfers(data?.transfers ?? {});
 
         const squadIds = data?.squadIds ?? [];
-        const xiIds = data?.startingXIIds ?? [];
-        const benchIds = data?.benchIds ?? [];
+        const xiIds = data?.finalXIIds?.length ? data.finalXIIds : data?.startingXIIds ?? [];
+        const benchIds = data?.finalBenchIds?.length ? data.finalBenchIds : data?.benchIds ?? [];
 
         const squadPlayers = mapIds(squadIds);
         const xiPlayers = mapIds(xiIds);

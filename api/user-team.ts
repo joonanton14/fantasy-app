@@ -21,6 +21,8 @@ type SavedTeam = {
   squadIds?: number[];
   startingXIIds?: number[];
   benchIds?: number[];
+  finalXIIds?: number[];
+  finalBenchIds?: number[];
   formation?: FormationKey;
   starPlayerIds?: StarPlayers;
   transfers?: TransferState;
@@ -188,11 +190,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ data: data ?? null });
       }
 
+      const finalXIIds =
+        (await redis.get<number[]>(`${PREFIX}:user:${username}:gw:${currentRound}:finalXI`)) ?? undefined;
+      const finalBenchIds =
+        (await redis.get<number[]>(`${PREFIX}:user:${username}:gw:${currentRound}:finalBench`)) ?? undefined;
       const normalized: SavedTeam = {
         ...data,
         transfers: normalizeTransfers(data.transfers, currentRound),
+        finalXIIds,
+        finalBenchIds,
       };
-
       return res.status(200).json({ data: normalized });
     }
 
