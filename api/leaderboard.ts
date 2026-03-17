@@ -1,8 +1,17 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { redis, PREFIX } from "../lib/redis";
 import { getSessionFromReq } from "../lib/session";
+import { fixtures } from "../server/src/data";
 
 type Row = { username: string; total: number; last: number };
+
+const GAME_ROUND = new Map<number, number>(
+  fixtures.map((f) => [f.id, f.round])
+);
+
+async function getGameRound(gameId: number): Promise<number | null> {
+  return GAME_ROUND.get(gameId) ?? null;
+}
 
 async function scanKeys(match: string): Promise<string[]> {
   const keys: string[] = [];
@@ -59,13 +68,6 @@ async function getPoints(username: string, gameId: number): Promise<number> {
   }
 
   return 0;
-}
-
-async function getGameRound(gameId: number): Promise<number | null> {
-  const fixture = await redis.get<{ id: number; round?: number }>(
-    `${PREFIX}:fixture:${gameId}`
-  );
-  return typeof fixture?.round === "number" ? fixture.round : null;
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
