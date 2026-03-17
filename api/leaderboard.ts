@@ -61,11 +61,20 @@ async function getPoints(username: string, gameId: number): Promise<number> {
   return 0;
 }
 
+async function getGameRound(gameId: number): Promise<number | null> {
+  const fixture = await redis.get<{ id: number; round?: number }>(
+    `${PREFIX}:fixture:${gameId}`
+  );
+  return typeof fixture?.round === "number" ? fixture.round : null;
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const session = await getSessionFromReq(req);
     if (!session) return res.status(401).json({ error: "Unauthorized" });
-    if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
+    if (req.method !== "GET") {
+      return res.status(405).json({ error: "Method not allowed" });
+    }
 
     // discover users who have teams saved
     const teamKeys = await scanKeys(`${PREFIX}:team:*`);
@@ -78,7 +87,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .filter((n) => Number.isInteger(n) && n > 0)
       .sort((a, b) => a - b);
 
-    const lastGameId = gameIds.length ? gameIds[gameIds.length - 1] : null;
+    const gameRounds = new Map<number, number>();
+
+    for (const gid of gameIds) {
+      const round = await getGameRound(gid);
+      if (round != null) gameRounds.set(gid, round);
+    }
+
+    const latestRound =
+      gameRounds.size > 0 ? Math.max(...Array.from(gameRounds.values())) : null;
 
     const rows: Row[] = [];
 
@@ -95,11 +112,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!teamExists) continue;
 
       let total = 0;
+      let currentRoundTotal = 0;
+
       for (const gid of gameIds) {
-        total += await getPoints(username, gid);
+        const pts = await getPoints(username, gid);
+        total += pts;
+
+        if (latestRound != null && gameRounds.get(gid) === latestRound) {
+          currentRoundTotal += pts;
+        }
       }
 
-      const last = lastGameId == null ? 0 : await getPoints(username, lastGameId);
+      const last = latestRound == null ? 0 : total - currentRoundTotal;
 
       rows.push({ username, total, last });
     }
@@ -109,10 +133,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({
       rows,
       gamesFinalized: gameIds.length,
-      lastGameId,
+      latestRound,
     });
   } catch (e: unknown) {
     console.error("LEADERBOARD_CRASH", e);
-    return res.status(500).json({ error: e instanceof Error ? e.message : "Server error" });
+    return res.status(500).json({
+      error: e instanceof Error ? e.message : "Server error",
+    });
   }
 }
