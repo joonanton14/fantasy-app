@@ -53,12 +53,14 @@ export default function App() {
   type LeaderboardRow = { username: string; total: number; last: number };
   const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
   const [loadingLb, setLoadingLb] = useState(false);
+  const [prevRanks, setPrevRanks] = useState<Record<string, number>>({});
+
   const [playerSearch, setPlayerSearch] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState<number | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [prevRanks, setPrevRanks] = useState<Record<string, number>>({});
+
   const [page, setPage] = useState<"builder" | "admin">("builder");
 
   const [players, setPlayers] = useState<Player[]>([]);
@@ -70,11 +72,7 @@ export default function App() {
   const [bench, setBench] = useState<Player[]>([]);
   const [savedFormation, setSavedFormation] = useState<FormationKey>("4-4-2");
 
-
-
-  // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
   const beforeFirstDeadline = true; // FIX THIS WHEN GAMES STARTS
-
 
   const [error, setError] = useState<string | null>(null);
   const [detailPlayer, setDetailPlayer] = useState<Player | null>(null);
@@ -160,6 +158,34 @@ export default function App() {
 
     return arr;
   }, [players, filterTeamId, filterPositions, playerSort, teamsById, playerSearch]);
+
+  function readSavedRanks(): Record<string, number> {
+    try {
+      return JSON.parse(localStorage.getItem("lb_prev_ranks") || "{}");
+    } catch {
+      return {};
+    }
+  }
+
+  function saveCurrentRanks(rows: Array<{ username: string }>) {
+    const next: Record<string, number> = {};
+    rows.forEach((r, i) => {
+      next[r.username] = i + 1;
+    });
+    localStorage.setItem("lb_prev_ranks", JSON.stringify(next));
+  }
+
+  function rankDiffSymbolFromPrev(
+    prev: Record<string, number>,
+    username: string,
+    currentRank: number
+  ): "up" | "down" | "same" | "new" {
+    const prevRank = prev[username];
+    if (typeof prevRank !== "number") return "new";
+    if (currentRank < prevRank) return "up";
+    if (currentRank > prevRank) return "down";
+    return "same";
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -424,34 +450,6 @@ export default function App() {
 
   const isTeamLocked = firstKickoffMs != null && Date.now() >= firstKickoffMs;
 
-      function readSavedRanks(): Record<string, number> {
-      try {
-        return JSON.parse(localStorage.getItem("lb_prev_ranks") || "{}");
-      } catch {
-        return {};
-      }
-    }
-
-    function saveCurrentRanks(rows: Array<{ username: string }>) {
-      const next: Record<string, number> = {};
-      rows.forEach((r, i) => {
-        next[r.username] = i + 1;
-      });
-      localStorage.setItem("lb_prev_ranks", JSON.stringify(next));
-    }
-
-    function rankDiffSymbolFromPrev(
-      prev: Record<string, number>,
-      username: string,
-      currentRank: number
-    ): "up" | "down" | "same" | "new" {
-      const prevRank = prev[username];
-      if (typeof prevRank !== "number") return "new";
-      if (currentRank < prevRank) return "up";
-      if (currentRank > prevRank) return "down";
-      return "same";
-    }
-
   async function loadLeaderboard() {
     setLoadingLb(true);
     try {
@@ -459,21 +457,26 @@ export default function App() {
       setPrevRanks(oldRanks);
 
       const res = await apiCall("/leaderboard", { method: "GET" });
-      if (!res.ok) return;
+      if (!res.ok) {
+        setLeaderboard([]);
+        return;
+      }
 
       const data = await res.json();
       const rows = (data?.rows ?? []) as LeaderboardRow[];
-
       setLeaderboard(rows);
       saveCurrentRanks(rows);
+    } catch {
+      setLeaderboard([]);
     } finally {
       setLoadingLb(false);
     }
   }
 
   useEffect(() => {
-    if (!isLoggedIn) return;
-    loadLeaderboard();
+    if (isLoggedIn) {
+      loadLeaderboard();
+    }
   }, [isLoggedIn]);
 
   function handleLoginSuccess(userId: number, userName: string, isAdmin: boolean) {
@@ -491,7 +494,7 @@ export default function App() {
   async function handleLogout() {
     try {
       await apiCall("/auth/logout", { method: "POST" });
-    } catch { }
+    } catch {}
 
     setIsLoggedIn(false);
     setUserId(null);
@@ -619,7 +622,7 @@ export default function App() {
                     className={`app-btn ${teamViewTab === "leaderboard" ? "app-btn-active" : ""}`}
                     onClick={() => {
                       setTeamViewTab("leaderboard");
-                      loadLeaderboard(); // maybe these could be loaded when logging in so it will be faster to use
+                      loadLeaderboard();
                     }}
                   >
                     Tulostaulu
@@ -629,7 +632,7 @@ export default function App() {
                     className={`app-btn ${teamViewTab === "fixtures" ? "app-btn-active" : ""}`}
                     onClick={() => {
                       setTeamViewTab("fixtures");
-                      loadFixtures(); // maybe these could be loaded when logging in so it will be faster to use
+                      loadFixtures();
                     }}
                   >
                     Ottelut
@@ -650,7 +653,7 @@ export default function App() {
                   isLocked={isTeamLocked}
                   transferLimit={savedTransfers.limit ?? 3}
                   transferUsed={savedTransfers.used ?? 0}
-                  beforeFirstDeadline={beforeFirstDeadline} // this is not really correct, but it's a placeholder until transfer logic is implemented
+                  beforeFirstDeadline={beforeFirstDeadline}
                   onCancel={() => setTeamViewTab("startingXI")}
                   onSave={async ({ squad }) => {
                     try {
@@ -678,7 +681,6 @@ export default function App() {
                     initialStarPlayerIds={savedStarPlayerIds}
                     budget={INITIAL_BUDGET}
                     readOnly={isTeamLocked}
-
                     onSave={async (p) => {
                       try {
                         await saveXI({
@@ -903,7 +905,7 @@ export default function App() {
                 </>
               )}
             </div>
-            <PlayerDetailsModal //TODO this doesnt yet do anythin, but it's a starting point for showing player details and stats in the future
+            <PlayerDetailsModal
               player={detailPlayer}
               teams={teams}
               onClose={() => setDetailPlayer(null)}
