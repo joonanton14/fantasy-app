@@ -530,7 +530,7 @@ export default function App() {
   async function handleLogout() {
     try {
       await apiCall("/auth/logout", { method: "POST" });
-    } catch {}
+    } catch { }
 
     setIsLoggedIn(false);
     setUserId(null);
@@ -704,15 +704,12 @@ export default function App() {
                 />
               ) : teamViewTab === "startingXI" ? (
                 <div>
-                  {loadingSaved && <div className="app-muted">Ladataan tallennettu joukkue…</div>}
+                  {loadingSaved && <div className="app-muted">Ladataan joukkue…</div>}
                   {isTeamLocked && (
                     <div className="starting-xi-warning" role="alert">
-                      Kierroksen ensimmäinen ottelu on alkanut — kokoonpanon muutokset ja vaihdot ovat lukittu.
+                      Kokoonpanon muutokset ja vaihdot ovat lukittu.
                     </div>
                   )}
-<div className="app-muted">
-  finalXI: {finalXI.length} | finalBench: {finalBench.length}
-</div>
                   <StartingXI
                     teams={teams}
                     squad={squad}

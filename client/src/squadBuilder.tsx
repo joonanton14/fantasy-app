@@ -305,7 +305,7 @@ export default function SquadBuilder(props: {
 
           {props.isLocked && (
             <div className="starting-xi-warning" role="alert">
-              Kierroksen ensimmäinen ottelu on alkanut — vaihdot ovat lukittu.
+              Pelit käynnissä, vaihdot ovat lukittu.
             </div>
           )}
 

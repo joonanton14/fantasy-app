@@ -128,6 +128,7 @@ function getDisplayedPlayerPoints(
   return isStarPlayer(player, starIds) ? Math.round(base * 1.5) : base;
 }
 
+
 type SwapSource = { area: "xi" | "bench"; slotId: string } | null;
 
 export type StartingXISavePayload = {
@@ -575,6 +576,7 @@ export const StartingXI: FC<{
               {lastName(assigned.name)} {star ? <span className="player-star">★</span> : null}
             </div>
             <div className="player-team">{teamName(teams, assigned.teamId)}</div>
+            {isScoredView && <div className="player-points">{shownPoints} p</div>}
           </div>
         ) : (
           <div className="slot-empty">{emptyLabel}</div>
