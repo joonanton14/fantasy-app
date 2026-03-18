@@ -207,8 +207,9 @@ function teamIdByName(raw: string): number {
 
 const FIXTURE_ROWS: Array<[number, string, string, string, string, number]> = [
   // Kierros 1
-  // Add this to simulate that round is on [1, "16.3.2026", "13:00", "FC Inter", "VPS", 1],
-  [1, "4.4.2026", "13:00", "FC Inter", "VPS", 1],
+  // Add this to simulate that round is on 
+  [1, "16.3.2026", "13:00", "FC Inter", "VPS", 1],
+  // change this [1, "4.4.2026", "13:00", "FC Inter", "VPS", 1],
   [2, "4.4.2026", "15:00", "HJK", "SJK", 1],
   [3, "4.4.2026", "17:00", "FF Jaro", "FC Lahti", 1],
   [4, "4.4.2026", "17:00", "IFK Mariehamn", "TPS", 1],
