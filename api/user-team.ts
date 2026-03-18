@@ -184,22 +184,52 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method === "GET") {
       const data = ((await redis.get<SavedTeam>(key)) ?? null) as SavedTeam | null;
 
-      const currentRound = getCurrentEditableRound();
-
-      if (!data || currentRound == null) {
-        return res.status(200).json({ data: data ?? null });
+      if (!data) {
+        return res.status(200).json({ data: null });
       }
 
+      const finalized = await redis.smembers(`${PREFIX}:games_finalized`);
+      const finalizedGameIds = finalized
+        .map((x) => Number(x))
+        .filter((n) => Number.isInteger(n) && n > 0);
+
+      const finalizedRounds = Array.from(
+        new Set(
+          finalizedGameIds
+            .map((gid) => fixtures.find((f) => f.id === gid)?.round)
+            .filter((r): r is number => Number.isInteger(r))
+        )
+      ).sort((a, b) => a - b);
+
+      const lastFinalizedRound =
+        finalizedRounds.length > 0 ? finalizedRounds[finalizedRounds.length - 1] : null;
+
+      const currentRound = getCurrentEditableRound();
+
       const finalXIIds =
-        (await redis.get<number[]>(`${PREFIX}:user:${username}:gw:${currentRound}:finalXI`)) ?? undefined;
+        lastFinalizedRound == null
+          ? undefined
+          : ((await redis.get<number[]>(
+            `${PREFIX}:user:${username}:gw:${lastFinalizedRound}:finalXI`
+          )) ?? undefined);
+
       const finalBenchIds =
-        (await redis.get<number[]>(`${PREFIX}:user:${username}:gw:${currentRound}:finalBench`)) ?? undefined;
+        lastFinalizedRound == null
+          ? undefined
+          : ((await redis.get<number[]>(
+            `${PREFIX}:user:${username}:gw:${lastFinalizedRound}:finalBench`
+          )) ?? undefined);
+
       const normalized: SavedTeam = {
         ...data,
-        transfers: normalizeTransfers(data.transfers, currentRound),
+        transfers:
+          currentRound == null
+            ? data.transfers
+            : normalizeTransfers(data.transfers, currentRound),
         finalXIIds,
         finalBenchIds,
       };
+
       return res.status(200).json({ data: normalized });
     }
 

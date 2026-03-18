@@ -189,6 +189,7 @@ export const StartingXI: FC<{
   const [starMID, setStarMID] = useState<number | "">(initialStarPlayerIds?.MID ?? "");
   const [starFWD, setStarFWD] = useState<number | "">(initialStarPlayerIds?.FWD ?? "");
   const [viewMode, setViewMode] = useState<"original" | "scored">("original");
+  
 
   const isScoredView = viewMode === "scored";
 
