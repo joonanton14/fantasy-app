@@ -14,7 +14,14 @@ export type Player = {
 
 export type Team = { id: number; name: string };
 
-export type FormationKey = "3-5-2" | "3-4-3" | "4-4-2" | "4-3-3" | "4-5-1" | "5-3-2" | "5-4-1";
+export type FormationKey =
+  | "3-5-2"
+  | "3-4-3"
+  | "4-4-2"
+  | "4-3-3"
+  | "4-5-1"
+  | "5-3-2"
+  | "5-4-1";
 
 export const FORMATIONS: Record<FormationKey, { DEF: number; MID: number; FWD: number }> = {
   "3-5-2": { DEF: 3, MID: 5, FWD: 2 },
@@ -43,6 +50,27 @@ function buildSlots(formation: FormationKey): Slot[] {
   for (let i = 1; i <= f.MID; i++) slots.push({ id: `mid-${i}`, position: "MID", label: "KK" });
   for (let i = 1; i <= f.FWD; i++) slots.push({ id: `fwd-${i}`, position: "FWD", label: "H" });
   return slots;
+}
+
+function inferFormationFromXI(xi: Player[]): FormationKey | null {
+  const def = xi.filter((p) => p.position === "DEF").length;
+  const mid = xi.filter((p) => p.position === "MID").length;
+  const fwd = xi.filter((p) => p.position === "FWD").length;
+
+  const key = `${def}-${mid}-${fwd}` as const;
+
+  switch (key) {
+    case "3-5-2":
+    case "3-4-3":
+    case "4-4-2":
+    case "4-3-3":
+    case "4-5-1":
+    case "5-3-2":
+    case "5-4-1":
+      return key;
+    default:
+      return null;
+  }
 }
 
 function teamName(teams: Team[], teamId: number) {
@@ -116,8 +144,14 @@ export type StartingXISavePayload = {
 export const StartingXI: FC<{
   teams: Team[];
   squad: Player[];
+
   initialXI: Player[];
   initialBench: Player[];
+
+  scoredXI?: Player[];
+  scoredBench?: Player[];
+  enableScoredToggle?: boolean;
+
   initialFormation: FormationKey;
   initialStarPlayerIds?: {
     DEF?: number | null;
@@ -137,6 +171,9 @@ export const StartingXI: FC<{
   initialStarPlayerIds,
   lastGwPointsByPlayerId,
   budget,
+  scoredXI = [],
+  scoredBench = [],
+  enableScoredToggle = false,
   readOnly = false,
   onSave,
 }) => {
@@ -151,6 +188,9 @@ export const StartingXI: FC<{
   const [starDEF, setStarDEF] = useState<number | "">(initialStarPlayerIds?.DEF ?? "");
   const [starMID, setStarMID] = useState<number | "">(initialStarPlayerIds?.MID ?? "");
   const [starFWD, setStarFWD] = useState<number | "">(initialStarPlayerIds?.FWD ?? "");
+  const [viewMode, setViewMode] = useState<"original" | "scored">("original");
+
+  const isScoredView = viewMode === "scored";
 
   useEffect(() => {
     function handlePointerDown(e: PointerEvent) {
@@ -175,28 +215,49 @@ export const StartingXI: FC<{
     [starDEF, starMID, starFWD]
   );
 
+  const displayedXIInput = useMemo(
+    () => (viewMode === "scored" && scoredXI.length ? scoredXI : initialXI),
+    [viewMode, scoredXI, initialXI]
+  );
+
+  const displayedBenchInput = useMemo(
+    () => (viewMode === "scored" && scoredBench.length ? scoredBench : initialBench),
+    [viewMode, scoredBench, initialBench]
+  );
+
+  const displayedFormation = useMemo(() => {
+    if (viewMode === "scored" && scoredXI.length) {
+      return inferFormationFromXI(scoredXI) ?? initialFormation;
+    }
+    return initialFormation;
+  }, [viewMode, scoredXI, initialFormation]);
+
   const squadWithPoints = useMemo(
     () => applyLastGwPoints(squad, lastGwPointsByPlayerId),
     [squad, lastGwPointsByPlayerId]
   );
 
   const initialXIWithPoints = useMemo(
-    () => applyLastGwPoints(initialXI, lastGwPointsByPlayerId),
-    [initialXI, lastGwPointsByPlayerId]
+    () => applyLastGwPoints(displayedXIInput, lastGwPointsByPlayerId),
+    [displayedXIInput, lastGwPointsByPlayerId]
   );
 
   const initialBenchWithPoints = useMemo(
-    () => applyLastGwPoints(initialBench, lastGwPointsByPlayerId),
-    [initialBench, lastGwPointsByPlayerId]
+    () => applyLastGwPoints(displayedBenchInput, lastGwPointsByPlayerId),
+    [displayedBenchInput, lastGwPointsByPlayerId]
   );
 
   const pool = useMemo(() => uniqById(squadWithPoints), [squadWithPoints]);
   const poolSet = useMemo(() => new Set(pool.map((p) => p.id)), [pool]);
 
   useEffect(() => {
-    setFormation(initialFormation);
+    setViewMode("original");
+  }, [initialXI, initialBench]);
 
-    const s = buildSlots(initialFormation);
+  useEffect(() => {
+    setFormation(displayedFormation);
+
+    const s = buildSlots(displayedFormation);
     setSlots(s);
 
     const xiMap: Record<string, Player | null> = {};
@@ -248,19 +309,25 @@ export const StartingXI: FC<{
     setBenchAssign(bMap);
     setSwapSource(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [poolSet, initialFormation, initialXIWithPoints, initialBenchWithPoints, squadWithPoints]);
+  }, [poolSet, displayedFormation, initialXIWithPoints, initialBenchWithPoints, squadWithPoints]);
 
   const xiPlayers = useMemo(() => Object.values(xiAssign).filter(Boolean) as Player[], [xiAssign]);
   const benchPlayers = useMemo(() => Object.values(benchAssign).filter(Boolean) as Player[], [benchAssign]);
 
   const hasStartedPoints = useMemo(() => {
-  const selectedPlayers = [...xiPlayers, ...benchPlayers];
-  return selectedPlayers.some((p) => Number(p.lastGwPoints ?? 0) !== 0);
-}, [xiPlayers, benchPlayers]);
-  
-  const pickedIds = useMemo(() => new Set([...xiPlayers, ...benchPlayers].map((p) => p.id)), [xiPlayers, benchPlayers]);
+    const selectedPlayers = [...xiPlayers, ...benchPlayers];
+    return selectedPlayers.some((p) => Number(p.lastGwPoints ?? 0) !== 0);
+  }, [xiPlayers, benchPlayers]);
 
-  const totalValue = useMemo(() => [...xiPlayers, ...benchPlayers].reduce((s, p) => s + p.value, 0), [xiPlayers, benchPlayers]);
+  const pickedIds = useMemo(
+    () => new Set([...xiPlayers, ...benchPlayers].map((p) => p.id)),
+    [xiPlayers, benchPlayers]
+  );
+
+  const totalValue = useMemo(
+    () => [...xiPlayers, ...benchPlayers].reduce((s, p) => s + p.value, 0),
+    [xiPlayers, benchPlayers]
+  );
 
   const remainingBudget = budget - totalValue;
   const f = FORMATIONS[formation];
@@ -299,14 +366,17 @@ export const StartingXI: FC<{
       if (!p || p.position === "GK") return false;
     }
 
-    for (const p of [...xiPlayers, ...benchPlayers]) if (!poolSet.has(p.id)) return false;
+    for (const p of [...xiPlayers, ...benchPlayers]) {
+      if (!poolSet.has(p.id)) return false;
+    }
+
     if (pickedIds.size !== 15) return false;
 
     return remainingBudget >= 0;
   }
 
   function beginSwap(area: "xi" | "bench", slotId: string) {
-    if (readOnly || hasStartedPoints) return;
+    if (readOnly || hasStartedPoints || isScoredView) return;
     const p = area === "xi" ? xiAssign[slotId] : benchAssign[slotId];
     if (!p) return;
     setSwapSource({ area, slotId });
@@ -355,7 +425,7 @@ export const StartingXI: FC<{
   }
 
   function trySwap(targetArea: "xi" | "bench", targetSlotId: string) {
-    if (readOnly || hasStartedPoints) return;
+    if (readOnly || hasStartedPoints || isScoredView) return;
     if (!swapSource) return;
 
     if (swapSource.area === targetArea && swapSource.slotId === targetSlotId) return;
@@ -423,7 +493,7 @@ export const StartingXI: FC<{
   }
 
   function applyFormation(next: FormationKey) {
-    if (readOnly || hasStartedPoints) return;
+    if (readOnly || hasStartedPoints || isScoredView) return;
 
     const nextSlots = buildSlots(next);
     const req = FORMATIONS[next];
@@ -465,7 +535,7 @@ export const StartingXI: FC<{
     setStarFWD(initialStarPlayerIds?.FWD ?? "");
   }, [initialStarPlayerIds]);
 
-  const saveDisabled = !isValid() || hasStartedPoints;
+  const saveDisabled = !isValid() || hasStartedPoints || isScoredView;
 
   const PlayerSlot = ({
     area,
@@ -534,7 +604,7 @@ export const StartingXI: FC<{
               assigned={assigned}
               emptyLabel={s.label}
               onSlotClick={() => {
-                if (readOnly || !assigned) return;
+                if (readOnly || !assigned || isScoredView) return;
 
                 if (!swapSource) {
                   beginSwap("xi", s.id);
@@ -578,7 +648,7 @@ export const StartingXI: FC<{
                   assigned={assigned}
                   emptyLabel={s.label}
                   onSlotClick={() => {
-                    if (readOnly || !assigned) return;
+                    if (readOnly || !assigned || isScoredView) return;
 
                     if (!swapSource) {
                       beginSwap("bench", s.id);
@@ -613,7 +683,7 @@ export const StartingXI: FC<{
                 className="formation-select"
                 value={formation}
                 onChange={(e) => applyFormation(e.target.value as FormationKey)}
-                disabled={readOnly || hasStartedPoints}
+                disabled={readOnly || hasStartedPoints || isScoredView}
               >
                 {(Object.keys(FORMATIONS) as FormationKey[]).map((k) => (
                   <option key={k} value={k}>
@@ -624,7 +694,40 @@ export const StartingXI: FC<{
             </div>
           </div>
 
-          {!isValid() && <div className="starting-xi-warning" role="alert">Kokoonpano ei ole kelvollinen. Lisää pelaajia vaihdot kohdasta</div>}
+          {enableScoredToggle && (
+            <div className="starting-xi-meta" style={{ marginTop: 8 }}>
+              <div className="xi-action-group">
+                <button
+                  type="button"
+                  className={`app-btn ${viewMode === "original" ? "app-btn-active" : ""}`}
+                  onClick={() => setViewMode("original")}
+                >
+                  Alkuperäinen
+                </button>
+
+                <button
+                  type="button"
+                  className={`app-btn ${viewMode === "scored" ? "app-btn-active" : ""}`}
+                  onClick={() => setViewMode("scored")}
+                  disabled={!scoredXI.length && !scoredBench.length}
+                >
+                  Pisteytetty
+                </button>
+              </div>
+            </div>
+          )}
+
+          {!isValid() && (
+            <div className="starting-xi-warning" role="alert">
+              Kokoonpano ei ole kelvollinen. Lisää pelaajia vaihdot kohdasta
+            </div>
+          )}
+
+          {isScoredView && (
+            <div className="starting-xi-warning" role="status">
+              Näytetään pisteytetty kokoonpano automaattivaihtojen jälkeen. Tätä näkymää ei voi muokata.
+            </div>
+          )}
         </header>
 
         <div className="pitch">
@@ -677,7 +780,11 @@ export const StartingXI: FC<{
                 }}
                 disabled={saveDisabled}
               >
-                {saveFlash === "clicked" ? "Tallennetaan…" : saveFlash === "saved" ? "Tallennettu ✓" : "Tallenna"}
+                {saveFlash === "clicked"
+                  ? "Tallennetaan…"
+                  : saveFlash === "saved"
+                    ? "Tallennettu ✓"
+                    : "Tallenna"}
               </button>
             )}
 
@@ -699,7 +806,7 @@ export const StartingXI: FC<{
                 className="star-pick-select"
                 value={starDEF}
                 onChange={(e) => setStarDEF(e.target.value ? Number(e.target.value) : "")}
-                disabled={readOnly || hasStartedPoints || xiDefs.length === 0}
+                disabled={readOnly || hasStartedPoints || isScoredView || xiDefs.length === 0}
               >
                 <option value="">Ei valittu</option>
                 {xiDefs.map((p) => (
@@ -716,7 +823,7 @@ export const StartingXI: FC<{
                 className="star-pick-select"
                 value={starMID}
                 onChange={(e) => setStarMID(e.target.value ? Number(e.target.value) : "")}
-                disabled={readOnly || hasStartedPoints || xiDefs.length === 0}
+                disabled={readOnly || hasStartedPoints || isScoredView || xiMids.length === 0}
               >
                 <option value="">Ei valittu</option>
                 {xiMids.map((p) => (
@@ -733,7 +840,7 @@ export const StartingXI: FC<{
                 className="star-pick-select"
                 value={starFWD}
                 onChange={(e) => setStarFWD(e.target.value ? Number(e.target.value) : "")}
-                disabled={readOnly || hasStartedPoints || xiDefs.length === 0}
+                disabled={readOnly || hasStartedPoints || isScoredView || xiFwds.length === 0}
               >
                 <option value="">Ei valittu</option>
                 {xiFwds.map((p) => (

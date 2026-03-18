@@ -45,15 +45,22 @@ type SavedTeamResponse = {
   data?: SavedTeamData | null;
 };
 
+type LeaderboardRow = { username: string; total: number; last: number };
+
+type LeaderboardMeta = {
+  rows?: LeaderboardRow[];
+  gamesFinalized?: number;
+  lastRound?: number | null;
+};
+
 const INITIAL_BUDGET = 100;
 
 export default function App() {
   const [authChecked, setAuthChecked] = useState(false);
 
-  type LeaderboardRow = { username: string; total: number; last: number };
   const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
   const [loadingLb, setLoadingLb] = useState(false);
-  const [leaderboardMeta, setLeaderboardMeta] = useState<any>(null);
+  const [leaderboardMeta, setLeaderboardMeta] = useState<LeaderboardMeta | null>(null);
   const [prevRanks, setPrevRanks] = useState<Record<string, number>>({});
 
   const [playerSearch, setPlayerSearch] = useState("");
@@ -67,25 +74,39 @@ export default function App() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
+
   const [selected, setSelected] = useState<Player[]>([]);
   const [squad, setSquad] = useState<Player[]>([]);
   const [startingXI, setStartingXI] = useState<Player[]>([]);
   const [bench, setBench] = useState<Player[]>([]);
+  const [finalXI, setFinalXI] = useState<Player[]>([]);
+  const [finalBench, setFinalBench] = useState<Player[]>([]);
+
   const [savedFormation, setSavedFormation] = useState<FormationKey>("4-4-2");
 
   const beforeFirstDeadline = true; // FIX THIS WHEN GAMES STARTS
 
   const [error, setError] = useState<string | null>(null);
   const [detailPlayer, setDetailPlayer] = useState<Player | null>(null);
-  type Fixture = { id: number; homeTeamId: number; awayTeamId: number; date: string; round?: number };
+
+  type Fixture = {
+    id: number;
+    homeTeamId: number;
+    awayTeamId: number;
+    date: string;
+    round?: number;
+  };
+
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
   const [fixturesErr, setFixturesErr] = useState<string | null>(null);
   const [loadingFixtures, setLoadingFixtures] = useState(false);
+
   const [savedStarPlayerIds, setSavedStarPlayerIds] = useState<{
     DEF?: number | null;
     MID?: number | null;
     FWD?: number | null;
   }>({});
+
   const [teamViewTab, setTeamViewTab] =
     useState<"startingXI" | "players" | "leaderboard" | "fixtures" | "transfers">("startingXI");
 
@@ -133,25 +154,20 @@ export default function App() {
           return a.name.localeCompare(b.name);
         case "name_desc":
           return b.name.localeCompare(a.name);
-
         case "team_asc":
           return teamName(a.teamId).localeCompare(teamName(b.teamId)) || a.name.localeCompare(b.name);
         case "team_desc":
           return teamName(b.teamId).localeCompare(teamName(a.teamId)) || a.name.localeCompare(b.name);
-
         case "pos_asc":
           return a.position.localeCompare(b.position) || a.name.localeCompare(b.name);
-
         case "value_desc":
           return b.value - a.value || a.name.localeCompare(b.name);
         case "value_asc":
           return a.value - b.value || a.name.localeCompare(b.name);
-
         case "id_desc":
           return b.id - a.id;
         case "id_asc":
           return a.id - b.id;
-
         default:
           return 0;
       }
@@ -186,6 +202,12 @@ export default function App() {
     if (currentRank < prevRank) return "up";
     if (currentRank > prevRank) return "down";
     return "same";
+  }
+
+  function getPreviousRoundValue(row: LeaderboardRow, meta: LeaderboardMeta | null): number {
+    const lastRound = meta?.lastRound ?? null;
+    if (lastRound == null || lastRound <= 1) return 0;
+    return row.last ?? 0;
   }
 
   useEffect(() => {
@@ -241,6 +263,7 @@ export default function App() {
 
         const playersData: Player[] = await playersRes.json();
         const teamsData: Team[] = await teamsRes.json();
+
         setPlayers(playersData);
         setTeams(teamsData);
 
@@ -254,12 +277,16 @@ export default function App() {
         setSavedTransfers(data?.transfers ?? {});
 
         const squadIds = data?.squadIds ?? [];
-        const xiIds = data?.finalXIIds?.length ? data.finalXIIds : data?.startingXIIds ?? [];
-        const benchIds = data?.finalBenchIds?.length ? data.finalBenchIds : data?.benchIds ?? [];
+        const xiIds = data?.startingXIIds ?? [];
+        const benchIds = data?.benchIds ?? [];
+        const scoredXiIds = data?.finalXIIds ?? [];
+        const scoredBenchIds = data?.finalBenchIds ?? [];
 
         const squadPlayers = mapIds(squadIds);
         const xiPlayers = mapIds(xiIds);
         const benchPlayers = mapIds(benchIds);
+        const finalXiPlayers = mapIds(scoredXiIds);
+        const finalBenchPlayers = mapIds(scoredBenchIds);
 
         const derivedIds = Array.from(new Set([...xiIds, ...benchIds]));
         const derivedPlayers = mapIds(derivedIds);
@@ -267,6 +294,8 @@ export default function App() {
         setSquad(squadPlayers.length ? squadPlayers : derivedPlayers);
         setStartingXI(xiPlayers);
         setBench(benchPlayers);
+        setFinalXI(finalXiPlayers);
+        setFinalBench(finalBenchPlayers);
 
         setSelected((prev) => {
           const existing = new Set(prev.map((p) => p.id));
@@ -357,12 +386,16 @@ export default function App() {
         setSavedTransfers(data?.transfers ?? {});
 
         const squadIds = data?.squadIds ?? [];
-        const xiIds = data?.finalXIIds?.length ? data.finalXIIds : data?.startingXIIds ?? [];
-        const benchIds = data?.finalBenchIds?.length ? data.finalBenchIds : data?.benchIds ?? [];
+        const xiIds = data?.startingXIIds ?? [];
+        const benchIds = data?.benchIds ?? [];
+        const scoredXiIds = data?.finalXIIds ?? [];
+        const scoredBenchIds = data?.finalBenchIds ?? [];
 
         const squadPlayers = mapIds(squadIds);
         const xiPlayers = mapIds(xiIds);
         const benchPlayers = mapIds(benchIds);
+        const finalXiPlayers = mapIds(scoredXiIds);
+        const finalBenchPlayers = mapIds(scoredBenchIds);
 
         const derivedIds = Array.from(new Set([...xiIds, ...benchIds]));
         const derivedPlayers = mapIds(derivedIds);
@@ -370,6 +403,8 @@ export default function App() {
         setSquad(squadPlayers.length ? squadPlayers : derivedPlayers);
         setStartingXI(xiPlayers);
         setBench(benchPlayers);
+        setFinalXI(finalXiPlayers);
+        setFinalBench(finalBenchPlayers);
 
         setSelected((prev) => {
           const existing = new Set(prev.map((p) => p.id));
@@ -411,11 +446,7 @@ export default function App() {
     const now = Date.now();
 
     const rounds = Array.from(
-      new Set(
-        fixtures
-          .map((f) => f.round)
-          .filter((r): r is number => typeof r === "number")
-      )
+      new Set(fixtures.map((f) => f.round).filter((r): r is number => typeof r === "number"))
     ).sort((a, b) => a - b);
 
     for (const round of rounds) {
@@ -451,29 +482,32 @@ export default function App() {
 
   const isTeamLocked = firstKickoffMs != null && Date.now() >= firstKickoffMs;
 
-async function loadLeaderboard() {
-  setLoadingLb(true);
-  try {
-    const res = await apiCall("/leaderboard", { method: "GET" });
-    if (!res.ok) {
+  async function loadLeaderboard() {
+    setLoadingLb(true);
+    try {
+      const oldRanks = readSavedRanks();
+      setPrevRanks(oldRanks);
+
+      const res = await apiCall("/leaderboard", { method: "GET" });
+      if (!res.ok) {
+        setLeaderboard([]);
+        setLeaderboardMeta(null);
+        return;
+      }
+
+      const data = (await res.json()) as LeaderboardMeta;
+      const rows = (data?.rows ?? []) as LeaderboardRow[];
+
+      setLeaderboard(rows);
+      setLeaderboardMeta(data);
+      saveCurrentRanks(rows);
+    } catch {
       setLeaderboard([]);
       setLeaderboardMeta(null);
-      return;
+    } finally {
+      setLoadingLb(false);
     }
-
-    const data = await res.json();
-    const rows = (data?.rows ?? []) as LeaderboardRow[];
-
-    setLeaderboard(rows);
-    setLeaderboardMeta(data);
-    saveCurrentRanks(rows);
-  } catch {
-    setLeaderboard([]);
-    setLeaderboardMeta(null);
-  } finally {
-    setLoadingLb(false);
   }
-}
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -507,6 +541,8 @@ async function loadLeaderboard() {
     setSquad([]);
     setStartingXI([]);
     setBench([]);
+    setFinalXI([]);
+    setFinalBench([]);
     setSavedTransfers({});
 
     setPage("builder");
@@ -674,11 +710,15 @@ async function loadLeaderboard() {
                       Kierroksen ensimmäinen ottelu on alkanut — kokoonpanon muutokset ja vaihdot ovat lukittu.
                     </div>
                   )}
+
                   <StartingXI
                     teams={teams}
                     squad={squad}
                     initialXI={startingXI}
                     initialBench={bench}
+                    scoredXI={finalXI}
+                    scoredBench={finalBench}
+                    enableScoredToggle={true}
                     initialFormation={savedFormation}
                     initialStarPlayerIds={savedStarPlayerIds}
                     budget={INITIAL_BUDGET}
@@ -804,7 +844,9 @@ async function loadLeaderboard() {
                                 </td>
                                 <td>{rank}</td>
                                 <td>{r.username}</td>
-                                <td style={{ textAlign: "right" }}>{r.last ?? 0}</td>
+                                <td style={{ textAlign: "right" }}>
+                                  {getPreviousRoundValue(r, leaderboardMeta)}
+                                </td>
                                 <td style={{ textAlign: "right" }}>{r.total ?? 0}</td>
                               </tr>
                             );
@@ -907,11 +949,8 @@ async function loadLeaderboard() {
                 </>
               )}
             </div>
-            <PlayerDetailsModal
-              player={detailPlayer}
-              teams={teams}
-              onClose={() => setDetailPlayer(null)}
-            />
+
+            <PlayerDetailsModal player={detailPlayer} teams={teams} onClose={() => setDetailPlayer(null)} />
           </div>
         </main>
       </div>
