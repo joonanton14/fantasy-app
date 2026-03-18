@@ -480,7 +480,7 @@ export default function App() {
     return Math.min(...times);
   }, [fixtures, currentRound]);
 
-  const isTeamLocked = firstKickoffMs != null && Date.now() >= firstKickoffMs;
+  const isTeamLocked = firstKickoffMs != null && Date.now() >= firstKickoffMs; // TODODODODODOODODODODOD FIX DATE
 
   async function loadLeaderboard() {
     setLoadingLb(true);
