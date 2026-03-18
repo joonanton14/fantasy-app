@@ -251,10 +251,6 @@ export const StartingXI: FC<{
   const poolSet = useMemo(() => new Set(pool.map((p) => p.id)), [pool]);
 
   useEffect(() => {
-    setViewMode("original");
-  }, [initialXI, initialBench]);
-
-  useEffect(() => {
     setFormation(displayedFormation);
 
     const s = buildSlots(displayedFormation);
@@ -578,7 +574,6 @@ export const StartingXI: FC<{
               {lastName(assigned.name)} {star ? <span className="player-star">★</span> : null}
             </div>
             <div className="player-team">{teamName(teams, assigned.teamId)}</div>
-            <div className="player-points">{shownPoints} p</div>
           </div>
         ) : (
           <div className="slot-empty">{emptyLabel}</div>
