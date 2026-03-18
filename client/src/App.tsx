@@ -481,6 +481,7 @@ export default function App() {
   }, [fixtures, currentRound]);
 
   // THIS NEED FUNCTION TO CHECK EVERY GAMEWEEKS FIRST GAME AND THEN LOCK TRASNFERS!!!
+  // TODOOOOOOOOOOOODODODODODODODODODODODODODOOOOOOOOOOOO
   const isTeamLocked = firstKickoffMs != null && Date.now() >= firstKickoffMs; // TODODODODODOODODODODOD FIX DATE
 
   async function loadLeaderboard() {
