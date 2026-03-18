@@ -265,6 +265,7 @@ export function scoreTeamFromAggregatedEventsWithAutosub(args: {
     counts,
   };
 }
+
 export function scoreTeamForRoundWithAutosubFromPoints(args: {
   team: TeamData;
   playersById: Map<number, PlayerLite>;
