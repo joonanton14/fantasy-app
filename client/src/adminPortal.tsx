@@ -799,8 +799,7 @@ export default function AdminPortal() {
           <h2 className="app-h2">Pisteet</h2>
 
           <div className="app-muted" style={{ marginBottom: 10 }}>
-            Tallenna jokaisen ottelun tapahtumat. Kun kaikki kierroksen ottelut on
-            tallennettu, paina "Päätä kierros" laskeaksesi kierroksen pisteet ja
+            Päätä kierros laskeaksesi kierroksen pisteet ja
             automaattivaihdot.
           </div>
 

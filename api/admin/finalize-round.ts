@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { redis, PREFIX } from "../../lib/redis";
 import { getSessionFromReq } from "../../lib/session";
 import {
-  scoreTeamForGameWithAutosub,
+  scoreTeamFromAggregatedEventsWithAutosub,
   type TeamData,
   type PlayerLite,
   type PlayerEventInput,
@@ -200,7 +200,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         subsOut,
         finalStartingXIIds,
         finalBenchIds,
-      } = scoreTeamForGameWithAutosub({
+      } = scoreTeamFromAggregatedEventsWithAutosub({
         team,
         playersById,
         eventsById: roundEventsById,

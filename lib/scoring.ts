@@ -124,7 +124,7 @@ function canReachMins(c: Counts, remainingSlots: number) {
   return needDEF + needMID + needFWD <= remainingSlots;
 }
 
-export function scoreTeamForGameWithAutosub(args: {
+export function scoreTeamFromAggregatedEventsWithAutosub(args: {
   team: TeamData;
   playersById: Map<number, PlayerLite>;
   eventsById: Record<string, PlayerEventInput>;
@@ -136,12 +136,10 @@ export function scoreTeamForGameWithAutosub(args: {
 
   const usedSubs = new Set<number>();
   const subsOut = new Set<number>();
+  const replacedBy = new Map<number, number>(); // outId -> inId
+
   let total = 0;
-
-  // Keep original XI intact
-  const finalStartingXIIds: number[] = [...starters];
   const finalBench: number[] = [...bench];
-
   const counts = emptyCounts();
 
   const getEv = (id: number) => eventsById[String(id)];
@@ -167,14 +165,14 @@ export function scoreTeamForGameWithAutosub(args: {
       total += calcPoints("GK", ev);
     } else if (benchGK) {
       const bev = getEv(benchGK);
-      const benchPoints = played(bev) ? calcPoints("GK", bev) : 0;
 
-      if (played(bev) && benchPoints > 0) {
+      if (played(bev)) {
         usedSubs.add(benchGK);
         subsOut.add(starterGK);
+        replacedBy.set(starterGK, benchGK);
 
         addCount(counts, "GK", 1);
-        total += benchPoints;
+        total += calcPoints("GK", bev);
 
         swapBenchPlayer(benchGK, starterGK);
       }
@@ -213,9 +211,6 @@ export function scoreTeamForGameWithAutosub(args: {
     const ev = getEv(bid);
     if (!played(ev)) continue;
 
-    const base = calcPoints(pos, ev);
-    if (base <= 0) continue;
-
     const missingNow =
       dnpOutfield.DEF.length + dnpOutfield.MID.length + dnpOutfield.FWD.length;
 
@@ -248,15 +243,18 @@ export function scoreTeamForGameWithAutosub(args: {
     const outId = dnpOutfield[replacedPos].shift()!;
     subsOut.add(outId);
     usedSubs.add(bid);
+    replacedBy.set(outId, bid);
 
     counts.DEF = next.DEF;
     counts.MID = next.MID;
     counts.FWD = next.FWD;
 
-    total += base;
+    total += calcPoints(pos, ev);
 
     swapBenchPlayer(bid, outId);
   }
+
+  const finalStartingXIIds = starters.map((id) => replacedBy.get(id) ?? id);
 
   return {
     total,
@@ -267,7 +265,6 @@ export function scoreTeamForGameWithAutosub(args: {
     counts,
   };
 }
-
 export function scoreTeamForRoundWithAutosubFromPoints(args: {
   team: TeamData;
   playersById: Map<number, PlayerLite>;
