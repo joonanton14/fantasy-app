@@ -710,7 +710,9 @@ export default function App() {
                       Kierroksen ensimmäinen ottelu on alkanut — kokoonpanon muutokset ja vaihdot ovat lukittu.
                     </div>
                   )}
-
+<div className="app-muted">
+  finalXI: {finalXI.length} | finalBench: {finalBench.length}
+</div>
                   <StartingXI
                     teams={teams}
                     squad={squad}

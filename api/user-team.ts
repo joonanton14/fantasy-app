@@ -179,6 +179,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!session) return res.status(401).json({ error: "Unauthorized" });
 
     const username = session.username;
+    const usernameLower = String(username).trim().toLowerCase();
     const key = `${PREFIX}:team:${username}`;
 
     if (req.method === "GET") {
@@ -210,14 +211,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         lastFinalizedRound == null
           ? undefined
           : ((await redis.get<number[]>(
-            `${PREFIX}:user:${username}:gw:${lastFinalizedRound}:finalXI`
+            `${PREFIX}:user:${usernameLower}:gw:${lastFinalizedRound}:finalXI`
           )) ?? undefined);
 
       const finalBenchIds =
         lastFinalizedRound == null
           ? undefined
           : ((await redis.get<number[]>(
-            `${PREFIX}:user:${username}:gw:${lastFinalizedRound}:finalBench`
+            `${PREFIX}:user:${usernameLower}:gw:${lastFinalizedRound}:finalBench`
           )) ?? undefined);
 
       const normalized: SavedTeam = {
@@ -230,7 +231,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         finalBenchIds,
       };
 
-      return res.status(200).json({ data: normalized });
+     return res.status(200).json({
+  data: normalized,
+  debug: {
+    username,
+    usernameLower,
+    lastFinalizedRound,
+    finalXIIds,
+    finalBenchIds,
+  },
+});
     }
 
     if (req.method === "POST") {
