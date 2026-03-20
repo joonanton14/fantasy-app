@@ -949,7 +949,11 @@ select option {
 }
 
 .player-modal-sheet {
-  width: min(480px, 100%);
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(480px, calc(100% - 32px));
   max-height: 85dvh;
   overflow: auto;
   background: rgba(17, 24, 39, 0.96);
@@ -957,6 +961,7 @@ select option {
   border-radius: 20px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
   padding: 14px;
+  z-index: 2147483648;
 }
 
 .player-modal-head {
