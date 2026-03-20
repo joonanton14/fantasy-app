@@ -1027,6 +1027,35 @@ select option {
   color: #fff;
 }
 
+@media (max-width: 520px) {
+  .player-modal-backdrop {
+    padding: 12px;
+    align-items: flex-start;
+    padding-top: 40px;
+  }
+
+  .player-modal-sheet {
+    width: 100%;
+    max-height: 60dvh;
+  }
+
+  .player-modal-name {
+    font-size: 16px;
+  }
+
+  .player-modal-item {
+    padding: 8px;
+  }
+
+  .player-modal-label {
+    font-size: 10px;
+  }
+
+  .player-modal-value {
+    font-size: 13px;
+  }
+}
+
 /* ========================= STAR CONTROLS ========================= */
 .starting-star-controls {
   display: flex;
