@@ -18,7 +18,7 @@ const fs = require("fs");
 const path = require("path");
 
 const MIN_FANTASY = 4.0;
-const MAX_FANTASY = 12.0;
+const MAX_FANTASY = 14.0;
 
 function clamp(x, min, max) {
   return Math.max(min, Math.min(max, x));
@@ -47,28 +47,22 @@ function main() {
     throw new Error("Input JSON must be an array of players");
   }
 
-  // Collect valid market values
-  const values = data
-    .map(p => p?.marketValueEur)
-    .filter(v => typeof v === "number" && Number.isFinite(v) && v > 0);
-
-  const minMV = values.length ? Math.min(...values) : 0;
-  const maxMV = values.length ? Math.max(...values) : 0;
+  // Use global market value range across all players
+  const GLOBAL_MIN_MV = 0;
+  const GLOBAL_MAX_MV = 600000;
 
   const mapped = data.map((p) => {
     const mv = p?.marketValueEur;
 
     let fantasyValueM = MIN_FANTASY;
 
-    if (typeof mv === "number" && Number.isFinite(mv) && mv > 0 && maxMV > minMV) {
-      // min-max scaling to [MIN_FANTASY, MAX_FANTASY]
-      const t = (mv - minMV) / (maxMV - minMV); // 0..1
+    if (typeof mv === "number" && Number.isFinite(mv) && mv > 0) {
+      // Global min-max scaling to [MIN_FANTASY, MAX_FANTASY]
+      // 0 EUR → 4.0, 600k EUR → 14.0
+      const t = (mv - GLOBAL_MIN_MV) / (GLOBAL_MAX_MV - GLOBAL_MIN_MV); // 0..1
       fantasyValueM = MIN_FANTASY + t * (MAX_FANTASY - MIN_FANTASY);
-    } else if (typeof mv === "number" && Number.isFinite(mv) && mv > 0 && maxMV === minMV) {
-      // edge case: everyone has same value
-      fantasyValueM = (MIN_FANTASY + MAX_FANTASY) / 2;
     } else {
-      // mv missing => keep minimum
+      // mv missing or zero => keep minimum
       fantasyValueM = MIN_FANTASY;
     }
 
@@ -82,7 +76,7 @@ function main() {
 
   fs.writeFileSync(absOut, JSON.stringify(mapped, null, 2), "utf8");
   console.log(`Wrote ${mapped.length} players -> ${absOut}`);
-  console.log(`Market value range used: min=${minMV} max=${maxMV} (EUR)`);
+  console.log(`Using global market value range: min=${GLOBAL_MIN_MV} max=${GLOBAL_MAX_MV} (EUR)`);
 }
 
 main();

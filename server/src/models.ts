@@ -19,7 +19,7 @@ export interface Player {
    */
   teamId: number;
   /**
-   * Player's fantasy value in millions. Values are clamped between 4 and 12.
+   * Player's fantasy value in millions. Values are clamped between 4 and 14.
    */
   value: number;
 }

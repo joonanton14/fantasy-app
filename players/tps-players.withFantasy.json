@@ -3,7 +3,7 @@
     "name": "Dan Lauri",
     "position": "Goalkeeper",
     "marketValueEur": 50000,
-    "fantasyValueM": 5.1
+    "fantasyValueM": 4.8
   },
   {
     "name": "Niklas Harju",
@@ -15,25 +15,25 @@
     "name": "Nikolas Talo",
     "position": "Centre-Back",
     "marketValueEur": 200000,
-    "fantasyValueM": 12
+    "fantasyValueM": 7.3
   },
   {
     "name": "Charlemagne Azongnitode",
     "position": "Centre-Back",
     "marketValueEur": 150000,
-    "fantasyValueM": 9.7
+    "fantasyValueM": 6.5
   },
   {
     "name": "Atte Sihvonen",
     "position": "Centre-Back",
     "marketValueEur": 50000,
-    "fantasyValueM": 5.1
+    "fantasyValueM": 4.8
   },
   {
     "name": "Akim Sairinen",
     "position": "Centre-Back",
     "marketValueEur": 25000,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.4
   },
   {
     "name": "Jesper Aitos",
@@ -45,7 +45,7 @@
     "name": "Tobias Karkulowski",
     "position": "Left-Back",
     "marketValueEur": 25000,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.4
   },
   {
     "name": "Eetu Turkki",
@@ -57,37 +57,37 @@
     "name": "Oscar Häggström",
     "position": "Right-Back",
     "marketValueEur": 25000,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.4
   },
   {
     "name": "Timo Zaal",
     "position": "Defensive-Midfielder",
     "marketValueEur": 100000,
-    "fantasyValueM": 7.4
+    "fantasyValueM": 5.7
   },
   {
     "name": "Marius Könkkölä",
     "position": "Attacking-Midfielder",
     "marketValueEur": 100000,
-    "fantasyValueM": 7.4
+    "fantasyValueM": 5.7
   },
   {
     "name": "Elmer Vauhkonen",
     "position": "Left-Winger",
     "marketValueEur": 50000,
-    "fantasyValueM": 5.1
+    "fantasyValueM": 4.8
   },
   {
     "name": "Miika Kauppila",
     "position": "Right-Winger",
     "marketValueEur": 50000,
-    "fantasyValueM": 5.1
+    "fantasyValueM": 4.8
   },
   {
     "name": "Albijon Muzaci",
     "position": "Right-Winger",
     "marketValueEur": 50000,
-    "fantasyValueM": 5.1
+    "fantasyValueM": 4.8
   },
   {
     "name": "Rasmus Harjanne",
@@ -105,6 +105,6 @@
     "name": "Luke Ivanovic",
     "position": "Centre-Forward",
     "marketValueEur": 150000,
-    "fantasyValueM": 9.7
+    "fantasyValueM": 6.5
   }
 ]

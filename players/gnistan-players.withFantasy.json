@@ -3,25 +3,25 @@
     "name": "Oskar Lyberopoulos",
     "position": "Goalkeeper",
     "marketValueEur": 50000,
-    "fantasyValueM": 4.7
+    "fantasyValueM": 4.8
   },
   {
     "name": "Rachide Gnanou",
     "position": "Centre-Back",
     "marketValueEur": 300000,
-    "fantasyValueM": 12
+    "fantasyValueM": 9
   },
   {
     "name": "Ayo Obileye",
     "position": "Centre-Back",
     "marketValueEur": 200000,
-    "fantasyValueM": 9.1
+    "fantasyValueM": 7.3
   },
   {
     "name": "Juhani Ojala",
     "position": "Centre-Back",
     "marketValueEur": 25000,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.4
   },
   {
     "name": "Marcelo Costa",
@@ -33,19 +33,19 @@
     "name": "Edmund Arko-Mensah",
     "position": "Left-Back",
     "marketValueEur": 200000,
-    "fantasyValueM": 9.1
+    "fantasyValueM": 7.3
   },
   {
     "name": "Benjamin Dahlström",
     "position": "Left-Back",
     "marketValueEur": 25000,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.4
   },
   {
     "name": "Joakim Latonen",
     "position": "Attacking-Midfielder",
     "marketValueEur": 250000,
-    "fantasyValueM": 10.5
+    "fantasyValueM": 8.2
   },
   {
     "name": "Roman Eremenko",
@@ -57,18 +57,90 @@
     "name": "Elmeri Lappalainen",
     "position": "Right-winger",
     "marketValueEur": 25000,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.4
   },
   {
     "name": "Adeleke Akinyemi",
     "position": "Centre-Forward",
     "marketValueEur": 150000,
-    "fantasyValueM": 7.6
+    "fantasyValueM": 6.5
   },
   {
     "name": "Artur Atarah",
     "position": "Centre-Forward",
     "marketValueEur": 100000,
-    "fantasyValueM": 6.2
+    "fantasyValueM": 5.7
+  },
+  {
+    "name": "Ramilson",
+    "position": "Goalkeeper",
+    "marketValueEur": 48000,
+    "fantasyValueM": 4.8
+  },
+  {
+    "name": "Craninx Alexandro",
+    "position": "Goalkeeper",
+    "marketValueEur": 200000,
+    "fantasyValueM": 7.3
+  },
+  {
+    "name": "Von Hellens Lucas",
+    "position": "Defender",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4.4
+  },
+  {
+    "name": "Max Brjurström",
+    "position": "Defender",
+    "marketValueEur": 0,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Heikari Samuel",
+    "position": "Defender",
+    "marketValueEur": 0,
+    "fantasyValueM": 4
+  },
+  {
+    "name": "Hänninen Vertti",
+    "position": "Midfielder",
+    "marketValueEur": 200000,
+    "fantasyValueM": 7.3
+  },
+  {
+    "name": "Sergei Eremenko",
+    "position": "Midfielder",
+    "marketValueEur": 150000,
+    "fantasyValueM": 6.5
+  },
+  {
+    "name": "Gabriel Europaeus",
+    "position": "Midfielder",
+    "marketValueEur": 150000,
+    "fantasyValueM": 6.5
+  },
+  {
+    "name": "Yevgeni Bashkirov",
+    "position": "Midfielder",
+    "marketValueEur": 100000,
+    "fantasyValueM": 5.7
+  },
+  {
+    "name": "Otto Hannula",
+    "position": "Midfielder",
+    "marketValueEur": 50000,
+    "fantasyValueM": 4.8
+  },
+  {
+    "name": "Adam Jouhi",
+    "position": "Midfielder",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4.4
+  },
+  {
+    "name": "Jeff Selenge",
+    "position": "Forward",
+    "marketValueEur": 0,
+    "fantasyValueM": 4
   }
 ]

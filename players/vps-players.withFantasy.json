@@ -3,19 +3,19 @@
     "name": "Aleksi Piispa",
     "position": "Goalkeeper",
     "marketValueEur": 50000,
-    "fantasyValueM": 4.9
+    "fantasyValueM": 4.8
   },
   {
     "name": "Mamadou Jalloh",
     "position": "Goalkeeper",
     "marketValueEur": 50000,
-    "fantasyValueM": 4.9
+    "fantasyValueM": 4.8
   },
   {
     "name": "Lucas Väyrynen",
     "position": "Goalkeeper",
     "marketValueEur": 25000,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.4
   },
   {
     "name": "Eino Ehrnrooth",
@@ -27,19 +27,19 @@
     "name": "Emmanuel Okereke",
     "position": "Centre-Back",
     "marketValueEur": 200000,
-    "fantasyValueM": 10.2
+    "fantasyValueM": 7.3
   },
   {
     "name": "Martti Haukioja",
     "position": "Centre-Back",
     "marketValueEur": 200000,
-    "fantasyValueM": 10.2
+    "fantasyValueM": 7.3
   },
   {
     "name": "Vilmer Rönnberg",
     "position": "Centre-Back",
     "marketValueEur": 100000,
-    "fantasyValueM": 6.7
+    "fantasyValueM": 5.7
   },
   {
     "name": "Adrian Arrakoski",
@@ -51,25 +51,25 @@
     "name": "Kevin Kouassivi-Benissan",
     "position": "Right-Back",
     "marketValueEur": 200000,
-    "fantasyValueM": 10.2
+    "fantasyValueM": 7.3
   },
   {
     "name": "Miika Niemi",
     "position": "Right-Back",
     "marketValueEur": 100000,
-    "fantasyValueM": 6.7
+    "fantasyValueM": 5.7
   },
   {
     "name": "Yassin Daoussi",
     "position": "Right-Back",
     "marketValueEur": 100000,
-    "fantasyValueM": 6.7
+    "fantasyValueM": 5.7
   },
   {
     "name": "Jayden Turfkruier",
     "position": "Left-Winger",
     "marketValueEur": 250000,
-    "fantasyValueM": 12
+    "fantasyValueM": 8.2
   },
   {
     "name": "Alex Myntti",
@@ -81,13 +81,13 @@
     "name": "Tijjani Mohammed",
     "position": "Centre-Forward",
     "marketValueEur": 25000,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.4
   },
   {
     "name": "Luka Smyth",
     "position": "Centre-Forward",
     "marketValueEur": 25000,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.4
   },
   {
     "name": "Olavi Keturi",

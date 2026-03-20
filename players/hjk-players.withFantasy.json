@@ -124,5 +124,41 @@
     "position": "Centre-Forward",
     "marketValueEur": 100000,
     "fantasyValueM": 5.7
+  },
+  {
+    "name": "Matej Markovic",
+    "position": "Goalkeeper",
+    "marketValueEur": 300000,
+    "fantasyValueM": 9
+  },
+  {
+    "name": "Leonel Montano",
+    "position": "Defender",
+    "marketValueEur": 100000,
+    "fantasyValueM": 5.7
+  },
+  {
+    "name": "Lucas Lingman",
+    "position": "Midfielder",
+    "marketValueEur": 400000,
+    "fantasyValueM": 10.7
+  },
+  {
+    "name": "Alexander Ring",
+    "position": "Midfielder",
+    "marketValueEur": 350000,
+    "fantasyValueM": 9.8
+  },
+  {
+    "name": "Jere Kallinen",
+    "position": "Midfielder",
+    "marketValueEur": 250000,
+    "fantasyValueM": 8.2
+  },
+  {
+    "name": "Pyry Mentu",
+    "position": "Midfielder",
+    "marketValueEur": 250000,
+    "fantasyValueM": 8.2
   }
 ]
