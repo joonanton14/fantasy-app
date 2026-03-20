@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { createPortal } from "react-dom";
 
 type Position = "GK" | "DEF" | "MID" | "FWD";
 type Player = {
@@ -38,7 +39,7 @@ export default function PlayerDetailsModal(props: {
 
   const teamName = teams.find((t) => t.id === player.teamId)?.name ?? "-";
 
-  return (
+  return createPortal(
     <div className="player-modal-backdrop" onClick={onClose} role="dialog" aria-modal="true">
       <div className="player-modal-sheet" onClick={(e) => e.stopPropagation()}>
         <div className="player-modal-head">
@@ -74,6 +75,7 @@ export default function PlayerDetailsModal(props: {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
