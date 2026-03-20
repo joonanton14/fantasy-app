@@ -142,7 +142,7 @@ export default function SquadBuilder(props: {
     if (pickedIds.has(p.id) && current?.id !== p.id) return;
 
     const nextTotal = totalValue - (current?.value ?? 0) + p.value;
-    if (nextTotal > props.budget) return;
+    if (nextTotal > props.budget + 0.01) return;
 
     let sameTeamCount = 0;
     for (const [id, pl] of Object.entries(assign)) {

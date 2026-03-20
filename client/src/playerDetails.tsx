@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 
 type Position = "GK" | "DEF" | "MID" | "FWD";
 type Player = {
@@ -20,6 +20,19 @@ export default function PlayerDetailsModal(props: {
   onClose: () => void;
 }) {
   const { player, teams, onClose } = props;
+
+  useEffect(() => {
+    if (!player) {
+      document.body.style.overflow = "";
+      return;
+    }
+
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [player]);
 
   if (!player) return null;
 
