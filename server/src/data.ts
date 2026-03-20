@@ -33,7 +33,7 @@ function mapPosition(raw: unknown): Position {
 
 function clampValue(v: number): number {
   if (!Number.isFinite(v) || Number.isNaN(v)) return 4;
-  return Math.max(4, Math.min(12, Math.round(v)));
+  return Math.max(4, Math.min(14, Math.round(v)));
 }
 
 function detectTeamForFile(fileName: string, data: unknown[]): Team | undefined {
