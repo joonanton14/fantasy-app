@@ -204,6 +204,25 @@ export default function App() {
     return "same";
   }
 
+  function applyStarBonusForDisplay(
+    player: Player,
+    starPlayerIds: {
+      DEF?: number | null;
+      MID?: number | null;
+      FWD?: number | null;
+    }
+  ) {
+    const isStar =
+      (player.position === "DEF" && Number(starPlayerIds.DEF) === player.id) ||
+      (player.position === "MID" && Number(starPlayerIds.MID) === player.id) ||
+      (player.position === "FWD" && Number(starPlayerIds.FWD) === player.id);
+
+    const base = player.lastGwPoints ?? 0;
+    if (!isStar) return base;
+
+    return Math.round(base * 1.5);
+  }
+
   function getPreviousRoundValue(row: LeaderboardRow, meta: LeaderboardMeta | null): number {
     const lastRound = meta?.lastRound ?? null;
     if (lastRound == null || lastRound <= 1) return 0;
@@ -480,6 +499,21 @@ export default function App() {
     return Math.min(...times);
   }, [fixtures, currentRound]);
 
+  const displayedFinalPoints = useMemo(() => {
+    if (!finalXI.length) return 0;
+
+    return finalXI.reduce((sum, p) => {
+      const isStar =
+        (p.position === "DEF" && Number(savedStarPlayerIds.DEF) === p.id) ||
+        (p.position === "MID" && Number(savedStarPlayerIds.MID) === p.id) ||
+        (p.position === "FWD" && Number(savedStarPlayerIds.FWD) === p.id);
+
+      const base = p.lastGwPoints ?? 0;
+      return sum + (isStar ? Math.round(base * 1.5) : base);
+    }, 0);
+  }, [finalXI, savedStarPlayerIds]);
+
+
   // THIS NEED FUNCTION TO CHECK EVERY GAMEWEEKS FIRST GAME AND THEN LOCK TRASNFERS!!!
   // TODOOOOOOOOOOOODODODODODODODODODODODODODOOOOOOOOOOOO
   const isTeamLocked = firstKickoffMs != null && Date.now() >= firstKickoffMs; // TODODODODODOODODODODOD FIX DATE
@@ -723,6 +757,7 @@ export default function App() {
                     initialFormation={savedFormation}
                     initialStarPlayerIds={savedStarPlayerIds}
                     budget={INITIAL_BUDGET}
+                    scoredTotalPoints={displayedFinalPoints}
                     readOnly={isTeamLocked}
                     onSave={async (p) => {
                       try {

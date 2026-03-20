@@ -152,7 +152,7 @@ export const StartingXI: FC<{
   scoredXI?: Player[];
   scoredBench?: Player[];
   enableScoredToggle?: boolean;
-
+  scoredTotalPoints?: number; 
   initialFormation: FormationKey;
   initialStarPlayerIds?: {
     DEF?: number | null;
@@ -171,6 +171,7 @@ export const StartingXI: FC<{
   initialFormation,
   initialStarPlayerIds,
   lastGwPointsByPlayerId,
+  scoredTotalPoints,
   budget,
   scoredXI = [],
   scoredBench = [],
@@ -718,12 +719,6 @@ export const StartingXI: FC<{
           {!isValid() && (
             <div className="starting-xi-warning" role="alert">
               Kokoonpano ei ole kelvollinen. Lisää pelaajia vaihdot kohdasta
-            </div>
-          )}
-
-          {isScoredView && (
-            <div className="starting-xi-warning" role="status">
-              Näytetään pisteytetty kokoonpano automaattivaihtojen jälkeen. Tätä näkymää ei voi muokata.
             </div>
           )}
         </header>
