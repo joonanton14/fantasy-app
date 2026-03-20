@@ -1920,6 +1920,22 @@ select option {
   }
 }
 
+@media (max-width: 420px) {
+  .starting-xi-meta {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .meta-pill {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .formation-select {
+    width: 100%;
+  }
+}
+
 @media (max-width: 380px) {
   .pitch {
     --slotW: 56px;

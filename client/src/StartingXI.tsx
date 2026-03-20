@@ -691,11 +691,9 @@ export const StartingXI: FC<{
                   ))}
                 </select>
               </div>
-            </div>
 
-            {enableScoredToggle && (
-              <div className="starting-xi-meta" style={{ marginTop: 8 }}>
-                <div className="xi-action-group">
+              {enableScoredToggle && (
+                <div className="meta-pill">
                   <button
                     type="button"
                     className={`app-btn ${viewMode === "original" ? "app-btn-active" : ""}`}
@@ -713,8 +711,8 @@ export const StartingXI: FC<{
                     Pisteytetty
                   </button>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {!isValid() && (
               <div className="starting-xi-warning" role="alert">
@@ -722,7 +720,7 @@ export const StartingXI: FC<{
               </div>
             )}
           </header>
-          {typeof scoredTotalPoints === "number" && (
+          {isScoredView && typeof scoredTotalPoints === "number" && (
             <div className="app-muted" style={{ marginBottom: 8, fontWeight: 700 }}>
               Kierroksen pisteet: {scoredTotalPoints}
             </div>
