@@ -15,6 +15,7 @@ interface Player {
   teamId: number;
   value: number;
   lastGwPoints?: number;
+  addedAt?: string;
 }
 
 interface Team {
@@ -132,9 +133,28 @@ export default function App() {
     | "value_desc"
     | "value_asc"
     | "id_desc"
-    | "id_asc";
+    | "id_asc"
+    | "new_desc";
 
   const [playerSort, setPlayerSort] = useState<PlayerSort>("value_desc");
+
+  // Track when new players status was last cleared
+  const [newPlayersResetTime, setNewPlayersResetTime] = useState<number>(() => {
+    const saved = localStorage.getItem("newPlayersResetTime");
+    return saved ? parseInt(saved, 10) : Date.now();
+  });
+
+  const isPlayerNew = (player: Player): boolean => {
+    if (!player.addedAt) return false;
+    const addedTime = new Date(player.addedAt).getTime();
+    return addedTime > newPlayersResetTime;
+  };
+
+  const resetNewPlayersStatus = () => {
+    const now = Date.now();
+    setNewPlayersResetTime(now);
+    localStorage.setItem("newPlayersResetTime", now.toString());
+  };
 
   const filteredPlayers = useMemo(() => {
     const q = playerSearch.trim().toLowerCase();
@@ -168,13 +188,21 @@ export default function App() {
           return b.id - a.id;
         case "id_asc":
           return a.id - b.id;
+        case "new_desc": {
+          const aIsNew = isPlayerNew(a);
+          const bIsNew = isPlayerNew(b);
+          if (aIsNew !== bIsNew) return aIsNew ? -1 : 1; // new players first
+          const aTime = a.addedAt ? new Date(a.addedAt).getTime() : 0;
+          const bTime = b.addedAt ? new Date(b.addedAt).getTime() : 0;
+          return bTime - aTime; // newest first
+        }
         default:
           return 0;
       }
     });
 
     return arr;
-  }, [players, filterTeamId, filterPositions, playerSort, teamsById, playerSearch]);
+  }, [players, filterTeamId, filterPositions, playerSort, teamsById, playerSearch, newPlayersResetTime]);
 
   function readSavedRanks(): Record<string, number> {
     try {
@@ -938,6 +966,7 @@ export default function App() {
                         <option value="team_asc">Joukkue (A →)</option>
                         <option value="team_desc">Joukkue (Ö →)</option>
                         <option value="pos_asc">Pelipaikka</option>
+                        <option value="new_desc">🆕 Uudet pelaajat</option>
                       </select>
                     </div>
 
@@ -970,9 +999,10 @@ export default function App() {
                       <tbody>
                         {filteredPlayers.map((p) => {
                           const teamName = teamsById.get(p.teamId)?.name ?? "";
+                          const isNew = isPlayerNew(p);
                           return (
-                            <tr key={p.id} className="player-row-clickable" onClick={() => setDetailPlayer(p)}>
-                              <td>{p.name}</td>
+                            <tr key={p.id} className={`player-row-clickable ${isNew ? "player-new" : ""}`} onClick={() => setDetailPlayer(p)}>
+                              <td>{isNew && <span className="new-badge">🆕</span>} {p.name}</td>
                               <td>{p.position}</td>
                               <td>{teamName}</td>
                               <td>{p.value.toFixed(1)}</td>
@@ -1011,7 +1041,7 @@ export default function App() {
 
       <main className="app-main">
         <div className="app-card">
-          {page === "admin" && <AdminPortal />}
+          {page === "admin" && <AdminPortal onNewPlayersUpdate={resetNewPlayersStatus} />}
           {page === "builder" && (
             <>
               <h1 className="app-h1">Veikkauliigapörssi admin</h1>

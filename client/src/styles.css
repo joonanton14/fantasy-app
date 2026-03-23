@@ -935,6 +935,20 @@ select option {
   background: rgba(255, 255, 255, 0.04);
 }
 
+.player-row-clickable.player-new td {
+  background: rgba(16, 185, 129, 0.08) !important;
+}
+
+.player-row-clickable.player-new:hover td {
+  background: rgba(16, 185, 129, 0.15) !important;
+}
+
+.new-badge {
+  display: inline-block;
+  margin-right: 6px;
+  font-weight: bold;
+}
+
 .player-modal-backdrop {
   position: fixed;
   inset: 0;

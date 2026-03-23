@@ -140,7 +140,8 @@ function detectTeamForFile(fileName: string, data: unknown[]): Team | undefined 
           name,
           position,
           teamId,
-          value: clampValue(Number(valueNum))
+          value: clampValue(Number(valueNum)),
+          addedAt: new Date().toISOString()
         });
       }
     }

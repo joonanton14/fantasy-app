@@ -9,6 +9,7 @@ type Player = {
   position: Position;
   teamId: number;
   value: number;
+  addedAt?: string;
 };
 
 type Team = {
@@ -301,7 +302,7 @@ function EventRow({ p, ev, teamNameText, onChange }: EventRowProps) {
   );
 }
 
-export default function AdminPortal() {
+export default function AdminPortal(props: { onNewPlayersUpdate?: () => void }) {
   const [tab, setTab] = useState<"players" | "fixtures" | "score">("players");
   const [players, setPlayers] = useState<Player[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
@@ -596,6 +597,7 @@ export default function AdminPortal() {
       );
 
       setFinalizeRoundStatus(`Round ${round} finalized ✅`);
+      props.onNewPlayersUpdate?.();
       setTimeout(() => setFinalizeRoundStatus(null), 2000);
     } catch (e) {
       setFinalizeRoundStatus(

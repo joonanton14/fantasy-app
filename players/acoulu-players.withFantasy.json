@@ -39,7 +39,7 @@
     "name": "Sampo Ala-Iso",
     "position": "Centre-Back",
     "marketValueEur": null,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.0
   },
   {
     "name": "Adramane Cassamá",
@@ -87,13 +87,13 @@
     "name": "Eemil Merikanto",
     "position": "Attacking-Midfielder",
     "marketValueEur": null,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.0
   },
   {
     "name": "Rasmus Karjalainen",
     "position": "Left-Winger",
     "marketValueEur": 300000,
-    "fantasyValueM": 9
+    "fantasyValueM": 9.0
   },
   {
     "name": "Elias Kallio",
@@ -117,7 +117,7 @@
     "name": "Kalifa Jatta",
     "position": "Right-Winger",
     "marketValueEur": null,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.0
   },
   {
     "name": "Santos Miguel",

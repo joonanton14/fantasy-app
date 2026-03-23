@@ -22,6 +22,10 @@ export interface Player {
    * Player's fantasy value in millions. Values are clamped between 4 and 14.
    */
   value: number;
+  /**
+   * ISO timestamp of when the player was added to the game.
+   */
+  addedAt?: string;
 }
 
 // Representation of a football team.
