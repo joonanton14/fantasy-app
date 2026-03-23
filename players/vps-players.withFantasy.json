@@ -3,102 +3,156 @@
     "name": "Aleksi Piispa",
     "position": "Goalkeeper",
     "marketValueEur": 50000,
-    "fantasyValueM": 4.8
+    "fantasyValueM": 4.7
   },
   {
     "name": "Mamadou Jalloh",
     "position": "Goalkeeper",
     "marketValueEur": 50000,
-    "fantasyValueM": 4.8
+    "fantasyValueM": 4.7
   },
   {
     "name": "Lucas Väyrynen",
     "position": "Goalkeeper",
     "marketValueEur": 25000,
-    "fantasyValueM": 4.4
+    "fantasyValueM": 4.3
   },
   {
     "name": "Eino Ehrnrooth",
     "position": "Goalkeeper",
     "marketValueEur": null,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.0
   },
   {
     "name": "Emmanuel Okereke",
     "position": "Centre-Back",
     "marketValueEur": 200000,
-    "fantasyValueM": 7.3
+    "fantasyValueM": 6.7
   },
   {
     "name": "Martti Haukioja",
     "position": "Centre-Back",
     "marketValueEur": 200000,
-    "fantasyValueM": 7.3
+    "fantasyValueM": 6.7
   },
   {
     "name": "Vilmer Rönnberg",
     "position": "Centre-Back",
     "marketValueEur": 100000,
-    "fantasyValueM": 5.7
+    "fantasyValueM": 5.3
   },
   {
     "name": "Adrian Arrakoski",
     "position": "Centre-Back",
     "marketValueEur": null,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.0
   },
   {
     "name": "Kevin Kouassivi-Benissan",
     "position": "Right-Back",
     "marketValueEur": 200000,
-    "fantasyValueM": 7.3
+    "fantasyValueM": 6.7
   },
   {
     "name": "Miika Niemi",
     "position": "Right-Back",
     "marketValueEur": 100000,
-    "fantasyValueM": 5.7
+    "fantasyValueM": 5.3
   },
   {
     "name": "Yassin Daoussi",
     "position": "Right-Back",
     "marketValueEur": 100000,
-    "fantasyValueM": 5.7
+    "fantasyValueM": 5.3
   },
   {
     "name": "Jayden Turfkruier",
     "position": "Left-Winger",
     "marketValueEur": 250000,
-    "fantasyValueM": 8.2
+    "fantasyValueM": 7.3
   },
   {
     "name": "Alex Myntti",
     "position": "Left-Winger",
     "marketValueEur": null,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.0
   },
   {
     "name": "Tijjani Mohammed",
     "position": "Centre-Forward",
     "marketValueEur": 25000,
-    "fantasyValueM": 4.4
+    "fantasyValueM": 4.3
   },
   {
     "name": "Luka Smyth",
     "position": "Centre-Forward",
     "marketValueEur": 25000,
-    "fantasyValueM": 4.4
+    "fantasyValueM": 4.3
   },
   {
     "name": "Olavi Keturi",
     "position": "Centre-Forward",
     "marketValueEur": null,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.0
   },
   {
     "name": "Joona Somppi",
     "position": "Centre-Forward",
     "marketValueEur": null,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.0
+  },
+  {
+    "name": "Paulo Lima",
+    "position": "Midfielder",
+    "marketValueEur": 0,
+    "fantasyValueM": 4.0
+  },
+  {
+    "name": "Antti-Ville Räisänen",
+    "position": "Midfielder",
+    "marketValueEur": 200000,
+    "fantasyValueM": 6.7
+  },
+  {
+    "name": "Simon Lindholm",
+    "position": "Midfielder",
+    "marketValueEur": 150000,
+    "fantasyValueM": 6.0
+  },
+  {
+    "name": "Will Wilson",
+    "position": "Midfielder",
+    "marketValueEur": 150000,
+    "fantasyValueM": 6.0
+  },
+  {
+    "name": "Akoon Kuek",
+    "position": "Midfielder",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4.3
+  },
+  {
+    "name": "Olavi Keturi",
+    "position": "Forward",
+    "marketValueEur": 0,
+    "fantasyValueM": 4.0
+  },
+  {
+    "name": "Jabir Abdihakim Ali",
+    "position": "Forward",
+    "marketValueEur": 225000,
+    "fantasyValueM": 7.0
+  },
+  {
+    "name": "Jonathan Muzinga",
+    "position": "Forward",
+    "marketValueEur": 50000,
+    "fantasyValueM": 4.7
+  },
+  {
+    "name": "Simon van Duivenbooden",
+    "position": "Forward",
+    "marketValueEur": 0,
+    "fantasyValueM": 4.0
   }
 ]

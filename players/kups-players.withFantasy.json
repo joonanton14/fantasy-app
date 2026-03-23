@@ -3,102 +3,162 @@
     "name": "Hemmo Riihimäki",
     "position": "Goalkeeper",
     "marketValueEur": 50000,
-    "fantasyValueM": 4.8
+    "fantasyValueM": 4.7
   },
   {
     "name": "Miilo Pitkänen",
     "position": "Goalkeeper",
     "marketValueEur": null,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.0
   },
   {
     "name": "Taneli Hämäläinen",
     "position": "Centre-Back",
     "marketValueEur": 250000,
-    "fantasyValueM": 8.2
+    "fantasyValueM": 7.3
   },
   {
     "name": "Arttu Lötjönen",
     "position": "Centre-Back",
     "marketValueEur": 100000,
-    "fantasyValueM": 5.7
+    "fantasyValueM": 5.3
   },
   {
     "name": "Tatu Hukkanen",
     "position": "Centre-Back",
     "marketValueEur": 25000,
-    "fantasyValueM": 4.4
+    "fantasyValueM": 4.3
   },
   {
     "name": "Karl Ward",
     "position": "Centre-Back",
     "marketValueEur": null,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.0
   },
   {
     "name": "Clinton Antwi",
     "position": "Left-Back",
     "marketValueEur": 300000,
-    "fantasyValueM": 9
+    "fantasyValueM": 8.0
   },
   {
     "name": "Rasmus Tikkanen",
     "position": "Left-Back",
     "marketValueEur": 50000,
-    "fantasyValueM": 4.8
+    "fantasyValueM": 4.7
   },
   {
     "name": "Akseli Puukko",
     "position": "Right-Back",
     "marketValueEur": null,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.0
   },
   {
     "name": "Otto Ruoppi",
     "position": "Attacking-Midfielder",
     "marketValueEur": 600000,
-    "fantasyValueM": 14
+    "fantasyValueM": 12.0
   },
   {
     "name": "Arttu Heinonen",
     "position": "Attacking-Midfielder",
     "marketValueEur": 150000,
-    "fantasyValueM": 6.5
+    "fantasyValueM": 6.0
   },
   {
     "name": "Eemil Tanninen",
     "position": "Attacking-Midfielder",
     "marketValueEur": 25000,
-    "fantasyValueM": 4.4
+    "fantasyValueM": 4.3
   },
   {
     "name": "Calvin Kabuye",
     "position": "Left-Winger",
     "marketValueEur": 400000,
-    "fantasyValueM": 10.7
+    "fantasyValueM": 9.3
   },
   {
     "name": "Saku Savolainen",
     "position": "Right-Winger",
     "marketValueEur": 250000,
-    "fantasyValueM": 8.2
+    "fantasyValueM": 7.3
   },
   {
     "name": "Joslyn Luyeye-Lutumba",
     "position": "Right-Winger",
     "marketValueEur": 250000,
-    "fantasyValueM": 8.2
+    "fantasyValueM": 7.3
   },
   {
     "name": "Mohamed Toure",
     "position": "Centre-Forward",
     "marketValueEur": 500000,
-    "fantasyValueM": 12.3
+    "fantasyValueM": 10.7
   },
   {
     "name": "Gustav Engvall",
     "position": "Centre-Forward",
     "marketValueEur": 125000,
-    "fantasyValueM": 6.1
+    "fantasyValueM": 5.7
+  },
+  {
+    "name": "Johannes Kreidl",
+    "position": "Goalkeeper",
+    "marketValueEur": 500000,
+    "fantasyValueM": 10.7
+  },
+  {
+    "name": "Kasim Adams",
+    "position": "Defender",
+    "marketValueEur": 450000,
+    "fantasyValueM": 10.0
+  },
+  {
+    "name": "Saku Heiskanen",
+    "position": "Defender",
+    "marketValueEur": 300000,
+    "fantasyValueM": 8.0
+  },
+  {
+    "name": "Bob Armah",
+    "position": "Defender",
+    "marketValueEur": 200000,
+    "fantasyValueM": 6.7
+  },
+  {
+    "name": "Valentin Gasc",
+    "position": "Midfielder",
+    "marketValueEur": 300000,
+    "fantasyValueM": 8.0
+  },
+  {
+    "name": "Jerry Voutilainen",
+    "position": "Midfielder",
+    "marketValueEur": 200000,
+    "fantasyValueM": 6.7
+  },
+  {
+    "name": "Samuel Pasanen",
+    "position": "Midfielder",
+    "marketValueEur": 150000,
+    "fantasyValueM": 6.0
+  },
+  {
+    "name": "Petteri Pennanen",
+    "position": "Midfielder",
+    "marketValueEur": 100000,
+    "fantasyValueM": 5.3
+  },
+  {
+    "name": "Niilo Kujasalo",
+    "position": "Midfielder",
+    "marketValueEur": 200000,
+    "fantasyValueM": 6.7
+  },
+  {
+    "name": "Souleymane Soumahoro",
+    "position": "Midfielder",
+    "marketValueEur": 0,
+    "fantasyValueM": 4.0
   }
 ]

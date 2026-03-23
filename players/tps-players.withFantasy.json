@@ -3,108 +3,144 @@
     "name": "Dan Lauri",
     "position": "Goalkeeper",
     "marketValueEur": 50000,
-    "fantasyValueM": 4.8
+    "fantasyValueM": 4.7
   },
   {
     "name": "Niklas Harju",
     "position": "Goalkeeper",
     "marketValueEur": null,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.0
   },
   {
     "name": "Nikolas Talo",
     "position": "Centre-Back",
     "marketValueEur": 200000,
-    "fantasyValueM": 7.3
+    "fantasyValueM": 6.7
   },
   {
     "name": "Charlemagne Azongnitode",
     "position": "Centre-Back",
     "marketValueEur": 150000,
-    "fantasyValueM": 6.5
+    "fantasyValueM": 6.0
   },
   {
     "name": "Atte Sihvonen",
     "position": "Centre-Back",
     "marketValueEur": 50000,
-    "fantasyValueM": 4.8
+    "fantasyValueM": 4.7
   },
   {
     "name": "Akim Sairinen",
     "position": "Centre-Back",
     "marketValueEur": 25000,
-    "fantasyValueM": 4.4
+    "fantasyValueM": 4.3
   },
   {
     "name": "Jesper Aitos",
     "position": "Centre-Back",
     "marketValueEur": null,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.0
   },
   {
     "name": "Tobias Karkulowski",
     "position": "Left-Back",
     "marketValueEur": 25000,
-    "fantasyValueM": 4.4
+    "fantasyValueM": 4.3
   },
   {
     "name": "Eetu Turkki",
     "position": "Left-Back",
     "marketValueEur": null,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.0
   },
   {
     "name": "Oscar Häggström",
     "position": "Right-Back",
     "marketValueEur": 25000,
-    "fantasyValueM": 4.4
+    "fantasyValueM": 4.3
   },
   {
     "name": "Timo Zaal",
     "position": "Defensive-Midfielder",
     "marketValueEur": 100000,
-    "fantasyValueM": 5.7
+    "fantasyValueM": 5.3
   },
   {
     "name": "Marius Könkkölä",
     "position": "Attacking-Midfielder",
     "marketValueEur": 100000,
-    "fantasyValueM": 5.7
+    "fantasyValueM": 5.3
   },
   {
     "name": "Elmer Vauhkonen",
     "position": "Left-Winger",
     "marketValueEur": 50000,
-    "fantasyValueM": 4.8
+    "fantasyValueM": 4.7
   },
   {
     "name": "Miika Kauppila",
     "position": "Right-Winger",
     "marketValueEur": 50000,
-    "fantasyValueM": 4.8
+    "fantasyValueM": 4.7
   },
   {
     "name": "Albijon Muzaci",
     "position": "Right-Winger",
     "marketValueEur": 50000,
-    "fantasyValueM": 4.8
+    "fantasyValueM": 4.7
   },
   {
     "name": "Rasmus Harjanne",
     "position": "Right-Winger",
     "marketValueEur": null,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.0
   },
   {
     "name": "Nino Rajamäki",
     "position": "Right-Winger",
     "marketValueEur": null,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.0
   },
   {
     "name": "Luke Ivanovic",
     "position": "Centre-Forward",
     "marketValueEur": 150000,
-    "fantasyValueM": 6.5
+    "fantasyValueM": 6.0
+  },
+  {
+    "name": "Elmo Henriksson",
+    "position": "Goalkeeper",
+    "marketValueEur": 150000,
+    "fantasyValueM": 6.0
+  },
+  {
+    "name": "Matej Hradecky",
+    "position": "Defender",
+    "marketValueEur": 100000,
+    "fantasyValueM": 5.3
+  },
+  {
+    "name": "Tobias Karkulowski",
+    "position": "Defender",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4.3
+  },
+  {
+    "name": "Pau Juvanteny",
+    "position": "Midfielder",
+    "marketValueEur": 50000,
+    "fantasyValueM": 4.7
+  },
+  {
+    "name": "Lasse Ikonen",
+    "position": "Midfielder",
+    "marketValueEur": 50000,
+    "fantasyValueM": 4.7
+  },
+  {
+    "name": "Samuel Anini",
+    "position": "Forward",
+    "marketValueEur": 25000,
+    "fantasyValueM": 4.3
   }
 ]

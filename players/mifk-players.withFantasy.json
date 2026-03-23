@@ -3,96 +3,120 @@
     "name": "Kevin Lund",
     "position": "Goalkeeper",
     "marketValueEur": 25000,
-    "fantasyValueM": 4.4
+    "fantasyValueM": 4.3
   },
   {
     "name": "Yeboah Amankwah",
     "position": "Centre-Back",
     "marketValueEur": 200000,
-    "fantasyValueM": 7.3
+    "fantasyValueM": 6.7
   },
   {
     "name": "Pontus Lindgren",
     "position": "Centre-Back",
     "marketValueEur": 150000,
-    "fantasyValueM": 6.5
+    "fantasyValueM": 6.0
   },
   {
     "name": "Michael Fonsell",
     "position": "Centre-Back",
     "marketValueEur": null,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.0
   },
   {
     "name": "Noah Nurmi",
     "position": "Centre-Back",
     "marketValueEur": 50000,
-    "fantasyValueM": 4.8
+    "fantasyValueM": 4.7
   },
   {
     "name": "Tuomas Koivisto",
     "position": "Centre-Back",
     "marketValueEur": 25000,
-    "fantasyValueM": 4.4
+    "fantasyValueM": 4.3
   },
   {
     "name": "Aaro Soiniemi",
     "position": "Left-Back",
     "marketValueEur": 25000,
-    "fantasyValueM": 4.4
+    "fantasyValueM": 4.3
   },
   {
     "name": "Samson Ngulube",
     "position": "Left-Back",
     "marketValueEur": null,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.0
   },
   {
     "name": "Jiri Nissinen",
     "position": "Right-Back",
     "marketValueEur": 150000,
-    "fantasyValueM": 6.5
+    "fantasyValueM": 6.0
   },
   {
     "name": "Nikolaos Dosis",
     "position": "Defensive-Midfielder",
     "marketValueEur": 125000,
-    "fantasyValueM": 6.1
+    "fantasyValueM": 5.7
   },
   {
     "name": "Anttoni Huttunen",
     "position": "Attacking-Midfielder",
     "marketValueEur": 150000,
-    "fantasyValueM": 6.5
+    "fantasyValueM": 6.0
   },
   {
     "name": "Leo Andersson",
     "position": "Attacking-Midfielder",
     "marketValueEur": null,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.0
   },
   {
     "name": "Milton Jansson",
     "position": "Attacking-Midfielder",
     "marketValueEur": 25000,
-    "fantasyValueM": 4.4
+    "fantasyValueM": 4.3
   },
   {
     "name": "Adam Larsson",
     "position": "Centre-Forward",
     "marketValueEur": 150000,
-    "fantasyValueM": 6.5
+    "fantasyValueM": 6.0
   },
   {
     "name": "Wille Nuñez",
     "position": "Centre-Forward",
     "marketValueEur": 25000,
-    "fantasyValueM": 4.4
+    "fantasyValueM": 4.3
   },
   {
     "name": "Arvid Lundberg",
     "position": "Centre-Forward",
     "marketValueEur": 25000,
-    "fantasyValueM": 4.4
+    "fantasyValueM": 4.3
+  },
+  {
+    "name": "Matias Riikonen",
+    "position": "Goalkeeper",
+    "marketValueEur": 150000,
+    "fantasyValueM": 6.0
+  },
+  {
+    "name": "Jelle van der Heyden",
+    "position": "Midfielder",
+    "marketValueEur": 150000,
+    "fantasyValueM": 6.0
+  },
+  {
+    "name": "Sebastina Dahlström",
+    "position": "Midfielder",
+    "marketValueEur": 200000,
+    "fantasyValueM": 6.7
+  },
+  {
+    "name": "Emmanuel Patut",
+    "position": "Midfielder",
+    "marketValueEur": 200000,
+    "fantasyValueM": 6.7
   }
 ]

@@ -3,90 +3,120 @@
     "name": "Joas Snellman",
     "position": "Goalkeeper",
     "marketValueEur": null,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.0
   },
   {
     "name": "Anton Finell",
     "position": "Goalkeeper",
     "marketValueEur": null,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.0
   },
   {
     "name": "Erik Gunnarsson",
     "position": "Centre-Back",
     "marketValueEur": 200000,
-    "fantasyValueM": 7.3
+    "fantasyValueM": 6.7
   },
   {
     "name": "Michael Ogungbaro",
     "position": "Centre-Back",
     "marketValueEur": 150000,
-    "fantasyValueM": 6.5
+    "fantasyValueM": 6.0
   },
   {
     "name": "Johan Brunell",
     "position": "Centre-Back",
     "marketValueEur": 25000,
-    "fantasyValueM": 4.4
+    "fantasyValueM": 4.3
   },
   {
     "name": "Felix Kass",
     "position": "Centre-Back",
     "marketValueEur": null,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.0
   },
   {
     "name": "Aron Bjonbäck",
     "position": "Right-Back",
     "marketValueEur": 100000,
-    "fantasyValueM": 5.7
+    "fantasyValueM": 5.3
   },
   {
     "name": "Herman Sjögrell",
     "position": "Right-Midfielder",
     "marketValueEur": 250000,
-    "fantasyValueM": 8.2
+    "fantasyValueM": 7.3
   },
   {
     "name": "Kaius Hardén",
     "position": "Attacking-Midfielder",
     "marketValueEur": 25000,
-    "fantasyValueM": 4.4
+    "fantasyValueM": 4.3
   },
   {
     "name": "Luca Weckström",
     "position": "Left-Winger",
     "marketValueEur": 50000,
-    "fantasyValueM": 4.8
+    "fantasyValueM": 4.7
   },
   {
     "name": "Joas Vikström",
     "position": "Left-Winger",
     "marketValueEur": null,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.0
   },
   {
     "name": "Elliot Holmäng",
     "position": "Left-Winger",
     "marketValueEur": null,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.0
   },
   {
     "name": "Emmanuel Mendy",
     "position": "Right-Winger",
     "marketValueEur": null,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.0
   },
   {
     "name": "Rudi Vikström",
     "position": "Centre-Forward",
     "marketValueEur": 100000,
-    "fantasyValueM": 5.7
+    "fantasyValueM": 5.3
   },
   {
     "name": "Linus Zetterström",
     "position": "Centre-Forward",
     "marketValueEur": null,
-    "fantasyValueM": 4
+    "fantasyValueM": 4.0
+  },
+  {
+    "name": "Senne Vits",
+    "position": "Goalkeeper",
+    "marketValueEur": 0,
+    "fantasyValueM": 4.0
+  },
+  {
+    "name": "Fabian Ostigård",
+    "position": "Defender",
+    "marketValueEur": 150000,
+    "fantasyValueM": 6.0
+  },
+  {
+    "name": "Jesper Svenungsen Skau",
+    "position": "Midfielder",
+    "marketValueEur": 175000,
+    "fantasyValueM": 6.3
+  },
+  {
+    "name": "Mats Pedersen",
+    "position": "Midfielder",
+    "marketValueEur": 350000,
+    "fantasyValueM": 8.7
+  },
+  {
+    "name": "Adam Vidjeskog",
+    "position": "Midfielder",
+    "marketValueEur": 100000,
+    "fantasyValueM": 5.3
   }
 ]
