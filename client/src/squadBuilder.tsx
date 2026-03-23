@@ -71,7 +71,7 @@ export default function SquadBuilder(props: {
   const [q, setQ] = useState("");
   const [pendingRestore, setPendingRestore] = useState<{ slotId: string; player: Player } | null>(null);
   const [onlySuitable, setOnlySuitable] = useState(false);
-  const [sortBy, setSortBy] = useState<"name" | "price-asc" | "price-desc" | "team">("name");
+  const [sortBy, setSortBy] = useState<"name" | "price-asc" | "price-desc" | "team">("price-desc");
   const [filterTeamId, setFilterTeamId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -89,7 +89,7 @@ export default function SquadBuilder(props: {
     setQ("");
     setPendingRestore(null);
     setOnlySuitable(false);
-    setSortBy("name");
+    setSortBy("price-desc");
     setFilterTeamId(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.initialSquad]);
