@@ -160,5 +160,11 @@
     "position": "Midfielder",
     "marketValueEur": 0,
     "fantasyValueM": 4.0
+  },
+  {
+    "name": "Jaime Moreno",
+    "position": "Midfielder",
+    "marketValueEur": 200000,
+    "fantasyValueM": 7.3
   }
 ]
