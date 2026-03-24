@@ -236,7 +236,8 @@ export default function SquadBuilder(props: {
       });
 
     rows.sort((a, b) => {
-      switch (sortBy) {
+      const currentSort = sortBy || "price-desc"; // Ensure default is price-desc
+      switch (currentSort) {
         case "price-asc":
           return a.player.value - b.player.value || a.player.name.localeCompare(b.player.name);
         case "price-desc":
