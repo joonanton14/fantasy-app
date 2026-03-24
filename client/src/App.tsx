@@ -344,14 +344,8 @@ export default function App() {
         setFinalXI(finalXiPlayers);
         setFinalBench(finalBenchPlayers);
 
-        setSelected((prev) => {
-          const existing = new Set(prev.map((p) => p.id));
-          const merged = [...prev];
-          for (const p of [...(squadPlayers.length ? squadPlayers : derivedPlayers)]) {
-            if (!existing.has(p.id)) merged.push(p);
-          }
-          return merged;
-        });
+        // Set selected to match the loaded squad - don't auto-merge new players
+        setSelected(squadPlayers.length ? squadPlayers : derivedPlayers);
       } catch {
         if (!cancelled) {
           setError("Alustus epäonnistui. Päivitä sivu tai kirjaudu uudelleen.");
@@ -452,15 +446,6 @@ export default function App() {
         setBench(benchPlayers);
         setFinalXI(finalXiPlayers);
         setFinalBench(finalBenchPlayers);
-
-        setSelected((prev) => {
-          const existing = new Set(prev.map((p) => p.id));
-          const merged = [...prev];
-          for (const p of [...(squadPlayers.length ? squadPlayers : derivedPlayers)]) {
-            if (!existing.has(p.id)) merged.push(p);
-          }
-          return merged;
-        });
       } catch {
         // ignore
       } finally {
