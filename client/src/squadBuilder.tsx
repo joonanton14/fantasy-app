@@ -236,11 +236,6 @@ export default function SquadBuilder(props: {
       });
 
     rows.sort((a, b) => {
-      // Always put disabled players at the bottom
-      if (a.disabled !== b.disabled) {
-        return a.disabled ? 1 : -1;
-      }
-
       switch (sortBy) {
         case "price-asc":
           return a.player.value - b.player.value || a.player.name.localeCompare(b.player.name);
