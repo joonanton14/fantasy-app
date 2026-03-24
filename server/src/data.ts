@@ -441,3 +441,14 @@ export function isTeamChangesLocked(now = Date.now()): boolean {
 
   return now >= new Date(firstKickoffIso).getTime();
 }
+
+export function isBeforeFirstDeadline(now = Date.now()): boolean {
+  const round = getCurrentEditableRound(now);
+  // Before first deadline means: in round 1 and before its first kickoff
+  if (round !== 1) return false;
+
+  const firstKickoffIso = getFirstKickoffForRound(round);
+  if (!firstKickoffIso) return false;
+
+  return now < new Date(firstKickoffIso).getTime();
+}

@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { redis, PREFIX } from "../lib/redis";
 import { getSessionFromReq } from "../lib/session";
-import { fixtures, getCurrentEditableRound, isTeamChangesLocked } from "../server/src/data";
+import { fixtures, getCurrentEditableRound, isTeamChangesLocked, isBeforeFirstDeadline } from "../server/src/data";
 
 type FormationKey = "3-5-2" | "3-4-3" | "4-4-2" | "4-3-3" | "4-5-1" | "5-3-2" | "5-4-1";
 
@@ -285,7 +285,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           transfersMade = countTransfers(oldSquadIds, newSquadIds);
         }
 
-        if (prevTransfers.used + transfersMade > prevTransfers.limit) {
+        // Allow unlimited transfers before the first deadline
+        const beforeFirstDeadline = isBeforeFirstDeadline();
+        if (!beforeFirstDeadline && prevTransfers.used + transfersMade > prevTransfers.limit) {
           return res.status(400).json({
             error: `Transfer limit reached. Remaining: ${Math.max(0, prevTransfers.limit - prevTransfers.used)}`,
           });
