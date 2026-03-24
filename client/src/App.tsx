@@ -141,7 +141,7 @@ export default function App() {
   // Track when new players status was last cleared
   const [newPlayersResetTime, setNewPlayersResetTime] = useState<number>(() => {
     const saved = localStorage.getItem("newPlayersResetTime");
-    return saved ? parseInt(saved, 10) : Date.now();
+    return saved ? parseInt(saved, 10) : 0; // Default to epoch time (0) instead of current time
   });
 
   const isPlayerNew = (player: Player): boolean => {
