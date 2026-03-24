@@ -446,6 +446,9 @@ export default function App() {
         setBench(benchPlayers);
         setFinalXI(finalXiPlayers);
         setFinalBench(finalBenchPlayers);
+
+        // Set selected to exactly the saved squad - no auto-merging of new players
+        setSelected(squadPlayers.length ? squadPlayers : derivedPlayers);
       } catch {
         // ignore
       } finally {
