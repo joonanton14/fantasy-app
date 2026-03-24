@@ -235,10 +235,6 @@ export default function SquadBuilder(props: {
         };
       });
 
-    if (onlySuitable) {
-      rows = rows.filter((row) => row.suitable);
-    }
-
     rows.sort((a, b) => {
       switch (sortBy) {
         case "price-asc":
@@ -255,6 +251,10 @@ export default function SquadBuilder(props: {
           return a.player.name.localeCompare(b.player.name);
       }
     });
+
+    if (onlySuitable) {
+      rows = rows.filter((row) => row.suitable);
+    }
 
     return rows;
   }, [
