@@ -235,6 +235,10 @@ export default function SquadBuilder(props: {
         };
       });
 
+    if (onlySuitable) {
+      rows = rows.filter((row) => row.suitable);
+    }
+
     rows.sort((a, b) => {
       switch (sortBy) {
         case "price-asc":
