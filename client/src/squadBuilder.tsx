@@ -235,12 +235,9 @@ export default function SquadBuilder(props: {
         };
       });
 
-    if (onlySuitable) {
-      rows = rows.filter((row) => row.suitable);
-    }
-
     rows.sort((a, b) => {
-      if (!onlySuitable && a.disabled !== b.disabled) {
+      // Always put disabled players at the bottom
+      if (a.disabled !== b.disabled) {
         return a.disabled ? 1 : -1;
       }
 
@@ -457,10 +454,10 @@ export default function SquadBuilder(props: {
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as "name" | "price-asc" | "price-desc" | "team")}
                 >
-                  <option value="name">Järjestä: Nimi</option>
-                  <option value="price-asc">Järjestä: Hinta ↑</option>
-                  <option value="price-desc">Järjestä: Hinta ↓</option>
-                  <option value="team">Järjestä: Joukkue</option>
+                  <option value="price-desc">Hinta ↓</option>
+                  <option value="price-asc">Hinta ↑</option>
+                  <option value="name">Nimi</option>
+                  <option value="team">Joukkue</option>
                 </select>
               </div>
 
