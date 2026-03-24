@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import { Player, Team, Fixture, Position } from './models';
 
 export const teams: Team[] = [
@@ -102,13 +103,22 @@ function detectTeamForFile(fileName: string, data: unknown[]): Team | undefined 
   return bestMatch;
 }
 
+// Generate stable ID from player data - same player always gets same ID
+function generatePlayerId(name: string, teamId: number, position: Position): number {
+  const hash = crypto
+    .createHash('md5')
+    .update(`${name.trim().toLowerCase()}|${teamId}|${position}`)
+    .digest('hex');
+  // Convert first 8 hex chars to integer and keep it positive
+  return parseInt(hash.substring(0, 8), 16);
+}
+
 (function loadPlayersFromDisk(): void {
   try {
     const playersDir = path.resolve(process.cwd(), 'players');
     if (!fs.existsSync(playersDir)) return;
 
     const files = fs.readdirSync(playersDir).filter((f) => f.endsWith('.json')).sort();
-    let nextId = 1;
 
     for (const file of files) {
       const rawText = fs.readFileSync(path.join(playersDir, file), 'utf8');
@@ -135,13 +145,16 @@ function detectTeamForFile(fileName: string, data: unknown[]): Team | undefined 
           (typeof p.value === 'number' && (p.value as number)) ||
           4;
 
+        // Use addedAt from JSON if present, otherwise use current time
+        const addedAt = typeof p.addedAt === 'string' ? p.addedAt : new Date().toISOString();
+
         players.push({
-          id: nextId++,
+          id: generatePlayerId(name, teamId, position),
           name,
           position,
           teamId,
           value: clampValue(Number(valueNum)),
-          addedAt: new Date().toISOString()
+          addedAt
         });
       }
     }
