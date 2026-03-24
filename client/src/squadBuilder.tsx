@@ -102,6 +102,13 @@ export default function SquadBuilder(props: {
     }
   }, [props.isLocked]);
 
+  useEffect(() => {
+    // Reset sort to price-desc when picker opens
+    if (picker && sortBy !== "price-desc") {
+      setSortBy("price-desc");
+    }
+  }, [picker]);
+
   const picked = useMemo(() => Object.values(assign).filter(Boolean) as Player[], [assign]);
   const pickedIds = useMemo(() => new Set(picked.map((p) => p.id)), [picked]);
 
