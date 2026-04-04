@@ -85,8 +85,8 @@ export default function App() {
 
   const [savedFormation, setSavedFormation] = useState<FormationKey>("4-4-2");
 
-  const beforeFirstDeadline = true; // FIX THIS WHEN GAMES STARTS HOX HOX HOOOXXXXX!!!!!!!!11
-
+  const beforeFirstDeadline = false;
+  
   const [error, setError] = useState<string | null>(null);
   const [detailPlayer, setDetailPlayer] = useState<Player | null>(null);
 
