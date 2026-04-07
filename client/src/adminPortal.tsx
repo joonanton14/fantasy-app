@@ -326,6 +326,20 @@ export default function AdminPortal(props: { onNewPlayersUpdate?: () => void }) 
   const [finalizeRoundResults, setFinalizeRoundResults] = useState<
     Array<{ username: string; points: number }>
   >([]);
+  const [backfillStarsStatus, setBackfillStarsStatus] = useState<string | null>(null);
+  const [backfillStarsResults, setBackfillStarsResults] = useState<
+    Array<{
+      username: string;
+      round: number;
+      status: "created" | "existing" | "ambiguous" | "unresolved" | "missing-data";
+      note?: string;
+      stars?: {
+        DEF?: number | null;
+        MID?: number | null;
+        FWD?: number | null;
+      };
+    }>
+  >([]);
 
   const [playerSearch, setPlayerSearch] = useState("");
 
@@ -606,6 +620,41 @@ export default function AdminPortal(props: { onNewPlayersUpdate?: () => void }) 
     }
   }
 
+  async function backfillFinalStars() {
+    setBackfillStarsStatus(null);
+    setBackfillStarsResults([]);
+
+    const target = selectedRound === "all" ? "all finalized rounds" : `round ${selectedRound}`;
+
+    try {
+      setBackfillStarsStatus(`Backfilling finalized star picks for ${target}…`);
+
+      const res = await apiCall("/admin/backfill-final-stars", {
+        method: "POST",
+        body: JSON.stringify({
+          round: selectedRound,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error((data as any).error || "Failed to backfill finalized star picks");
+      }
+
+      const rows = Array.isArray((data as any).results) ? (data as any).results : [];
+      const summary = (data as any).summary ?? {};
+
+      setBackfillStarsResults(rows);
+      setBackfillStarsStatus(
+        `Backfill finished. Created: ${summary.created ?? 0}, existing: ${summary.existing ?? 0}, ambiguous: ${summary.ambiguous ?? 0}, unresolved: ${summary.unresolved ?? 0}, missing-data: ${summary["missing-data"] ?? 0}`
+      );
+    } catch (e) {
+      setBackfillStarsStatus(
+        e instanceof Error ? e.message : "Failed to backfill finalized star picks"
+      );
+    }
+  }
+
   function getEv(pid: number): PlayerEventInput {
     return events[String(pid)] ?? { ...DEFAULT_EVENT };
   }
@@ -822,6 +871,8 @@ export default function AdminPortal(props: { onNewPlayersUpdate?: () => void }) 
                       setEvents({});
                       setFinalizeRoundResults([]);
                       setFinalizeRoundStatus(null);
+                      setBackfillStarsResults([]);
+                      setBackfillStarsStatus(null);
                       setSaveStatus(null);
                     }}
                     style={{ flex: 1 }}
@@ -844,6 +895,14 @@ export default function AdminPortal(props: { onNewPlayersUpdate?: () => void }) 
                     title="Finalizes all games in the selected round in one request."
                   >
                     Päätä kierros
+                  </button>
+
+                  <button
+                    className="app-btn"
+                    onClick={backfillFinalStars}
+                    title="Backfills finalized star picks for the selected round or all finalized rounds."
+                  >
+                    Backfill tähdet
                   </button>
                 </div>
 
@@ -911,6 +970,9 @@ export default function AdminPortal(props: { onNewPlayersUpdate?: () => void }) 
             {loadEventsStatus && <div className="app-muted">{loadEventsStatus}</div>}
             {finalizeRoundStatus && (
               <div className="app-muted">{finalizeRoundStatus}</div>
+            )}
+            {backfillStarsStatus && (
+              <div className="app-muted">{backfillStarsStatus}</div>
             )}
           </div>
 
@@ -1050,6 +1112,40 @@ export default function AdminPortal(props: { onNewPlayersUpdate?: () => void }) 
                 Kierroksen pisteet tulevat kaikista kierroksen otteluista.
                 Automaattivaihdot tehdään vasta kierroksen päättämisen yhteydessä,
                 eikä yksittäisen ottelun tallennuksessa.
+              </div>
+            </div>
+          )}
+
+          {backfillStarsResults.length > 0 && (
+            <div style={{ marginTop: 12 }}>
+              <h3 className="app-h2">Tähtien backfill-tulokset</h3>
+              <div className="app-table-wrap">
+                <table className="app-table">
+                  <thead>
+                    <tr>
+                      <th>Käyttäjä</th>
+                      <th>Kierros</th>
+                      <th>Tila</th>
+                      <th>Tähdet</th>
+                      <th>Huomio</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {backfillStarsResults.map((r, idx) => (
+                      <tr key={`${r.round}-${r.username}-${idx}`}>
+                        <td>{r.username}</td>
+                        <td>{r.round}</td>
+                        <td>{r.status}</td>
+                        <td>
+                          {r.stars
+                            ? `P: ${r.stars.DEF ?? "-"}, KK: ${r.stars.MID ?? "-"}, H: ${r.stars.FWD ?? "-"}`
+                            : "-"}
+                        </td>
+                        <td>{r.note ?? ""}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
