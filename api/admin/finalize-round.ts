@@ -211,6 +211,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       await redis.set(`${PREFIX}:user:${username}:gw:${roundNum}:subsOut`, subsOut);
       await redis.set(`${PREFIX}:user:${username}:gw:${roundNum}:finalXI`, finalStartingXIIds);
       await redis.set(`${PREFIX}:user:${username}:gw:${roundNum}:finalBench`, finalBenchIds);
+      await redis.set(`${PREFIX}:user:${username}:gw:${roundNum}:finalStars`, team.starPlayerIds ?? {});
       results.push({ username, points: total, subsUsed });
     }
 

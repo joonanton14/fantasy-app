@@ -159,6 +159,11 @@ export const StartingXI: FC<{
     MID?: number | null;
     FWD?: number | null;
   };
+  scoredStarPlayerIds?: {
+    DEF?: number | null;
+    MID?: number | null;
+    FWD?: number | null;
+  };
   lastGwPointsByPlayerId?: Record<number, number>;
   budget: number;
   readOnly?: boolean;
@@ -170,6 +175,7 @@ export const StartingXI: FC<{
   initialBench,
   initialFormation,
   initialStarPlayerIds,
+  scoredStarPlayerIds,
   lastGwPointsByPlayerId,
   scoredTotalPoints,
   budget,
@@ -218,6 +224,11 @@ export const StartingXI: FC<{
       [starDEF, starMID, starFWD]
     );
 
+    const displayedStarIds = useMemo(
+      () => (isScoredView ? (scoredStarPlayerIds ?? initialStarPlayerIds ?? {}) : currentStarIds),
+      [isScoredView, scoredStarPlayerIds, initialStarPlayerIds, currentStarIds]
+    );
+
     const displayedXIInput = useMemo(
       () => (viewMode === "scored" && scoredXI.length ? scoredXI : initialXI),
       [viewMode, scoredXI, initialXI]
@@ -250,7 +261,14 @@ export const StartingXI: FC<{
       [displayedBenchInput, lastGwPointsByPlayerId]
     );
 
-    const pool = useMemo(() => uniqById(squadWithPoints), [squadWithPoints]);
+    const pool = useMemo(
+      () => (
+        isScoredView
+          ? uniqById([...initialXIWithPoints, ...initialBenchWithPoints])
+          : uniqById(squadWithPoints)
+      ),
+      [isScoredView, initialXIWithPoints, initialBenchWithPoints, squadWithPoints]
+    );
     const poolSet = useMemo(() => new Set(pool.map((p) => p.id)), [pool]);
 
     useEffect(() => {
@@ -550,8 +568,8 @@ export const StartingXI: FC<{
         ((swapSource.area === "xi" && area === "bench") || (swapSource.area === "bench" && area === "xi"));
 
       const isTarget = !!swapSource && isValidSwapTarget(area, slotId);
-      const star = assigned ? isStarPlayer(assigned, currentStarIds) : false;
-      const shownPoints = assigned ? getDisplayedPlayerPoints(assigned, currentStarIds) : 0;
+      const star = assigned ? isStarPlayer(assigned, displayedStarIds) : false;
+      const shownPoints = assigned ? getDisplayedPlayerPoints(assigned, displayedStarIds) : 0;
 
       return (
         <div

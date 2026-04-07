@@ -30,6 +30,11 @@ type SavedTeamData = {
   benchIds?: number[];
   finalXIIds?: number[];
   finalBenchIds?: number[];
+  finalStarPlayerIds?: {
+    DEF?: number | null;
+    MID?: number | null;
+    FWD?: number | null;
+  };
   starPlayerIds?: {
     DEF?: number | null;
     MID?: number | null;
@@ -82,6 +87,11 @@ export default function App() {
   const [bench, setBench] = useState<Player[]>([]);
   const [finalXI, setFinalXI] = useState<Player[]>([]);
   const [finalBench, setFinalBench] = useState<Player[]>([]);
+  const [finalStarPlayerIds, setFinalStarPlayerIds] = useState<{
+    DEF?: number | null;
+    MID?: number | null;
+    FWD?: number | null;
+  }>({});
 
   const [savedFormation, setSavedFormation] = useState<FormationKey>("4-4-2");
 
@@ -321,6 +331,7 @@ export default function App() {
         const formation = (data?.formation ?? "4-4-2") as FormationKey;
         setSavedFormation(formation);
         setSavedStarPlayerIds(data?.starPlayerIds ?? {});
+        setFinalStarPlayerIds(data?.finalStarPlayerIds ?? data?.starPlayerIds ?? {});
         setSavedTransfers(data?.transfers ?? {});
 
         const squadIds = data?.squadIds ?? [];
@@ -424,6 +435,7 @@ export default function App() {
         const formation = (data?.formation ?? "4-4-2") as FormationKey;
         setSavedFormation(formation);
         setSavedStarPlayerIds(data?.starPlayerIds ?? {});
+        setFinalStarPlayerIds(data?.finalStarPlayerIds ?? data?.starPlayerIds ?? {});
         setSavedTransfers(data?.transfers ?? {});
 
         const squadIds = data?.squadIds ?? [];
@@ -520,14 +532,14 @@ export default function App() {
 
     return finalXI.reduce((sum, p) => {
       const isStar =
-        (p.position === "DEF" && Number(savedStarPlayerIds.DEF) === p.id) ||
-        (p.position === "MID" && Number(savedStarPlayerIds.MID) === p.id) ||
-        (p.position === "FWD" && Number(savedStarPlayerIds.FWD) === p.id);
+        (p.position === "DEF" && Number(finalStarPlayerIds.DEF) === p.id) ||
+        (p.position === "MID" && Number(finalStarPlayerIds.MID) === p.id) ||
+        (p.position === "FWD" && Number(finalStarPlayerIds.FWD) === p.id);
 
       const base = p.lastGwPoints ?? 0;
       return sum + (isStar ? Math.round(base * 1.5) : base);
     }, 0);
-  }, [finalXI, savedStarPlayerIds]);
+  }, [finalXI, finalStarPlayerIds]);
 
 
   // THIS NEED FUNCTION TO CHECK EVERY GAMEWEEKS FIRST GAME AND THEN LOCK TRASNFERS!!!
@@ -595,6 +607,7 @@ export default function App() {
     setBench([]);
     setFinalXI([]);
     setFinalBench([]);
+    setFinalStarPlayerIds({});
     setSavedTransfers({});
 
     setPage("builder");
@@ -772,6 +785,7 @@ export default function App() {
                     enableScoredToggle={true}
                     initialFormation={savedFormation}
                     initialStarPlayerIds={savedStarPlayerIds}
+                    scoredStarPlayerIds={finalStarPlayerIds}
                     budget={INITIAL_BUDGET}
                     scoredTotalPoints={displayedFinalPoints}
                     readOnly={isTeamLocked}

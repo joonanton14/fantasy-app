@@ -23,6 +23,7 @@ type SavedTeam = {
   benchIds?: number[];
   finalXIIds?: number[];
   finalBenchIds?: number[];
+  finalStarPlayerIds?: StarPlayers;
   formation?: FormationKey;
   starPlayerIds?: StarPlayers;
   transfers?: TransferState;
@@ -221,6 +222,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             `${PREFIX}:user:${usernameLower}:gw:${lastFinalizedRound}:finalBench`
           )) ?? undefined);
 
+      const finalStarPlayerIds =
+        lastFinalizedRound == null
+          ? undefined
+          : ((await redis.get<StarPlayers>(
+            `${PREFIX}:user:${usernameLower}:gw:${lastFinalizedRound}:finalStars`
+          )) ?? undefined);
+
       const normalized: SavedTeam = {
         ...data,
         transfers:
@@ -229,6 +237,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             : normalizeTransfers(data.transfers, currentRound),
         finalXIIds,
         finalBenchIds,
+        finalStarPlayerIds,
       };
 
      return res.status(200).json({
@@ -239,6 +248,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     lastFinalizedRound,
     finalXIIds,
     finalBenchIds,
+    finalStarPlayerIds,
   },
 });
     }

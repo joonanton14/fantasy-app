@@ -7,6 +7,13 @@ export type SavedTeamData = {
   squadIds?: number[];
   startingXIIds?: number[];
   benchIds?: number[];
+  finalXIIds?: number[];
+  finalBenchIds?: number[];
+  finalStarPlayerIds?: {
+    DEF?: number | null;
+    MID?: number | null;
+    FWD?: number | null;
+  };
   starPlayerIds?: {
     DEF?: number | null;
     MID?: number | null;
