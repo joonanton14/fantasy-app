@@ -313,11 +313,6 @@ export const StartingXI: FC<{
     const xiPlayers = useMemo(() => Object.values(xiAssign).filter(Boolean) as Player[], [xiAssign]);
     const benchPlayers = useMemo(() => Object.values(benchAssign).filter(Boolean) as Player[], [benchAssign]);
 
-    const hasStartedPoints = useMemo(() => {
-      const selectedPlayers = [...xiPlayers, ...benchPlayers];
-      return selectedPlayers.some((p) => Number(p.lastGwPoints ?? 0) !== 0);
-    }, [xiPlayers, benchPlayers]);
-
     const pickedIds = useMemo(
       () => new Set([...xiPlayers, ...benchPlayers].map((p) => p.id)),
       [xiPlayers, benchPlayers]
@@ -375,7 +370,7 @@ export const StartingXI: FC<{
     }
 
     function beginSwap(area: "xi" | "bench", slotId: string) {
-      if (readOnly || hasStartedPoints || isScoredView) return;
+      if (readOnly || isScoredView) return;
       const p = area === "xi" ? xiAssign[slotId] : benchAssign[slotId];
       if (!p) return;
       setSwapSource({ area, slotId });
@@ -424,7 +419,7 @@ export const StartingXI: FC<{
     }
 
     function trySwap(targetArea: "xi" | "bench", targetSlotId: string) {
-      if (readOnly || hasStartedPoints || isScoredView) return;
+      if (readOnly || isScoredView) return;
       if (!swapSource) return;
 
       if (swapSource.area === targetArea && swapSource.slotId === targetSlotId) return;
@@ -492,7 +487,7 @@ export const StartingXI: FC<{
     }
 
     function applyFormation(next: FormationKey) {
-      if (readOnly || hasStartedPoints || isScoredView) return;
+      if (readOnly || isScoredView) return;
 
       const nextSlots = buildSlots(next);
       const req = FORMATIONS[next];
@@ -534,7 +529,7 @@ export const StartingXI: FC<{
       setStarFWD(initialStarPlayerIds?.FWD ?? "");
     }, [initialStarPlayerIds]);
 
-    const saveDisabled = !isValid() || hasStartedPoints || isScoredView;
+    const saveDisabled = !isValid() || readOnly || isScoredView;
 
     const PlayerSlot = ({
       area,
@@ -682,7 +677,7 @@ export const StartingXI: FC<{
                   className="formation-select"
                   value={formation}
                   onChange={(e) => applyFormation(e.target.value as FormationKey)}
-                  disabled={readOnly || hasStartedPoints || isScoredView}
+                  disabled={readOnly || isScoredView}
                 >
                   {(Object.keys(FORMATIONS) as FormationKey[]).map((k) => (
                     <option key={k} value={k}>
@@ -802,7 +797,7 @@ export const StartingXI: FC<{
                   className="star-pick-select"
                   value={starDEF}
                   onChange={(e) => setStarDEF(e.target.value ? Number(e.target.value) : "")}
-                  disabled={readOnly || hasStartedPoints || isScoredView || xiDefs.length === 0}
+                  disabled={readOnly || isScoredView || xiDefs.length === 0}
                 >
                   <option value="">Ei valittu</option>
                   {xiDefs.map((p) => (
@@ -819,7 +814,7 @@ export const StartingXI: FC<{
                   className="star-pick-select"
                   value={starMID}
                   onChange={(e) => setStarMID(e.target.value ? Number(e.target.value) : "")}
-                  disabled={readOnly || hasStartedPoints || isScoredView || xiMids.length === 0}
+                  disabled={readOnly || isScoredView || xiMids.length === 0}
                 >
                   <option value="">Ei valittu</option>
                   {xiMids.map((p) => (
@@ -836,7 +831,7 @@ export const StartingXI: FC<{
                   className="star-pick-select"
                   value={starFWD}
                   onChange={(e) => setStarFWD(e.target.value ? Number(e.target.value) : "")}
-                  disabled={readOnly || hasStartedPoints || isScoredView || xiFwds.length === 0}
+                  disabled={readOnly || isScoredView || xiFwds.length === 0}
                 >
                   <option value="">Ei valittu</option>
                   {xiFwds.map((p) => (
