@@ -113,19 +113,24 @@ function playerStarBonus(playerId: number, pos: Position, finalXIIds: number[], 
 
 function inferStarsFromTotal(args: {
   finalXIIds: number[];
+  finalBenchIds: number[];
   roundTotal: number;
   basePointsById: Map<number, number>;
   positionsById: Map<number, Position>;
   preferredStars?: StarPlayers;
 }): { stars?: StarPlayers; note?: string } {
-  const { finalXIIds, roundTotal, basePointsById, positionsById, preferredStars } = args;
+  const { finalXIIds, finalBenchIds, roundTotal, basePointsById, positionsById, preferredStars } = args;
 
   const baseTotal = finalXIIds.reduce((sum, id) => sum + (basePointsById.get(id) ?? 0), 0);
   const bonusDelta = roundTotal - baseTotal;
 
-  const defIds = finalXIIds.filter((id) => positionsById.get(id) === "DEF");
-  const midIds = finalXIIds.filter((id) => positionsById.get(id) === "MID");
-  const fwdIds = finalXIIds.filter((id) => positionsById.get(id) === "FWD");
+  // Candidates include finalXI players AND bench players (autosub'd stars end up in bench).
+  // Star bonus for a bench player returns 0 (they didn't play), so they only matter
+  // for resolving ambiguous matches via preferredStars.
+  const allCandidates = Array.from(new Set([...finalXIIds, ...finalBenchIds]));
+  const defIds = allCandidates.filter((id) => positionsById.get(id) === "DEF");
+  const midIds = allCandidates.filter((id) => positionsById.get(id) === "MID");
+  const fwdIds = allCandidates.filter((id) => positionsById.get(id) === "FWD");
 
   const defChoices: Array<number | null> = [null, ...defIds];
   const midChoices: Array<number | null> = [null, ...midIds];
@@ -236,14 +241,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           continue;
         }
 
-        const [finalXI, roundTotal, currentTeam] = await Promise.all([
+        const [finalXI, finalBench, roundTotal, currentTeam] = await Promise.all([
           redis.get<number[]>(`${PREFIX}:user:${username}:gw:${round}:finalXI`),
+          redis.get<number[]>(`${PREFIX}:user:${username}:gw:${round}:finalBench`),
           redis.get<number | string>(`${PREFIX}:user:${username}:gw:${round}:points`),
           loadCurrentTeam(teamKey),
         ]);
 
         const finalXIIds = Array.isArray(finalXI)
           ? finalXI.map(Number).filter((n) => Number.isInteger(n) && n > 0)
+          : [];
+        const finalBenchIds = Array.isArray(finalBench)
+          ? finalBench.map(Number).filter((n) => Number.isInteger(n) && n > 0)
           : [];
         const totalNum = Number(roundTotal);
 
@@ -259,6 +268,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const inferred = inferStarsFromTotal({
           finalXIIds,
+          finalBenchIds,
           roundTotal: totalNum,
           basePointsById,
           positionsById,

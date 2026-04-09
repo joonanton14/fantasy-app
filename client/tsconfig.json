@@ -3,7 +3,7 @@
     "target": "ES2019",
     "module": "ESNext",
     "jsx": "react-jsx",
-    "moduleResolution": "Node",
+    "moduleResolution": "bundler",
     "allowJs": false,
     "strict": true,
     "esModuleInterop": true,
